@@ -1,0 +1,383 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:path/path.dart' as p;
+
+import 'web_project_config.dart';
+
+class WebRequestEvent {
+  const WebRequestEvent(this.method, this.path, this.status, this.elapsed);
+
+  final String method;
+  final String path;
+  final int status;
+  final Duration elapsed;
+
+  @override
+  String toString() => '$method $path  $status  ${elapsed.inMilliseconds} ms';
+}
+
+class WebDevServer {
+  WebDevServer._(this._server, this.config, this._client);
+
+  final HttpServer _server;
+  final WebProjectConfig config;
+  final HttpClient _client;
+  final _requests = StreamController<WebRequestEvent>.broadcast();
+  final _debug = StreamController<String>.broadcast();
+  final _eventClients = <HttpResponse>{};
+  final _debugBuffer = <String>[];
+  StreamSubscription<FileSystemEvent>? _watcher;
+  Timer? _reloadTimer;
+  Timer? _heartbeat;
+  bool _stopped = false;
+
+  int get port => _server.port;
+  String get url => 'http://127.0.0.1:$port/';
+  Stream<WebRequestEvent> get requests => _requests.stream;
+  Stream<String> get debugStream => _debug.stream;
+  List<String> get debugBuffer => List.unmodifiable(_debugBuffer);
+
+  static Future<WebDevServer> start(String projectPath) async {
+    final config = await WebProjectConfig.load(projectPath);
+    final server = await HttpServer.bind(
+      InternetAddress.loopbackIPv4,
+      config.port,
+    );
+    final instance = WebDevServer._(
+      server,
+      config,
+      HttpClient()..connectionTimeout = const Duration(seconds: 10),
+    );
+    server.listen((request) => unawaited(instance._handle(request)));
+    instance._watchFiles();
+    return instance;
+  }
+
+  Future<void> stop() async {
+    if (_stopped) return;
+    _stopped = true;
+    _reloadTimer?.cancel();
+    _heartbeat?.cancel();
+    await _watcher?.cancel();
+    for (final response in _eventClients.toList()) {
+      try {
+        await response.close();
+      } catch (_) {}
+    }
+    _eventClients.clear();
+    _client.close(force: true);
+    await _server.close(force: true);
+    await _requests.close();
+    await _debug.close();
+  }
+
+  void _watchFiles() {
+    try {
+      _watcher = Directory(config.root).watch(recursive: true).listen((event) {
+        if (p.split(event.path).any((part) => part == '.qfli')) return;
+        _reloadTimer?.cancel();
+        _reloadTimer = Timer(const Duration(milliseconds: 180), () {
+          for (final response in _eventClients.toList()) {
+            try {
+              response.write('data: reload\n\n');
+              unawaited(response.flush());
+            } catch (_) {
+              _eventClients.remove(response);
+            }
+          }
+        });
+      });
+    } on FileSystemException {
+      // File watching is optional on filesystems that do not support it.
+    }
+  }
+
+  Future<void> _handle(HttpRequest request) async {
+    final started = DateTime.now();
+    var status = HttpStatus.internalServerError;
+    try {
+      if (request.uri.path == '/__webforge/events') {
+        status = await _events(request);
+      } else if (request.uri.path == '/__webforge/debug') {
+        status = await _receiveDebug(request);
+      } else {
+        final proxy = _matchingProxy(request.uri.path);
+        status = proxy == null
+            ? await _serveFile(request)
+            : await _proxy(request, proxy);
+      }
+    } on SocketException {
+      status = HttpStatus.badGateway;
+      await _sendError(request, status, 'Upstream unavailable');
+    } on TimeoutException {
+      status = HttpStatus.gatewayTimeout;
+      await _sendError(request, status, 'Upstream timed out');
+    } catch (_) {
+      status = HttpStatus.internalServerError;
+      await _sendError(request, status, 'Internal server error');
+    } finally {
+      if (!_requests.isClosed && request.uri.path != '/__webforge/events') {
+        _requests.add(
+          WebRequestEvent(
+            request.method,
+            request.uri.toString(),
+            status,
+            DateTime.now().difference(started),
+          ),
+        );
+      }
+    }
+  }
+
+  WebProxyRule? _matchingProxy(String path) {
+    for (final rule in config.proxies) {
+      if (rule.matches(path)) return rule;
+    }
+    return null;
+  }
+
+  Future<int> _serveFile(HttpRequest request) async {
+    if (request.method != 'GET' && request.method != 'HEAD') {
+      await _sendError(
+        request,
+        HttpStatus.methodNotAllowed,
+        'Method not allowed',
+      );
+      return HttpStatus.methodNotAllowed;
+    }
+    final segments = request.uri.pathSegments.where((s) => s.isNotEmpty);
+    if (segments.any(
+      (s) =>
+          s == '.' ||
+          s == '..' ||
+          s.contains('/') ||
+          s.contains('\\') ||
+          s.contains('\x00') ||
+          (s.startsWith('.') && s != '.well-known'),
+    )) {
+      await _sendError(request, HttpStatus.forbidden, 'Forbidden');
+      return HttpStatus.forbidden;
+    }
+    final parts = segments.toList();
+    if (parts.isEmpty || request.uri.path.endsWith('/')) {
+      parts.add('index.html');
+    }
+    var file = File(p.joinAll([config.root, ...parts]));
+    if (!await file.exists() &&
+        config.spaFallback &&
+        p.extension(file.path).isEmpty &&
+        request.headers
+                .value(HttpHeaders.acceptHeader)
+                ?.contains('text/html') ==
+            true) {
+      file = File(p.join(config.root, 'index.html'));
+    }
+    if (!await file.exists()) {
+      await _sendError(request, HttpStatus.notFound, 'Not found');
+      return HttpStatus.notFound;
+    }
+    final resolved = await file.resolveSymbolicLinks();
+    if (!p.isWithin(config.root, resolved)) {
+      await _sendError(request, HttpStatus.forbidden, 'Forbidden');
+      return HttpStatus.forbidden;
+    }
+    final response = request.response;
+    response.headers.contentType = ContentType.parse(_contentType(file.path));
+    response.headers.set(HttpHeaders.cacheControlHeader, 'no-store');
+    if (request.method == 'GET') {
+      if (p.extension(file.path).toLowerCase() case '.html' || '.htm') {
+        final html = await file.readAsString();
+        final head = RegExp('</head>', caseSensitive: false).firstMatch(html);
+        final rendered = head == null
+            ? '$_bridge$html'
+            : html.replaceRange(head.start, head.start, _bridge);
+        response.add(utf8.encode(rendered));
+      } else {
+        await response.addStream(file.openRead());
+      }
+    }
+    await response.close();
+    return HttpStatus.ok;
+  }
+
+  Future<int> _proxy(HttpRequest request, WebProxyRule rule) async {
+    final suffix = request.uri.path.substring(rule.prefix.length);
+    final basePath = rule.target.path.endsWith('/')
+        ? rule.target.path.substring(0, rule.target.path.length - 1)
+        : rule.target.path;
+    final upstream = rule.target.replace(
+      path: '$basePath$suffix',
+      query: request.uri.hasQuery ? request.uri.query : null,
+    );
+    final outgoing = await _client
+        .openUrl(request.method, upstream)
+        .timeout(const Duration(seconds: 10));
+    final skipped = _hopHeaders(request.headers);
+    request.headers.forEach((name, values) {
+      if (!skipped.contains(name.toLowerCase()) &&
+          name.toLowerCase() != HttpHeaders.hostHeader) {
+        outgoing.headers.set(name, values);
+      }
+    });
+    await outgoing.addStream(request);
+    final incoming = await outgoing.close().timeout(
+      const Duration(seconds: 30),
+    );
+    final response = request.response;
+    response.statusCode = incoming.statusCode;
+    final responseSkipped = _hopHeaders(incoming.headers);
+    incoming.headers.forEach((name, values) {
+      if (!responseSkipped.contains(name.toLowerCase())) {
+        response.headers.set(name, values);
+      }
+    });
+    await response.addStream(incoming);
+    await response.close();
+    return incoming.statusCode;
+  }
+
+  Future<int> _receiveDebug(HttpRequest request) async {
+    if (request.method != 'POST') {
+      await _sendError(
+        request,
+        HttpStatus.methodNotAllowed,
+        'Method not allowed',
+      );
+      return HttpStatus.methodNotAllowed;
+    }
+    final origin = request.headers.value('origin');
+    if (origin != null &&
+        origin != 'http://127.0.0.1:$port' &&
+        origin != 'http://localhost:$port') {
+      await _sendError(request, HttpStatus.forbidden, 'Forbidden');
+      return HttpStatus.forbidden;
+    }
+    final bytes = <int>[];
+    await for (final chunk in request) {
+      bytes.addAll(chunk);
+      if (bytes.length > 16384) {
+        await _sendError(
+          request,
+          HttpStatus.requestEntityTooLarge,
+          'Too large',
+        );
+        return HttpStatus.requestEntityTooLarge;
+      }
+    }
+    final value = jsonDecode(utf8.decode(bytes));
+    if (value is! Map || value['message'] is! String) {
+      await _sendError(request, HttpStatus.badRequest, 'Invalid debug event');
+      return HttpStatus.badRequest;
+    }
+    final level = value['level'] is String ? value['level'] as String : 'log';
+    final message = (value['message'] as String);
+    final line =
+        '[web.${level.substring(0, level.length.clamp(0, 16))}] '
+        '${message.substring(0, message.length.clamp(0, 4000))}';
+    _debugBuffer.add(line);
+    if (_debugBuffer.length > 500) _debugBuffer.removeRange(0, 100);
+    if (!_debug.isClosed) _debug.add(line);
+    request.response.statusCode = HttpStatus.noContent;
+    await request.response.close();
+    return HttpStatus.noContent;
+  }
+
+  Future<int> _events(HttpRequest request) async {
+    if (request.method != 'GET') {
+      await _sendError(
+        request,
+        HttpStatus.methodNotAllowed,
+        'Method not allowed',
+      );
+      return HttpStatus.methodNotAllowed;
+    }
+    final response = request.response;
+    response.headers.contentType = ContentType.parse('text/event-stream');
+    response.headers.set(HttpHeaders.cacheControlHeader, 'no-store');
+    response.write(': connected\n\n');
+    await response.flush();
+    _eventClients.add(response);
+    _heartbeat ??= Timer.periodic(const Duration(seconds: 15), (_) {
+      for (final client in _eventClients.toList()) {
+        try {
+          client.write(': keepalive\n\n');
+          unawaited(client.flush());
+        } catch (_) {
+          _eventClients.remove(client);
+        }
+      }
+    });
+    return HttpStatus.ok;
+  }
+
+  Future<void> _sendError(HttpRequest request, int code, String text) async {
+    try {
+      request.response.statusCode = code;
+      request.response.headers.contentType = ContentType.text;
+      request.response.write(text);
+      await request.response.close();
+    } catch (_) {}
+  }
+
+  static Set<String> _hopHeaders(HttpHeaders headers) {
+    final result = <String>{
+      'connection',
+      'keep-alive',
+      'proxy-authenticate',
+      'proxy-authorization',
+      'te',
+      'trailer',
+      'transfer-encoding',
+      'upgrade',
+    };
+    for (final value in headers[HttpHeaders.connectionHeader] ?? const []) {
+      result.addAll(value.split(',').map((item) => item.trim().toLowerCase()));
+    }
+    return result;
+  }
+
+  static String _contentType(String path) =>
+      switch (p.extension(path).toLowerCase()) {
+        '.html' || '.htm' => 'text/html; charset=utf-8',
+        '.css' => 'text/css; charset=utf-8',
+        '.js' || '.mjs' => 'text/javascript; charset=utf-8',
+        '.json' || '.map' => 'application/json; charset=utf-8',
+        '.svg' => 'image/svg+xml',
+        '.png' => 'image/png',
+        '.jpg' || '.jpeg' => 'image/jpeg',
+        '.gif' => 'image/gif',
+        '.webp' => 'image/webp',
+        '.ico' => 'image/x-icon',
+        '.woff' => 'font/woff',
+        '.woff2' => 'font/woff2',
+        '.wasm' => 'application/wasm',
+        '.txt' => 'text/plain; charset=utf-8',
+        '.xml' => 'application/xml; charset=utf-8',
+        '.pdf' => 'application/pdf',
+        _ => 'application/octet-stream',
+      };
+}
+
+const _bridge = r'''<script>
+(() => {
+  const send = (level, values) => {
+    let message;
+    try { message = values.map(value => typeof value === 'string' ? value : JSON.stringify(value)).join(' '); }
+    catch (_) { message = String(values); }
+    fetch('/__webforge/debug', {method: 'POST', headers: {'content-type': 'application/json'},
+      body: JSON.stringify({level, message})}).catch(() => {});
+  };
+  for (const level of ['log', 'info', 'warn', 'error']) {
+    const original = console[level].bind(console);
+    console[level] = (...values) => { send(level, values); original(...values); };
+  }
+  window.addEventListener('error', event => send('error', [event.message]));
+  window.addEventListener('unhandledrejection', event => send('error', [String(event.reason)]));
+  new EventSource('/__webforge/events').onmessage = event => {
+    if (event.data === 'reload') location.reload();
+  };
+})();
+</script>
+''';

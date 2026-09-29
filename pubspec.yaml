@@ -14,6 +14,7 @@ dependencies:
     path: ../qfli_studio_core
 
   cupertino_icons: ^1.0.8
+  path: ^1.9.1
 
 dependency_overrides:
   re_editor:
@@ -24,9 +25,6 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
 
-  # 只有 test/web_app_test.dart 用它做路径处理，所以放 dev_dependencies。
-  # 不显式声明的话 flutter analyze 会报 depend_on_referenced_packages。
-  path: ^1.9.1
 
 flutter:
   uses-material-design: true
