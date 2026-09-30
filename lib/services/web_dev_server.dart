@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
+import 'package:qfli_studio_core/services/studio_profile.dart';
 
 import 'web_project_config.dart';
 
@@ -18,7 +19,7 @@ class WebRequestEvent {
   String toString() => '$method $path  $status  ${elapsed.inMilliseconds} ms';
 }
 
-class WebDevServer {
+class WebDevServer implements WebPreviewSession {
   WebDevServer._(this._server, this.config, this._client);
 
   final HttpServer _server;
@@ -27,6 +28,7 @@ class WebDevServer {
   final _requests = StreamController<WebRequestEvent>.broadcast();
   final _debug = StreamController<String>.broadcast();
   final _eventClients = <HttpResponse>{};
+  final _webSockets = <WebSocket>{};
   final _debugBuffer = <String>[];
   StreamSubscription<FileSystemEvent>? _watcher;
   Timer? _reloadTimer;
@@ -34,8 +36,10 @@ class WebDevServer {
   bool _stopped = false;
 
   int get port => _server.port;
+  @override
   String get url => 'http://127.0.0.1:$port/';
   Stream<WebRequestEvent> get requests => _requests.stream;
+  @override
   Stream<String> get debugStream => _debug.stream;
   List<String> get debugBuffer => List.unmodifiable(_debugBuffer);
 
@@ -48,13 +52,16 @@ class WebDevServer {
     final instance = WebDevServer._(
       server,
       config,
-      HttpClient()..connectionTimeout = const Duration(seconds: 10),
+      HttpClient()
+        ..connectionTimeout = const Duration(seconds: 10)
+        ..autoUncompress = false,
     );
     server.listen((request) => unawaited(instance._handle(request)));
     instance._watchFiles();
     return instance;
   }
 
+  @override
   Future<void> stop() async {
     if (_stopped) return;
     _stopped = true;
@@ -67,6 +74,10 @@ class WebDevServer {
       } catch (_) {}
     }
     _eventClients.clear();
+    for (final socket in _webSockets.toList()) {
+      unawaited(socket.close(WebSocketStatus.goingAway));
+    }
+    _webSockets.clear();
     _client.close(force: true);
     await _server.close(force: true);
     await _requests.close();
@@ -77,21 +88,25 @@ class WebDevServer {
     try {
       _watcher = Directory(config.root).watch(recursive: true).listen((event) {
         if (p.split(event.path).any((part) => part == '.qfli')) return;
-        _reloadTimer?.cancel();
-        _reloadTimer = Timer(const Duration(milliseconds: 180), () {
-          for (final response in _eventClients.toList()) {
-            try {
-              response.write('data: reload\n\n');
-              unawaited(response.flush());
-            } catch (_) {
-              _eventClients.remove(response);
-            }
-          }
-        });
+        _queueReload();
       });
     } on FileSystemException {
       // File watching is optional on filesystems that do not support it.
     }
+  }
+
+  void _queueReload() {
+    _reloadTimer?.cancel();
+    _reloadTimer = Timer(const Duration(milliseconds: 180), () {
+      for (final response in _eventClients.toList()) {
+        try {
+          response.write('data: reload\n\n');
+          unawaited(response.flush());
+        } catch (_) {
+          _eventClients.remove(response);
+        }
+      }
+    });
   }
 
   Future<void> _handle(HttpRequest request) async {
@@ -106,6 +121,8 @@ class WebDevServer {
         final proxy = _matchingProxy(request.uri.path);
         status = proxy == null
             ? await _serveFile(request)
+            : request.headers.value('upgrade')?.toLowerCase() == 'websocket'
+            ? await _proxyWebSocket(request, proxy)
             : await _proxy(request, proxy);
       }
     } on SocketException {
@@ -114,19 +131,25 @@ class WebDevServer {
     } on TimeoutException {
       status = HttpStatus.gatewayTimeout;
       await _sendError(request, status, 'Upstream timed out');
-    } catch (_) {
+    } on WebSocketException {
+      status = HttpStatus.badGateway;
+      await _sendError(request, status, 'WebSocket upstream unavailable');
+    } catch (error) {
       status = HttpStatus.internalServerError;
+      if (!_debug.isClosed) _debug.add('[web.server] $error');
       await _sendError(request, status, 'Internal server error');
     } finally {
       if (!_requests.isClosed && request.uri.path != '/__webforge/events') {
-        _requests.add(
-          WebRequestEvent(
-            request.method,
-            request.uri.toString(),
-            status,
-            DateTime.now().difference(started),
-          ),
+        final event = WebRequestEvent(
+          request.method,
+          request.uri.toString(),
+          status,
+          DateTime.now().difference(started),
         );
+        _requests.add(event);
+        if (status >= 400 && !_debug.isClosed) {
+          _debug.add('[web.http] $event');
+        }
       }
     }
   }
@@ -203,17 +226,11 @@ class WebDevServer {
   }
 
   Future<int> _proxy(HttpRequest request, WebProxyRule rule) async {
-    final suffix = request.uri.path.substring(rule.prefix.length);
-    final basePath = rule.target.path.endsWith('/')
-        ? rule.target.path.substring(0, rule.target.path.length - 1)
-        : rule.target.path;
-    final upstream = rule.target.replace(
-      path: '$basePath$suffix',
-      query: request.uri.hasQuery ? request.uri.query : null,
-    );
+    final upstream = _upstreamUri(request, rule);
     final outgoing = await _client
         .openUrl(request.method, upstream)
         .timeout(const Duration(seconds: 10));
+    outgoing.followRedirects = false;
     final skipped = _hopHeaders(request.headers);
     request.headers.forEach((name, values) {
       if (!skipped.contains(name.toLowerCase()) &&
@@ -236,6 +253,104 @@ class WebDevServer {
     await response.addStream(incoming);
     await response.close();
     return incoming.statusCode;
+  }
+
+  Uri _upstreamUri(HttpRequest request, WebProxyRule rule) {
+    final suffix = request.uri.path.substring(rule.prefix.length);
+    final basePath = rule.target.path.endsWith('/')
+        ? rule.target.path.substring(0, rule.target.path.length - 1)
+        : rule.target.path;
+    return rule.target.replace(
+      path: '$basePath$suffix',
+      query: request.uri.hasQuery ? request.uri.query : null,
+    );
+  }
+
+  Future<int> _proxyWebSocket(HttpRequest request, WebProxyRule rule) async {
+    final httpUri = _upstreamUri(request, rule);
+    final upstreamUri = httpUri.replace(
+      scheme: httpUri.scheme == 'https' ? 'wss' : 'ws',
+    );
+    final skipped = _hopHeaders(request.headers);
+    final headers = <String, String>{};
+    request.headers.forEach((name, values) {
+      if (!skipped.contains(name.toLowerCase()) &&
+          name.toLowerCase() != HttpHeaders.hostHeader &&
+          !name.toLowerCase().startsWith('sec-websocket-')) {
+        headers[name] = values.join(', ');
+      }
+    });
+    final protocolHeader = request.headers.value('sec-websocket-protocol');
+    final protocols = protocolHeader == null
+        ? <String>[]
+        : protocolHeader
+              .split(',')
+              .map((protocol) => protocol.trim())
+              .where((protocol) => protocol.isNotEmpty)
+              .toList();
+    final upstream = await WebSocket.connect(
+      upstreamUri.toString(),
+      headers: headers,
+      protocols: protocols,
+      customClient: _client,
+    ).timeout(const Duration(seconds: 10));
+    _webSockets.add(upstream);
+    late final WebSocket downstream;
+    try {
+      if (_stopped) throw const SocketException('Server stopped');
+      downstream = await WebSocketTransformer.upgrade(
+        request,
+        protocolSelector: (_) => upstream.protocol,
+      );
+    } catch (_) {
+      _webSockets.remove(upstream);
+      await upstream.close();
+      rethrow;
+    }
+    _webSockets.add(downstream);
+    downstream.listen(
+      (message) {
+        if (upstream.readyState == WebSocket.open) upstream.add(message);
+      },
+      onDone: () {
+        _webSockets.remove(downstream);
+        unawaited(_closeSocket(upstream, downstream));
+      },
+      onError: (_) {
+        unawaited(_closeSocket(upstream, downstream));
+      },
+    );
+    upstream.listen(
+      (message) {
+        if (downstream.readyState == WebSocket.open) downstream.add(message);
+      },
+      onDone: () {
+        _webSockets.remove(upstream);
+        unawaited(_closeSocket(downstream, upstream));
+      },
+      onError: (_) {
+        unawaited(_closeSocket(downstream, upstream));
+      },
+    );
+    return HttpStatus.switchingProtocols;
+  }
+
+  Future<void> _closeSocket(WebSocket target, WebSocket source) async {
+    final code = source.closeCode;
+    final validCode =
+        code == WebSocketStatus.noStatusReceived ||
+            code == WebSocketStatus.abnormalClosure ||
+            code == WebSocketStatus.reserved1015
+        ? null
+        : code;
+    try {
+      await target.close(
+        validCode,
+        validCode == null ? null : source.closeReason,
+      );
+    } on WebSocketException {
+      // The peer may already have closed while the other side is finishing.
+    }
   }
 
   Future<int> _receiveDebug(HttpRequest request) async {
@@ -266,7 +381,13 @@ class WebDevServer {
         return HttpStatus.requestEntityTooLarge;
       }
     }
-    final value = jsonDecode(utf8.decode(bytes));
+    final Object? value;
+    try {
+      value = jsonDecode(utf8.decode(bytes));
+    } on FormatException {
+      await _sendError(request, HttpStatus.badRequest, 'Invalid debug event');
+      return HttpStatus.badRequest;
+    }
     if (value is! Map || value['message'] is! String) {
       await _sendError(request, HttpStatus.badRequest, 'Invalid debug event');
       return HttpStatus.badRequest;
@@ -294,11 +415,18 @@ class WebDevServer {
       return HttpStatus.methodNotAllowed;
     }
     final response = request.response;
+    response.bufferOutput = false;
     response.headers.contentType = ContentType.parse('text/event-stream');
     response.headers.set(HttpHeaders.cacheControlHeader, 'no-store');
     response.write(': connected\n\n');
     await response.flush();
     _eventClients.add(response);
+    unawaited(
+      response.done.then<void>(
+        (_) => _eventClients.remove(response),
+        onError: (Object _) => _eventClients.remove(response),
+      ),
+    );
     _heartbeat ??= Timer.periodic(const Duration(seconds: 15), (_) {
       for (final client in _eventClients.toList()) {
         try {
@@ -333,7 +461,9 @@ class WebDevServer {
       'upgrade',
     };
     for (final value in headers[HttpHeaders.connectionHeader] ?? const []) {
-      result.addAll(value.split(',').map((item) => item.trim().toLowerCase()));
+      for (final item in value.split(',')) {
+        result.add(item.trim().toLowerCase());
+      }
     }
     return result;
   }

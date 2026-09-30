@@ -26,10 +26,6 @@ class WebProjectConfig {
   final List<WebProxyRule> proxies;
 
   static Future<WebProjectConfig> load(String projectPath) async {
-    final project = Directory(projectPath);
-    if (!await project.exists()) {
-      throw FileSystemException('项目目录不存在', projectPath);
-    }
     final file = File(p.join(projectPath, '.qfli', 'web.json'));
     final Map<String, dynamic> data;
     if (await file.exists()) {
@@ -41,16 +37,23 @@ class WebProjectConfig {
     } else {
       data = const {};
     }
+    return parse(projectPath, data);
+  }
 
+  static WebProjectConfig parse(String projectPath, Map<String, dynamic> data) {
+    final project = Directory(projectPath);
+    if (!project.existsSync()) {
+      throw FileSystemException('项目目录不存在', projectPath);
+    }
     final rootSetting = data['root'];
     if (rootSetting != null && rootSetting is! String) {
       throw const FormatException('root 必须是相对目录');
     }
     final relativeRoot =
         rootSetting as String? ??
-        (await File(p.join(projectPath, 'index.html')).exists()
+        (File(p.join(projectPath, 'index.html')).existsSync()
             ? '.'
-            : await File(p.join(projectPath, 'src', 'index.html')).exists()
+            : File(p.join(projectPath, 'src', 'index.html')).existsSync()
             ? 'src'
             : '.');
     if (p.isAbsolute(relativeRoot) ||
@@ -58,12 +61,12 @@ class WebProjectConfig {
         relativeRoot.contains('\\')) {
       throw const FormatException('root 必须位于项目目录内');
     }
-    final canonicalProject = await project.resolveSymbolicLinks();
+    final canonicalProject = project.resolveSymbolicLinksSync();
     final root = Directory(p.join(projectPath, relativeRoot));
-    if (!await root.exists()) {
+    if (!root.existsSync()) {
       throw FileSystemException('Web 根目录不存在', root.path);
     }
-    final canonicalRoot = await root.resolveSymbolicLinks();
+    final canonicalRoot = root.resolveSymbolicLinksSync();
     if (canonicalRoot != canonicalProject &&
         !p.isWithin(canonicalProject, canonicalRoot)) {
       throw const FormatException('Web 根目录不能指向项目外');

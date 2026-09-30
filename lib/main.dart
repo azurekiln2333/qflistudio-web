@@ -10,6 +10,9 @@ import 'package:qfli_studio_core/store/auth_store.dart';
 import 'package:qfli_studio_core/store/project_store.dart';
 import 'package:qfli_studio_core/store/settings_store.dart';
 
+import 'pages/web_tools_page.dart';
+import 'services/web_dev_server.dart';
+
 /// 本 App 的产品名。窗口标题、任务切换器和应用内顶栏都读它。
 const String _appTitle = StudioProductCatalog.webForge;
 
@@ -26,12 +29,12 @@ const StudioProfile webProfile = StudioProfile(
   runtimeKind: 'html-css-javascript-preview',
   runtimeStatus: 'available',
   supportedFileExtensions: ['.html', '.css', '.js'],
-  // 本版不注入运行后端：`.html` 交给内核已有的分流逻辑——它会起一个本地静态
-  // 服务器、注入调试桥，并把 console 输出回传到编辑器。也就是说 Web 版的
-  // 「运行」能力内核已经具备，这里少写一行反而是完整的。
-  // index.html 排在默认入口表前面，保证本版一定先命中它。
+  webPreviewFactory: WebDevServer.start,
+  toolsPageBuilder: _buildWebTools,
   entryFileNames: ['index.html', 'src/index.html'],
 );
+
+Widget _buildWebTools(ProjectStore store) => WebToolsPage(store: store);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

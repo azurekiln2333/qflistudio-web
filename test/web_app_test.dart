@@ -10,11 +10,7 @@ import 'package:qfli_studio_core/services/studio_profile.dart';
 
 /// Web 版 App 的接线测试。
 ///
-/// Web 版是五个语言里唯一「不用自带解释器就能跑」的：内核的 RunnerService 会用
-/// LocalWebServer 起一个本地静态服务器，把项目目录当网站serve出去，并往页面里
-/// 注入调试桥（劫持 console.log / window.onerror 回传）。所以这里的重点不是
-/// 「后端接管」，而是「内核那条路真的通」——起服务器、拿到 URL、页面里能看到
-/// 项目内容、调试桥被注入了。
+/// WebForge uses its own local preview service through the shared editor hook.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -55,8 +51,10 @@ void main() {
       expect(webProfile.filterLanguages(all), ['Web']);
     });
 
-    test('不注入运行后端，交给内核的静态服务器', () {
+    test('WebForge has a dedicated preview and tools screen', () {
       expect(webProfile.runner, isNull);
+      expect(webProfile.webPreviewFactory, isNotNull);
+      expect(webProfile.toolsPageBuilder, isNotNull);
     });
 
     test('产品名使用 QFLIWebForge', () {
@@ -94,17 +92,9 @@ void main() {
   group('运行按钮', () {
     test('起本地服务器并返回可访问的 URL', () async {
       write('index.html', '<html><body><h1>你好</h1></body></html>');
-      final result = await RunnerService.runProject(
-        projectPath: project.path,
-        entryFile: p.join(project.path, 'index.html'),
-      );
-      expect(result, isNotNull);
-      expect(result!.webServer, isNotNull, reason: '没有起静态服务器');
-      expect(result.hint, isNull);
-      expect(result.title, startsWith('http://127.0.0.1:'));
-
-      final server = result.webServer!;
+      final server = await webProfile.webPreviewFactory!(project.path);
       addTearDown(server.stop);
+      expect(server.url, startsWith('http://127.0.0.1:'));
       // 服务器必须真的在服务这个项目目录，而不是只返回了一个字符串。
       final body = await _get(server.url);
       expect(body, contains('你好'));
@@ -112,29 +102,23 @@ void main() {
 
     test('页面里被注入了调试桥，console.log 能回传', () async {
       write('index.html', '<html><body>hi</body></html>');
-      final result = await RunnerService.runProject(
-        projectPath: project.path,
-        entryFile: p.join(project.path, 'index.html'),
-      );
-      final server = result!.webServer!;
+      final server = await webProfile.webPreviewFactory!(project.path);
       addTearDown(server.stop);
 
       final body = await _get(server.url);
-      expect(body, contains('/__debug'), reason: '页面里没有调试桥');
+      expect(body, contains('/__webforge/debug'), reason: '页面里没有调试桥');
     });
 
-    test('子目录资源按路径取得到', () async {
-      write('index.html', '<html><body>root</body></html>');
-      write('css/site.css', 'body { color: red; }');
-      final result = await RunnerService.runProject(
-        projectPath: project.path,
-        entryFile: p.join(project.path, 'index.html'),
+    test('模板的 src 资源按路径取得到', () async {
+      write(
+        'src/index.html',
+        '<html><body>root<link rel="stylesheet" href="style.css"></body></html>',
       );
-      final server = result!.webServer!;
+      write('src/style.css', 'body { color: red; }');
+      final server = await webProfile.webPreviewFactory!(project.path);
       addTearDown(server.stop);
 
-      final base = server.url.substring(0, server.url.lastIndexOf('/') + 1);
-      expect(await _get('${base}css/site.css'), contains('color: red'));
+      expect(await _get('${server.url}style.css'), contains('color: red'));
     });
   });
 }
