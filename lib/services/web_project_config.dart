@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+enum WebServerEngine { auto, nginx, webforge }
+
 class WebProxyRule {
   const WebProxyRule({required this.prefix, required this.target});
 
@@ -18,12 +20,14 @@ class WebProjectConfig {
     required this.port,
     required this.spaFallback,
     required this.proxies,
+    this.engine = WebServerEngine.auto,
   });
 
   final String root;
   final int port;
   final bool spaFallback;
   final List<WebProxyRule> proxies;
+  final WebServerEngine engine;
 
   static Future<WebProjectConfig> load(String projectPath) async {
     final file = File(p.join(projectPath, '.qfli', 'web.json'));
@@ -41,6 +45,12 @@ class WebProjectConfig {
   }
 
   static WebProjectConfig parse(String projectPath, Map<String, dynamic> data) {
+    final engine = switch (data['engine'] ?? 'auto') {
+      'auto' => WebServerEngine.auto,
+      'nginx' => WebServerEngine.nginx,
+      'webforge' => WebServerEngine.webforge,
+      _ => throw const FormatException('engine 必须是 auto、nginx 或 webforge'),
+    };
     final project = Directory(projectPath);
     if (!project.existsSync()) {
       throw FileSystemException('项目目录不存在', projectPath);
@@ -117,6 +127,7 @@ class WebProjectConfig {
       port: port,
       spaFallback: spaFallback,
       proxies: List.unmodifiable(proxies),
+      engine: engine,
     );
   }
 }

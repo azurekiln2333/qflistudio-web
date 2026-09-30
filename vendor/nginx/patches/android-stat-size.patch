@@ -1,0 +1,11 @@
+--- a/src/os/unix/ngx_files.h
++++ b/src/os/unix/ngx_files.h
+@@ -282,7 +282,7 @@
+ #define ngx_de_access(dir)       (((dir)->info.st_mode) & 0777)
+ #define ngx_de_size(dir)         (dir)->info.st_size
+ #define ngx_de_fs_size(dir)                                                  \
+-    ngx_max((dir)->info.st_size, (dir)->info.st_blocks * 512)
++    ngx_max((dir)->info.st_size, (int64_t) (dir)->info.st_blocks * 512)
+ #define ngx_de_mtime(dir)        (dir)->info.st_mtime
+ 
+ 

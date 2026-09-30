@@ -8,8 +8,9 @@ import 'package:path/path.dart' as p;
 import 'package:qfli_studio_core/services/local_web_server.dart';
 import 'package:qfli_studio_core/store/project_store.dart';
 
-import '../services/web_dev_server.dart';
 import '../services/web_project_config.dart';
+import '../services/web_runtime.dart';
+import '../services/web_runtime_session.dart';
 
 class WebToolsPage extends StatefulWidget {
   const WebToolsPage({super.key, required this.store});
@@ -21,7 +22,7 @@ class WebToolsPage extends StatefulWidget {
 }
 
 class _WebToolsPageState extends State<WebToolsPage> {
-  WebDevServer? _server;
+  WebRuntimeSession? _server;
   StreamSubscription<WebRequestEvent>? _requests;
   StreamSubscription<String>? _debug;
   final _log = <String>[];
@@ -65,13 +66,20 @@ class _WebToolsPageState extends State<WebToolsPage> {
     if (_busy || _server != null) return;
     setState(() => _busy = true);
     try {
-      final server = await WebDevServer.start(path);
+      final server = await WebRuntime.start(path);
       if (!mounted) {
         await server.stop();
         return;
       }
       _requests = server.requests.listen((event) => _append(event.toString()));
-      _debug = server.debugStream.listen(_append);
+      _debug = server.debugStream.listen(
+        _append,
+        onDone: () {
+          if (mounted && identical(_server, server)) {
+            setState(() => _server = null);
+          }
+        },
+      );
       setState(() {
         _server = server;
         _busy = false;
@@ -216,6 +224,10 @@ class _WebToolsPageState extends State<WebToolsPage> {
             ),
             if (_server case final server?) ...[
               const SizedBox(height: 18),
+              Text(
+                server.engineName,
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
               Row(
                 children: [
                   Expanded(child: SelectableText(server.url)),
@@ -292,6 +304,7 @@ class _WebProjectSettingsDialogState extends State<_WebProjectSettingsDialog> {
   final _removedProxies = <_ProxyDraft>[];
   Map<String, dynamic> _original = {};
   bool _spaFallback = false;
+  WebServerEngine _engine = WebServerEngine.auto;
   String? _error;
 
   @override
@@ -322,7 +335,7 @@ class _WebProjectSettingsDialogState extends State<_WebProjectSettingsDialog> {
           _ProxyDraft(rule['prefix'] as String, rule['target'] as String),
         );
       }
-      WebProjectConfig.parse(widget.projectPath, decoded);
+      _engine = WebProjectConfig.parse(widget.projectPath, decoded).engine;
     } catch (error) {
       _error = '$error';
     }
@@ -338,10 +351,12 @@ class _WebProjectSettingsDialogState extends State<_WebProjectSettingsDialog> {
       ..remove('root')
       ..remove('port')
       ..remove('spaFallback')
-      ..remove('proxies');
+      ..remove('proxies')
+      ..remove('engine');
     if (_root.text.trim().isNotEmpty) data['root'] = _root.text.trim();
     if (port != 0) data['port'] = port;
     data['spaFallback'] = _spaFallback;
+    data['engine'] = _engine.name;
     data['proxies'] = [
       for (final draft in _proxies)
         {
@@ -384,6 +399,30 @@ class _WebProjectSettingsDialogState extends State<_WebProjectSettingsDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              DropdownButtonFormField<WebServerEngine>(
+                initialValue: _engine,
+                decoration: const InputDecoration(
+                  labelText: '服务引擎',
+                  border: OutlineInputBorder(),
+                ),
+                items: const [
+                  DropdownMenuItem(
+                    value: WebServerEngine.auto,
+                    child: Text('自动'),
+                  ),
+                  DropdownMenuItem(
+                    value: WebServerEngine.nginx,
+                    child: Text('Nginx'),
+                  ),
+                  DropdownMenuItem(
+                    value: WebServerEngine.webforge,
+                    child: Text('WebForge'),
+                  ),
+                ],
+                onChanged: (value) =>
+                    setState(() => _engine = value ?? WebServerEngine.auto),
+              ),
+              const SizedBox(height: 12),
               TextField(
                 controller: _root,
                 decoration: const InputDecoration(

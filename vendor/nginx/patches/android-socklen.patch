@@ -1,0 +1,11 @@
+--- a/src/core/ngx_connection.c
++++ b/src/core/ngx_connection.c
+@@ -410,7 +410,7 @@
+             continue;
+         }
+ 
+-        if (olen < sizeof(int) || timeout == 0) {
++        if (olen < (socklen_t) sizeof(int) || timeout == 0) {
+             continue;
+         }
+ 

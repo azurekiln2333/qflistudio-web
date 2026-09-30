@@ -93,6 +93,10 @@ void main() {
           .join(' | '),
     );
     await tester.tap(find.text('SPA 路由回退'));
+    await tester.tap(find.text('自动'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('WebForge').last);
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('添加代理'));
     await tester.pumpAndSettle();
     await tester.enterText(find.widgetWithText(TextField, '路径前缀'), '/api');
@@ -111,6 +115,7 @@ void main() {
             )
             as Map<String, dynamic>;
     expect(config['spaFallback'], true);
+    expect(config['engine'], 'webforge');
     expect(config['proxies'], [
       {'prefix': '/api', 'target': 'http://127.0.0.1:3000/'},
     ]);

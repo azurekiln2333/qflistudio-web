@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:qfli_web/services/web_dev_server.dart';
 import 'package:qfli_web/services/web_project_config.dart';
+import 'package:qfli_web/services/web_runtime.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -299,6 +300,17 @@ void main() {
       '{"proxies":[{"prefix":"/api","target":"file:///etc"}]}',
     );
     expect(() => WebProjectConfig.load(project.path), throwsFormatException);
+  });
+
+  test('engine settings select WebForge and reject unknown engines', () async {
+    write('index.html', 'ok');
+    write('.qfli/web.json', '{"engine":"webforge"}');
+    final server = await WebRuntime.start(project.path);
+    addTearDown(server.stop);
+    expect(server.engineName, 'WebForge');
+    expect((await request(server.url)).status, HttpStatus.ok);
+    write('.qfli/web.json', '{"engine":"unknown"}');
+    await expectLater(WebRuntime.start(project.path), throwsFormatException);
   });
 }
 

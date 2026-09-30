@@ -1,0 +1,25 @@
+{
+  "version": "1.31.6",
+  "source": {
+    "url": "https://nginx.org/download/nginx-1.31.6.tar.gz",
+    "sha256": "974ed5298a5e398e008704ed5db284e655fc270c596493dbccada452448fc9f1"
+  },
+  "windows": {
+    "url": "https://nginx.org/download/nginx-1.31.6.zip",
+    "sha256": "bb65edcfc22a2214a4afaac59f038f560c02b98d4b49c5dca1206d3cc5d631c9",
+    "binary": "assets/runtime/nginx/windows/nginx.exe",
+    "binary_sha256": "2429269c8ea20ce6c5040bb4eb5fd78a28003dfa272f66d146338320353c5f62"
+  },
+  "android_inputs": {
+    "ndk_version": "27.0.12077973",
+    "api": 24,
+    "segment_alignment": 16384,
+    "patches_url": "https://github.com/termux/termux-packages/tree/master/packages/nginx",
+    "glob_url": "https://github.com/termux/termux-packages/tree/master/packages/libandroid-glob"
+  },
+  "ohos_inputs": {
+    "clang_version": "15.0.4",
+    "segment_alignment": 16384,
+    "status": "cross-compiled; application exec returned EACCES on the phone simulator"
+  }
+}

@@ -3,28 +3,19 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
-import 'package:qfli_studio_core/services/studio_profile.dart';
 
 import 'web_project_config.dart';
+import 'web_runtime_session.dart';
 
-class WebRequestEvent {
-  const WebRequestEvent(this.method, this.path, this.status, this.elapsed);
+export 'web_runtime_session.dart' show WebRequestEvent;
 
-  final String method;
-  final String path;
-  final int status;
-  final Duration elapsed;
-
-  @override
-  String toString() => '$method $path  $status  ${elapsed.inMilliseconds} ms';
-}
-
-class WebDevServer implements WebPreviewSession {
-  WebDevServer._(this._server, this.config, this._client);
+class WebDevServer implements WebRuntimeSession {
+  WebDevServer._(this._server, this.config, this._client, this._publicPort);
 
   final HttpServer _server;
   final WebProjectConfig config;
   final HttpClient _client;
+  final int _publicPort;
   final _requests = StreamController<WebRequestEvent>.broadcast();
   final _debug = StreamController<String>.broadcast();
   final _eventClients = <HttpResponse>{};
@@ -37,14 +28,21 @@ class WebDevServer implements WebPreviewSession {
 
   int get port => _server.port;
   @override
+  String get engineName => 'WebForge';
+  @override
   String get url => 'http://127.0.0.1:$port/';
+  @override
   Stream<WebRequestEvent> get requests => _requests.stream;
   @override
   Stream<String> get debugStream => _debug.stream;
   List<String> get debugBuffer => List.unmodifiable(_debugBuffer);
 
-  static Future<WebDevServer> start(String projectPath) async {
-    final config = await WebProjectConfig.load(projectPath);
+  static Future<WebDevServer> start(
+    String projectPath, {
+    WebProjectConfig? configuration,
+    int? publicPort,
+  }) async {
+    final config = configuration ?? await WebProjectConfig.load(projectPath);
     final server = await HttpServer.bind(
       InternetAddress.loopbackIPv4,
       config.port,
@@ -55,6 +53,7 @@ class WebDevServer implements WebPreviewSession {
       HttpClient()
         ..connectionTimeout = const Duration(seconds: 10)
         ..autoUncompress = false,
+      publicPort ?? server.port,
     );
     server.listen((request) => unawaited(instance._handle(request)));
     instance._watchFiles();
@@ -364,8 +363,8 @@ class WebDevServer implements WebPreviewSession {
     }
     final origin = request.headers.value('origin');
     if (origin != null &&
-        origin != 'http://127.0.0.1:$port' &&
-        origin != 'http://localhost:$port') {
+        origin != 'http://127.0.0.1:$_publicPort' &&
+        origin != 'http://localhost:$_publicPort') {
       await _sendError(request, HttpStatus.forbidden, 'Forbidden');
       return HttpStatus.forbidden;
     }

@@ -11,6 +11,7 @@ import { systemShare } from '@kit.ShareKit';
 import { common, Want, ConfigurationConstant } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { fileIo } from '@kit.CoreFileKit';
 import { GeneratedPluginRegistrant } from '../plugins/GeneratedPluginRegistrant';
 import { handlePickerCall, isPickerMethod } from './PickerBridge';
 
@@ -46,6 +47,14 @@ export default class EntryAbility extends FlutterAbility {
     );
     platformChannel.setMethodCallHandler({
       onMethodCall(call: MethodCall, result: MethodResult): void {
+        if (call.method === 'nginxPath') {
+          const libraryDir = abilityContext.applicationInfo.nativeLibraryPath;
+          const absoluteDir = libraryDir.startsWith('/')
+            ? libraryDir : `${abilityContext.bundleCodeDir}/${libraryDir}`;
+          const executable = `${absoluteDir}/libnginx_exec.so`;
+          result.success(fileIo.accessSync(executable) ? executable : null);
+          return;
+        }
         if (call.method === 'openUrl') {
           const url = call.argument('url') as string;
           const want: Want = {

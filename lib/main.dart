@@ -11,7 +11,7 @@ import 'package:qfli_studio_core/store/project_store.dart';
 import 'package:qfli_studio_core/store/settings_store.dart';
 
 import 'pages/web_tools_page.dart';
-import 'services/web_dev_server.dart';
+import 'services/web_runtime.dart';
 
 /// 本 App 的产品名。窗口标题、任务切换器和应用内顶栏都读它。
 const String _appTitle = StudioProductCatalog.webForge;
@@ -29,7 +29,7 @@ const StudioProfile webProfile = StudioProfile(
   runtimeKind: 'html-css-javascript-preview',
   runtimeStatus: 'available',
   supportedFileExtensions: ['.html', '.css', '.js'],
-  webPreviewFactory: WebDevServer.start,
+  webPreviewFactory: WebRuntime.start,
   toolsPageBuilder: _buildWebTools,
   entryFileNames: ['index.html', 'src/index.html'],
 );

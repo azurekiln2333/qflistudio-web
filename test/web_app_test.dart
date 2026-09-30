@@ -16,15 +16,19 @@ void main() {
 
   late Directory project;
   late StudioProfile? previousProfile;
+  late HttpOverrides? previousOverrides;
 
   setUp(() {
     previousProfile = StudioProfile.current;
+    previousOverrides = HttpOverrides.current;
+    HttpOverrides.global = null;
     StudioProfile.current = webProfile;
     project = Directory.systemTemp.createTempSync('qfli_web_app_test');
   });
 
   tearDown(() {
     StudioProfile.current = previousProfile;
+    HttpOverrides.global = previousOverrides;
     if (project.existsSync()) project.deleteSync(recursive: true);
   });
 

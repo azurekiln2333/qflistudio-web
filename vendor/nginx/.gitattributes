@@ -1,0 +1,8 @@
+# Patch context and retained third-party bytes include intentional whitespace.
+*.patch* text eol=lf whitespace=-blank-at-eol,-blank-at-eof
+android-glob/* whitespace=-blank-at-eol
+*.c text eol=lf
+*.h text eol=lf
+LICENSE text eol=lf
+HASHES.sha256 text eol=lf
+*.tar.gz binary
