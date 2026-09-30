@@ -17,7 +17,8 @@ Deliver a usable local web development server, project tools, and editor integra
 ## Acceptance Criteria
 
 - [ ] New and imported HTML projects preview with working CSS, JS, images, and nested routes.
-- [ ] Only one preview listener exists per project run and it stops when the editor exits.
+- [ ] Only one public preview endpoint exists per project run; its runtime and
+  any private middleware stop when the editor exits.
 - [ ] HTTP file serving rejects traversal and symlink escapes; missing assets return 404 rather than HTML.
 - [ ] Console, errors, and request failures reach a visible debugging surface.
 - [ ] Configured proxy routes and SPA fallback work in integration tests.
@@ -29,3 +30,9 @@ Deliver a usable local web development server, project tools, and editor integra
 ## Notes
 
 `qfli_web` is the product repository. The editor, navigation, and current preview server live in the sibling `qfli_studio_core` repository, which already has unrelated uncommitted changes. Integrating these capabilities requires a narrow change there and separate commits.
+
+Current implementation evidence is recorded in `research/native-nginx.md` and
+`vendor/nginx/VALIDATION.md`. Windows native tests and mobile builds passed;
+Android x86_64 application smoke passed on an API 37 / 16 KiB emulator.
+Android arm64/32-bit devices and HarmonyOS app execution remain open. Keep this
+task in progress until those checks are resolved.

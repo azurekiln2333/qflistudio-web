@@ -15,6 +15,31 @@ Bind loopback on a dynamic port by default. Choose the content root from an expl
 
 Proxy rules match path prefixes and forward to an explicit upstream URL. The proxy must preserve request methods, query strings, response status and headers, and stream bodies with bounded resource use. Avoid forwarding hop-by-hop headers. Provide a local request log and explicit stop/dispose behavior.
 
-## Native Nginx assessment
+## Native Nginx runtime
 
-An actual Nginx build requires native binaries and lifecycle integration separately for Windows, Android, and HarmonyOS. In particular, mobile app execution restrictions must be verified before advertising Nginx. Keep the in-process server clearly identified by its real engine while native packaging is investigated.
+`WebRuntime.start` reads the persisted engine selection. WebForge starts the
+in-process server; auto/native uses a packaged real upstream Nginx executable.
+Explicit native selection never substitutes another engine.
+
+Nginx owns the public loopback endpoint and forwards safe project files,
+diagnostics, SSE and HTTPS upstream transport to private Dart middleware. HTTP
+proxies and WebSocket upgrades are native. Both listeners share a session and
+stop together. Native route generation includes HTTPS prefixes so scheme does
+not change longest-prefix priority. Startup reserves the requested public port,
+writes a session-local config, runs `nginx -t`, and verifies a unique token through
+the native health location. Version/config/signal commands are bounded and kill
+their process on timeout. Native access logs are read in bounded chunks.
+
+Windows packages the official executable through CMake. Android builds official
+source with retained Termux inputs and local Bionic type patches, targets API 24,
+and packages PIE executables through legacy native-library extraction. Source
+and native artifacts have SHA-256 records. Shell/C/patch inputs keep LF in Git.
+
+HarmonyOS arm64/x86_64 cross-compilation and signed HAP packaging work. On the
+phone simulator, shell execution passed but the original app package had mode
+100644 and returned EACCES. System `echo` execution inside the app succeeded.
+The module now declares both binaries in `executableBinaryPaths`; the signed HAP
+retains the declarations, but its app execution still requires verification.
+Auto handles permission denial with a WebForge session; explicit Nginx reports
+the failure. Android x86_64 app execution passed on an API 37 / 16 KiB emulator.
+Android arm64/32-bit device checks and Apple builds remain unverified.

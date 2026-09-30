@@ -32,6 +32,9 @@ completed work toward that goal; they do not satisfy the native port requirement
 
 ## Local Build Environment
 
+The following was the initial environment snapshot; later device findings are
+recorded under Implementation Evidence Update.
+
 - WSL `qfli-java-build` starts successfully and provides cc, make, and patch.
 - The `Ubuntu` instance fails because its registered ext4.vhdx is missing.
 - Android NDK 27.0.12077973 is installed, with clang and make for Windows.
@@ -58,3 +61,43 @@ completed work toward that goal; they do not satisfy the native port requirement
    occupied ports, invalid configuration, and shutdown using the real binary.
 6. Keep this task in progress until the native port and required device checks
    are proven. Build success alone does not prove mobile execution.
+
+## Implementation Evidence Update
+
+Official Nginx 1.31.6 source and the Windows executable are retained with hashes
+and licenses. Windows real-binary tests now pass for serving, diagnostics/logs,
+native HTTP/WebSocket proxies, HTTPS prefix priority, reload and shutdown.
+Android NDK 27 produced all three ABI executables with 16 KiB PIE alignment; the
+debug APK includes all binaries and both licenses.
+
+OpenHarmony SDK Clang 15.0.4 built arm64-v8a and x86_64. The API 24 x86_64 phone
+simulator appeared during this continuation. Its shell ran the real binary's
+`-V`, and a signed test HAP installed. App `nginxPath` resolved
+`/data/storage/el1/bundle/libs/x86_64/libnginx_exec.so`; app `Process.run(..., ['-v'])`
+failed with `Permission denied`. Follow-up app probes confirmed mode `100644`
+and successful `/system/bin/echo` execution. This narrows the failure to packaged
+executable permissions, without proving there are no further execution limits.
+The local module schema and Hvigor pre-build validator expose
+`module.executableBinaryPaths`; both module-relative `libs/<abi>/libnginx_exec.so`
+paths are declared, and signed dual-ABI HAP packaging preserves them. The
+simulator disconnected before the updated HAP could be verified in the app.
+
+The local `@ohos.app.ability.childProcessManager.d.ts` describes
+`startNativeChildProcess` as supported on PCs/2-in-1 devices and tablets; on other
+device types it returns 801. App EACCES and shell success must be treated as
+different evidence. Native application execution remains unresolved. Auto uses
+WebForge for this specific permission failure; explicit Nginx fails truthfully.
+
+On 2026-10-01 the user switched debugging to Android. The connected
+`emulator-5556` reports API 37, x86_64, and `getconf PAGESIZE` of `16384`. Running
+`tool/nginx_smoke.dart` produced a real application PASS for HTML/CSS, HTTP
+proxying, WebSocket, SSE reload, diagnostics, native access logs, 404, occupied
+port rejection, shutdown, restart and default automatic Nginx selection. The app
+resolved the executable inside its extracted native library directory.
+Arm64/32-bit and older API execution still need device evidence.
+
+WSL Windows NDK/SDK tools work via `/init executable argv[0] args`; normal exec
+became unavailable when WSLInterop's binfmt registration disappeared. Clang CRLF
+normalization remains necessary for generated configuration strings. Android
+32-bit Bionic needs signed stat-block and socket-length comparison patches;
+OpenHarmony's socket header needs a local CMSG_NXTHDR comparison adaptation.
