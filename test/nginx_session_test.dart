@@ -36,6 +36,25 @@ void main() {
   }
 
   test(
+    'real Nginx serves a custom imported HTML entry and relative assets',
+    () async {
+      write('src/imported.html', '<head></head><h1>Custom native entry</h1>');
+      write('src/style.css', 'body { color: green; }');
+      write('.qfli/project.json', '{"entryFile":"src/imported.html"}');
+      final server = await NginxSession.start(
+        project.path,
+        executable: executable,
+      );
+      addTearDown(server.stop);
+      final page = await request(server.url);
+      expect(page.status, HttpStatus.ok);
+      expect(page.headers.value('x-webforge-engine'), 'nginx');
+      expect(page.body, contains('Custom native entry'));
+      expect((await request('${server.url}style.css')).body, contains('green'));
+    },
+  );
+
+  test(
     'real Nginx serves the project, diagnostics and request logs',
     () async {
       write('src/index.html', '<head></head><h1>Native preview</h1>');

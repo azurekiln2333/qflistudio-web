@@ -183,7 +183,9 @@ class WebDevServer implements WebRuntimeSession {
       return HttpStatus.forbidden;
     }
     final parts = segments.toList();
-    if (parts.isEmpty || request.uri.path.endsWith('/')) {
+    if (parts.isEmpty) {
+      parts.addAll(p.split(config.indexFile));
+    } else if (request.uri.path.endsWith('/')) {
       parts.add('index.html');
     }
     var file = File(p.joinAll([config.root, ...parts]));
@@ -194,7 +196,7 @@ class WebDevServer implements WebRuntimeSession {
                 .value(HttpHeaders.acceptHeader)
                 ?.contains('text/html') ==
             true) {
-      file = File(p.join(config.root, 'index.html'));
+      file = File(p.join(config.root, config.indexFile));
     }
     if (!await file.exists()) {
       await _sendError(request, HttpStatus.notFound, 'Not found');

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
+import 'package:qfli_studio_core/services/runner_service.dart';
 
 enum WebServerEngine { auto, nginx, webforge }
 
@@ -21,6 +22,7 @@ class WebProjectConfig {
     required this.spaFallback,
     required this.proxies,
     this.engine = WebServerEngine.auto,
+    this.indexFile = 'index.html',
   });
 
   final String root;
@@ -28,6 +30,7 @@ class WebProjectConfig {
   final bool spaFallback;
   final List<WebProxyRule> proxies;
   final WebServerEngine engine;
+  final String indexFile;
 
   static Future<WebProjectConfig> load(String projectPath) async {
     final file = File(p.join(projectPath, '.qfli', 'web.json'));
@@ -59,9 +62,20 @@ class WebProjectConfig {
     if (rootSetting != null && rootSetting is! String) {
       throw const FormatException('root 必须是相对目录');
     }
+    final candidate = RunnerService.findEntry(projectPath);
+    final entry =
+        candidate != null &&
+            const [
+              '.html',
+              '.htm',
+            ].contains(p.extension(candidate).toLowerCase())
+        ? p.absolute(candidate)
+        : null;
     final relativeRoot =
         rootSetting as String? ??
-        (File(p.join(projectPath, 'index.html')).existsSync()
+        (entry != null
+            ? p.relative(p.dirname(entry), from: p.absolute(projectPath))
+            : File(p.join(projectPath, 'index.html')).existsSync()
             ? '.'
             : File(p.join(projectPath, 'src', 'index.html')).existsSync()
             ? 'src'
@@ -77,6 +91,9 @@ class WebProjectConfig {
       throw FileSystemException('Web 根目录不存在', root.path);
     }
     final canonicalRoot = root.resolveSymbolicLinksSync();
+    final canonicalEntry = entry == null
+        ? null
+        : File(entry).resolveSymbolicLinksSync();
     if (canonicalRoot != canonicalProject &&
         !p.isWithin(canonicalProject, canonicalRoot)) {
       throw const FormatException('Web 根目录不能指向项目外');
@@ -128,6 +145,10 @@ class WebProjectConfig {
       spaFallback: spaFallback,
       proxies: List.unmodifiable(proxies),
       engine: engine,
+      indexFile:
+          canonicalEntry != null && p.isWithin(canonicalRoot, canonicalEntry)
+          ? p.relative(canonicalEntry, from: canonicalRoot)
+          : 'index.html',
     );
   }
 }

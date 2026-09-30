@@ -78,6 +78,48 @@ void main() {
   });
 
   test(
+    'custom imported HTML entry serves the page, assets and SPA routes',
+    () async {
+      write('src/lesson.html', '<head></head><h1>Imported lesson</h1>');
+      write('src/style.css', 'body { color: green; }');
+      write('.qfli/project.json', '{"entryFile":"src/lesson.html"}');
+      write('.qfli/web.json', '{"spaFallback":true}');
+      final server = await WebDevServer.start(project.path);
+      addTearDown(server.stop);
+
+      expect(server.config.root, p.join(project.path, 'src'));
+      expect(server.config.indexFile, 'lesson.html');
+      expect((await request(server.url)).body, contains('Imported lesson'));
+      expect((await request('${server.url}style.css')).body, contains('green'));
+      expect((await request('${server.url}lesson.html')).status, HttpStatus.ok);
+      expect(
+        (await request('${server.url}missing.js')).status,
+        HttpStatus.notFound,
+      );
+      expect(
+        (await request(
+          '${server.url}users/42',
+          headers: {'accept': 'text/html'},
+        )).body,
+        contains('Imported lesson'),
+      );
+    },
+  );
+
+  test(
+    'an explicit Web root takes precedence over an imported entry',
+    () async {
+      write('src/lesson.html', '<h1>Source</h1>');
+      write('dist/index.html', '<h1>Build</h1>');
+      write('.qfli/project.json', '{"entryFile":"src/lesson.html"}');
+      write('.qfli/web.json', '{"root":"dist"}');
+      final server = await WebDevServer.start(project.path);
+      addTearDown(server.stop);
+      expect((await request(server.url)).body, contains('Build'));
+    },
+  );
+
+  test(
     'private project files and symlinks outside root are not served',
     () async {
       write('index.html', 'ok');

@@ -72,6 +72,7 @@ class NginxSession implements WebRuntimeSession {
         publicPort: port,
         configuration: WebProjectConfig(
           root: config.root,
+          indexFile: config.indexFile,
           port: 0,
           spaFallback: config.spaFallback,
           proxies: config.proxies

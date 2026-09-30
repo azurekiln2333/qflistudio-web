@@ -43,8 +43,14 @@ preview through `RunnerService.runProject`.
 - Display the running session's actual `engineName`. Explicit Nginx never
   substitutes another engine. On HarmonyOS, `auto` handles a native exec EACCES
   by selecting WebForge; other startup errors still propagate.
-- The root is explicit or chosen from root `index.html`, then `src/index.html`.
-  UI saves and server startup both validate through `WebProjectConfig.parse`.
+- The root is explicit or derived from the safe HTML entry returned by
+  `RunnerService.findEntry`, including `.qfli/project.json`'s `entryFile`.
+  Legacy projects retain root `index.html`, then `src/index.html` discovery.
+  `WebProjectConfig.indexFile` is relative to the canonical root and defaults
+  to `index.html`. `/` and SPA navigation use it; subdirectories keep their own
+  `index.html`. An explicit Web root wins when the entry lies elsewhere.
+  Nginx passes `indexFile` to its private middleware. UI saves and server startup
+  both validate through `WebProjectConfig.parse`.
 - Proxy targets are HTTP(S) URLs without query, fragment, or credentials.
   Prefix matches have path-segment boundaries; the longest prefix wins.
 - HTTP proxies preserve methods, query, bodies, status, redirects, and headers.
@@ -88,6 +94,8 @@ preview through `RunnerService.runProject`.
 
 - Good: a `src/index.html` template loads its relative CSS/JS; `/api/items?q=7`
   forwards to `/v1/items?q=7`; a WebSocket proxy echoes binary data.
+- Good: importing HTML as `src/lesson.html` previews it at `/` with working
+  relative assets, through both WebForge and native Nginx.
 - Base: a root-level static project runs with an ephemeral loopback port.
 - Bad: `/missing.js` receives SPA HTML, proxy redirects are followed internally,
   or a second preview listener remains active after an editor run.
@@ -100,6 +108,8 @@ preview through `RunnerService.runProject`.
 - `test/nginx_session_test.dart`: real upstream binary/header, native HTTP and
   WebSocket proxies, overlapping HTTP/HTTPS prefix priority, diagnostics, native
   access logs, SSE streaming, port conflict and post-stop connection failure.
+- Both server suites cover a custom imported HTML entry. The WebForge suite
+  also checks SPA navigation and an explicit root pointing to build output.
 - `test/web_app_test.dart`: product hook wiring and root/src entry behavior.
 - `test/web_tools_navigation_test.dart`: existing navigation and persisted settings.
 - `test/web_tools_page_test.dart`: actual HTTP transport and visible codec results.
