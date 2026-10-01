@@ -1,5 +1,7 @@
 # Content Import Verification
 
+Independent task: `10-01-content-code-import`; WebForge commit: `d1ef042`.
+
 Verified on 2026-10-01 in the WebForge product and sibling shared core checkout.
 
 ## Implementation Audit
