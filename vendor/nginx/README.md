@@ -10,7 +10,51 @@ retained here; generated build trees live under `build/native/nginx/`.
 installs it and the upstream license into the application bundle's
 `data/nginx/` directory. It can also be exercised from the checkout by Dart tests.
 
+## Linux and macOS
+
+The desktop ports build the retained upstream C source without a download.
+They need Bash, tar, make, a native C compiler and checksum tools (`sha256sum`
+on Linux, `shasum` on macOS). The build omits gzip, rewrite and auth-basic so
+PCRE, zlib and crypt do not become extra package dependencies. Native HTTP and
+WebSocket proxies use the same product integration as Windows and Android.
+
+Linux CMake builds Nginx automatically and installs it, with executable
+permissions and its license, into `data/nginx/` next to the application.
+Build on the target Linux machine; cross-compiling the runner is rejected
+because Nginx's configure probes must run for the target operating system.
+
+The macOS Xcode target builds with all requested `ARCHS` (arm64 and/or x86_64),
+copies the executable into `Contents/Helpers/nginx`, and signs it before the
+outer app with the app's signing identity. `Nginx.entitlements` enables sandbox
+inheritance; the parent app grants both network client and server access. The
+source build uses universal compiler flags for both probes and final objects.
+The bundled upstream license lives in `Contents/Resources/nginx/`.
+
+For desktop integration tests from a checkout, build the host executable first:
+
+```bash
+bash scripts/build_nginx_desktop.sh linux
+# On an Apple build host:
+ARCHS="arm64 x86_64" bash scripts/build_nginx_desktop.sh macos
+flutter test --no-pub test/nginx_session_test.dart
+```
+
+The default output is `assets/runtime/nginx/<platform>/nginx`. Generated Unix
+executables and source build trees are ignored. Application builds select their
+own output directories. The integration suite discovers the host runtime and
+marks itself skipped when no native build exists; a skip is not runtime proof.
+
+## iOS
+
+The iOS app uses the existing in-process WebForge server for local preview,
+proxying and live reload. It does not claim native Nginx. The upstream process
+lifecycle uses executable launch and signals, which are not available to an iOS
+application. An in-process Nginx port would need separate event-loop and global
+state integration. Explicit Nginx selection therefore reports an unavailable
+runtime rather than selecting a different engine.
+
 ## Android
+
 
 From Linux or WSL, build each supported ABI using an installed NDK:
 

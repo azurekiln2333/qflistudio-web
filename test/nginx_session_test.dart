@@ -4,19 +4,17 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:qfli_web/services/nginx_session.dart';
+import 'package:qfli_web/services/web_runtime.dart';
 
 import 'web_dev_server_test.dart' show request;
 
-void main() {
+Future<void> main() async {
   TestWidgetsFlutterBinding.ensureInitialized();
-  final executable = p.join(
-    Directory.current.path,
-    'assets',
-    'runtime',
-    'nginx',
-    'windows',
-    'nginx.exe',
-  );
+  final executable = await WebRuntime.nginxExecutable();
+  if (executable == null) {
+    test('native Nginx integration', () {}, skip: 'No desktop Nginx build');
+    return;
+  }
   late Directory project;
   late HttpOverrides? overrides;
 
@@ -34,6 +32,16 @@ void main() {
     file.parent.createSync(recursive: true);
     file.writeAsStringSync(content);
   }
+
+  test('automatic selection starts the discovered native Nginx', () async {
+    write('index.html', '<head></head><h1>Automatic native preview</h1>');
+    final server = await WebRuntime.start(project.path);
+    addTearDown(server.stop);
+    expect(server.engineName, 'Nginx 1.31.6');
+    final page = await request(server.url);
+    expect(page.headers.value('x-webforge-engine'), 'nginx');
+    expect(page.body, contains('Automatic native preview'));
+  });
 
   test(
     'real Nginx serves a custom imported HTML entry and relative assets',

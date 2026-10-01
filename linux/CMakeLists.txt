@@ -91,6 +91,31 @@ install(CODE "
 set(INSTALL_BUNDLE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/data")
 set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 
+find_program(NGINX_BASH bash)
+if(NOT NGINX_BASH)
+  message(FATAL_ERROR "Bash is required to build the bundled Nginx runtime")
+endif()
+if(CMAKE_CROSSCOMPILING)
+  message(FATAL_ERROR "Build the bundled Nginx runtime on the target Linux host")
+endif()
+set(NGINX_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/..")
+set(NGINX_EXECUTABLE "${CMAKE_CURRENT_BINARY_DIR}/nginx/nginx")
+add_custom_command(
+  OUTPUT "${NGINX_EXECUTABLE}"
+  COMMAND "${NGINX_BASH}" "${NGINX_ROOT}/scripts/build_nginx_desktop.sh"
+    linux "${NGINX_EXECUTABLE}"
+  DEPENDS "${NGINX_ROOT}/scripts/build_nginx_desktop.sh"
+    "${NGINX_ROOT}/vendor/nginx/nginx-1.31.6.tar.gz"
+    "${NGINX_ROOT}/vendor/nginx/HASHES.sha256"
+  VERBATIM
+)
+add_custom_target(nginx_runtime ALL DEPENDS "${NGINX_EXECUTABLE}")
+add_dependencies(${BINARY_NAME} nginx_runtime)
+install(PROGRAMS "${NGINX_EXECUTABLE}"
+  DESTINATION "${INSTALL_BUNDLE_DATA_DIR}/nginx" COMPONENT Runtime)
+install(FILES "${NGINX_ROOT}/vendor/nginx/LICENSE"
+  DESTINATION "${INSTALL_BUNDLE_DATA_DIR}/nginx" COMPONENT Runtime)
+
 install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
   COMPONENT Runtime)
 

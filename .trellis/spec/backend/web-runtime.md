@@ -134,6 +134,24 @@ upstream Nginx binary is packaged, launched, verified, and stopped correctly.
 
 ## Native Packaging & Evidence
 
+- Linux builds the retained upstream C source through its CMake dependency and
+  uses `install(PROGRAMS ...)` under `data/nginx/`. Configure probes require a
+  native target host; reject a cross-built runner instead of packaging a host
+  executable. `scripts/build_nginx_desktop.sh linux [OUTPUT]` also supports a
+  checkout build under `assets/runtime/nginx/linux/` for integration tests.
+- macOS runs `scripts/bundle_nginx_macos.sh` in the Runner target. Build both
+  configure probes, final objects and linking with the same `ARCHS`; bundle the helper
+  under `Contents/Helpers/nginx`, its license under `Contents/Resources/nginx/`,
+  and sign the helper with the parent signing identity and sandbox inheritance
+  before the outer application. Parent network client/server rights are needed.
+  A copied unsigned helper or executable in Flutter assets is insufficient.
+- `WebRuntime.nginxExecutable()` resolves Linux `data/nginx/nginx`, macOS
+  `Contents/Helpers/nginx`, then platform-specific checkout paths. Desktop tests
+  use that same discovery and exercise automatic engine selection as well as
+  explicit Nginx. Missing native builds produce a visible skip, never a pass.
+  Apple builds and Linux app execution remain unverified; consult VALIDATION.
+- iOS uses the in-process WebForge server. The existing upstream Nginx child
+  process lifecycle cannot run there; explicit Nginx reports unavailable.
 - Retain upstream source/Windows archive hashes in `vendor/nginx/SOURCE.json`;
   retained build inputs and binaries are covered by `HASHES.sha256`.
 - Android API 24 PIE executables ship as `jniLibs/<abi>/libnginx_exec.so` with

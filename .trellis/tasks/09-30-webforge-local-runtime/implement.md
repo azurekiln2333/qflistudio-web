@@ -10,6 +10,12 @@
   distinguish successful shell execution from the app's EACCES failure.
 - [x] Verify Android x86_64 native runtime in the app on emulator-5556:
   API 37, actual 16 KiB pages, complete native smoke PASS.
+- [x] Add Linux source build, bundle installation and runtime discovery.
+- [x] Add macOS architecture builds, signed sandbox-inheriting helper and discovery.
+- [x] Verify desktop completion on the available Windows environment and record
+  skipped native platforms separately from successful source-level checks.
+  Linux WSL access could not pass permission review (service HTTP 503); no Apple
+  build environment exists. Neither platform has a native runtime pass.
 - [ ] Verify Android arm64-v8a/armeabi-v7a application execution on devices.
 - [ ] Resolve HarmonyOS application execution and verify the complete native
   smoke target. The original packaged file was mode 100644; both paths now use

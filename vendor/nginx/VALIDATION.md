@@ -10,7 +10,25 @@ Packaging and application execution are separate checks.
 | Android arm64-v8a, armeabi-v7a | NDK 27 / API 24 PIE, all LOAD segments aligned to 0x4000 | Debug APK built; all three native files and both licenses present | Pending physical device checks |
 | HarmonyOS arm64-v8a | SDK Clang 15.0.4 PIE | Native file built for HAP inclusion | Pending physical device |
 | HarmonyOS x86_64 | SDK Clang 15.0.4 PIE; simulator shell `-V` passed | Signed dual-ABI debug HAP built, including executableBinaryPaths declarations | Original app startup failed with EACCES and file mode 100644; execution after the manifest change remains unverified |
-| iOS/macOS | No packaged Nginx | Apple builds unavailable on this Windows host | WebForge engine; no native Nginx claim |
+| Linux (native host architecture) | Retained upstream source build integrated | CMake builds and installs executable plus license | Not run: WSL access failed; automatic permission review returned 503 on two attempts |
+| macOS arm64/x86_64 | Retained upstream source build integrated with universal compiler flags | Xcode bundles and signs a sandbox-inheriting helper | Not run: no Apple build host or device |
+| iOS | No native Nginx process integration | WebForge remains the in-process engine | Apple builds unavailable; explicit Nginx reports unavailable |
+
+## Desktop Completion (2026-10-01)
+
+Linux/macOS now have complete source-build, packaging and executable discovery
+paths. These paths have not been native-built or executed on this host. Linux
+environment inspection first returned WSL access denied in the restricted
+session. Both requests to access WSL with the required permission were not
+executed because automatic approval review returned HTTP 503 (review service
+unavailable). This is an environment limitation, not a compiler result.
+Apple targets have no local Xcode or Apple device and were not run.
+
+The Windows host passed static analysis and all 33 product tests,
+including automatic native selection and the real upstream Nginx integration
+suite. Desktop shell inputs passed
+Bash syntax checks, and the retained source archive's SHA-256 matched its
+manifest. No Linux/macOS runtime pass is inferred from these host checks.
 
 ## Desktop Integration Assertions
 

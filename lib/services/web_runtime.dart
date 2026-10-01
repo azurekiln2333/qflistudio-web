@@ -21,21 +21,21 @@ abstract final class WebRuntime {
       }
       return null;
     }
-    if (Platform.isWindows) {
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      final executableName = Platform.isWindows ? 'nginx.exe' : 'nginx';
+      final executableDirectory = p.dirname(Platform.resolvedExecutable);
       for (final path in [
-        p.join(
-          p.dirname(Platform.resolvedExecutable),
-          'data',
-          'nginx',
-          'nginx.exe',
-        ),
+        if (Platform.isMacOS)
+          p.normalize(p.join(executableDirectory, '..', 'Helpers', 'nginx'))
+        else
+          p.join(executableDirectory, 'data', 'nginx', executableName),
         p.join(
           Directory.current.path,
           'assets',
           'runtime',
           'nginx',
-          'windows',
-          'nginx.exe',
+          Platform.operatingSystem,
+          executableName,
         ),
       ]) {
         if (await File(path).exists()) return path;

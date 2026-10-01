@@ -43,3 +43,22 @@ retains the declarations, but its app execution still requires verification.
 Auto handles permission denial with a WebForge session; explicit Nginx reports
 the failure. Android x86_64 app execution passed on an API 37 / 16 KiB emulator.
 Android arm64/32-bit device checks and Apple builds remain unverified.
+
+## Desktop completion (2026-10-01)
+
+The Linux runner builds the retained, checksum-verified upstream source and
+installs an executable plus its license under the bundle's `data/nginx/`.
+The macOS runner builds all requested Xcode architectures, bundles the helper
+under `Contents/Helpers/nginx`, and signs it with sandbox inheritance. Native
+feature probes use the same architecture flags as the build. No new network
+downloads or third-party system libraries are needed beyond the C toolchain.
+Runtime discovery resolves these packaged paths and platform-specific checkout
+paths. The existing Nginx integration tests use that discovery on each desktop.
+
+The change boundary is the missing Linux/macOS native build, packaging and
+discovery chain: `scripts/build_nginx_desktop.sh`, `scripts/bundle_nginx_macos.sh`,
+Linux CMake, macOS Xcode/signing, `web_runtime.dart`, and the native integration
+suite. Other language products have independent active platform tasks. iOS
+retains its in-process WebForge engine because its application cannot launch
+the upstream Nginx child process; embedded Nginx would require a different
+lifecycle integration and is not established by these desktop changes.
