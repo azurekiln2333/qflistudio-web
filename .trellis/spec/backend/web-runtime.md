@@ -150,6 +150,8 @@ upstream Nginx binary is packaged, launched, verified, and stopped correctly.
   use that same discovery and exercise automatic engine selection as well as
   explicit Nginx. Missing native builds produce a visible skip, never a pass.
   Apple builds and Linux app execution remain unverified; consult VALIDATION.
+  The 2026-10-02 WSL standalone build passed native static/proxy/404/stop checks.
+  Keep that engine evidence distinct from Linux Flutter middleware integration.
 - iOS uses the in-process WebForge server. The existing upstream Nginx child
   process lifecycle cannot run there; explicit Nginx reports unavailable.
 - Retain upstream source/Windows archive hashes in `vendor/nginx/SOURCE.json`;

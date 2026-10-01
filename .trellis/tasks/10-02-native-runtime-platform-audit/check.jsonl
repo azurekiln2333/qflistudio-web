@@ -1,0 +1,2 @@
+{"file":".trellis/spec/backend/web-runtime.md","reason":"Require real native execution evidence and explicit platform skips"}
+{"file":".trellis/tasks/10-02-native-runtime-platform-audit/prd.md","reason":"Preserve full cross-product requirements"}

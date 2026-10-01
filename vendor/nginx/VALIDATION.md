@@ -1,6 +1,7 @@
 # Native Runtime Verification
 
-Recorded on 2026-09-30; Android device evidence updated on 2026-10-01.
+Recorded on 2026-09-30; Android evidence updated on 2026-10-01 and Linux
+native execution updated on 2026-10-02.
 Packaging and application execution are separate checks.
 
 | Platform | Native binary | Packaging | Application execution |
@@ -10,14 +11,28 @@ Packaging and application execution are separate checks.
 | Android arm64-v8a, armeabi-v7a | NDK 27 / API 24 PIE, all LOAD segments aligned to 0x4000 | Debug APK built; all three native files and both licenses present | Pending physical device checks |
 | HarmonyOS arm64-v8a | SDK Clang 15.0.4 PIE | Native file built for HAP inclusion | Pending physical device |
 | HarmonyOS x86_64 | SDK Clang 15.0.4 PIE; simulator shell `-V` passed | Signed dual-ABI debug HAP built, including executableBinaryPaths declarations | Original app startup failed with EACCES and file mode 100644; execution after the manifest change remains unverified |
-| Linux (native host architecture) | Retained upstream source build integrated | CMake builds and installs executable plus license | Not run: WSL access failed; automatic permission review returned 503 on two attempts |
+| Linux x86_64 | Retained upstream Nginx 1.31.6 source built with GCC 13 | CMake build/install integration; full Flutter packaging unverified | Standalone native static/proxy/404/stop checks passed; Flutter application unverified |
 | macOS arm64/x86_64 | Retained upstream source build integrated with universal compiler flags | Xcode bundles and signs a sandbox-inheriting helper | Not run: no Apple build host or device |
 | iOS | No native Nginx process integration | WebForge remains the in-process engine | Apple builds unavailable; explicit Nginx reports unavailable |
 
-## Desktop Completion (2026-10-01)
+## Linux Native Check (2026-10-02)
+
+WSL access became available. `scripts/build_nginx_desktop.sh linux` built the
+retained source in the qfli-java-build Linux environment. The actual executable
+reported `nginx/1.31.6`, passed `nginx -t`, served a native static fixture,
+forwarded an HTTP proxy request with the upstream response header, returned
+404 for a missing file, and stopped with no listener accepting connections.
+The reproducible harness and configuration are in the active native platform
+audit task's research directory. Its missing-file error log is expected.
+
+This verifies the standalone native Linux binary. It does not establish a
+Linux Flutter application build, middleware/SSE/WebSocket integration pass,
+or any Apple execution result. Those remain separate gates.
+
+## Earlier Desktop Completion (2026-10-01)
 
 Linux/macOS now have complete source-build, packaging and executable discovery
-paths. These paths have not been native-built or executed on this host. Linux
+paths. At that point these paths had not been native-built or executed. Linux
 environment inspection first returned WSL access denied in the restricted
 session. Both requests to access WSL with the required permission were not
 executed because automatic approval review returned HTTP 503 (review service
