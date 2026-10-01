@@ -6,6 +6,9 @@
 - qfli_dart 138affc: official desktop SDK and Kernel compiler (earlier).
 - qfli_sql 7269c12: native SQLite mobile/desktop/Apple FFI integration.
 - qfli_python e4d0e40: native desktop/Apple FFI integration and Windows port.
+- qfli_lua 31e0107: native Apple integration, Windows UTF-8 filenames, Android
+  16 KiB build settings and application source/bytecode verification.
+- qfli_go 68f91a5: native iOS archive/FFI integration and common platform routing.
 
 All changes were committed separately in their owning repositories. Existing
 cloud SQL, OHOS agreement/startup and agent metadata changes were preserved.
@@ -83,6 +86,48 @@ it is separate from the Windows default-runner Flutter test.
 The current Python API has no cancellation hook or reusable bytecode output.
 These are unresolved requirements, not verified capabilities.
 
+## Lua
+
+The owning task's existing source review and real Windows checks were inspected:
+native CTest passed 1/1, all 44 Flutter tests and full analysis passed, and the
+standalone AOT CLI loaded its adjacent DLL to check, compile and run bytecode.
+Apple wiring compiles the shared bridge and all 32 Lua library C files in Runner;
+there is still no Apple build/runtime evidence on this Windows host.
+
+The existing release APK (69,981,813 bytes) was installed on emulator-5560 and
+launched through its ordinary `com.azurekiln.qfli.script/.MainActivity` entry.
+An isolated `LuaNativeAudit` project was created in the real UI. Its default
+`src/main.lua` printed `Hello, QFLIStudio+!` and exited 0. The editor's native
+syntax check passed and its compile action generated `src/main.luac`. The source
+was then replaced with `dofile[[src/main.luac]]`; a subsequent run loaded the
+retained bytecode and printed the same output, exit 0. A probe target was not
+installed. Screenshots are under `build/native/platform-audit/lua-android-*`.
+
+The platform implementation and owning validation task were committed in Lua.
+Startup/content/OHOS changes remain outside that native-platform commit. Linux
+application/native Lua execution and Android ARM execution remain unverified.
+
+## Go
+
+The owning task and chat's prior evidence were inspected: 38 working-tree
+application tests, clean analysis, three real Android FFI cases, Windows SDK
+operations/cancellation, and Linux SDK/native-source tests passed. Apple archive
+build/link configuration has source evidence only; there is no Apple execution.
+
+Delivery selected the runtime imports/profile metadata in `lib/main.dart`
+against HEAD, leaving the separate startup changes in the working tree. The
+actual index was exported into the ignored `go-staged` directory. Only that
+verification copy used absolute shared-core paths; the product's dependency
+paths remain relative. All 18 tests in this delivered source and full analysis
+passed with the actual official Go SDK enabled, including SDK operations and
+cancellation. The 38-test working-tree pass includes other undelivered features
+and is not the staged-source count.
+
+Initial verification attempts encountered Dart/Go compiler memory-allocation
+failures. The successful retry limited this verification process to Flutter
+`--concurrency 1`, `GOMAXPROCS=2`, and `GOFLAGS=-p=1`; product settings were not
+changed. The native iOS/routing changes and their evidence were committed in Go.
+
 ## Linux Nginx
 
 The retained upstream source hash was checked by build_nginx_desktop.sh.
@@ -111,9 +156,11 @@ integration evidence.
 - The existing new Java x86_64 image's launcher and JVM have 0x4000 LOAD
   alignment. The image's complete dependencies, staged package and real app
   execution still need verification; its owning changes are uncommitted.
-- A subsequent read-only WSL inspection of that Java image again failed at
-  automatic approval review with HTTP 503. The inspection did not execute.
-  Preserve the earlier Linux passes and keep Java staging/execution pending.
+- Two subsequent read-only WSL inspections of that Java image failed at
+  automatic approval review with HTTP 503. Neither inspection executed. The
+  service reported no available channel for codex-auto-review. Preserve the
+  earlier Linux passes and keep Java staging/execution pending; the user was
+  asked to repair the review service or manually export the existing image.
 
 The audit remains in progress. Dart mobile, Rust target builds, Java/Web iOS,
 local Oracle MySQL outside OHOS, outstanding language delivery and unavailable

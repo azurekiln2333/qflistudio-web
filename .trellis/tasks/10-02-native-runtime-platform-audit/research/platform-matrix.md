@@ -9,11 +9,11 @@ recorded passes are identified below; they were not all replayed by this audit.
 | Product | Actual engine | Owning source / build boundary |
 | --- | --- | --- |
 | C/C++ | Clang/GCC desktop, native Clang Android; in-process LLVM/Wasm iOS work in progress | lib/forge_runner.dart, lib/clang_runner.dart, lib/android_clang_runner.dart; native/toolchain; current C chat |
-| Lua | Retained upstream Lua 5.4.8 C compiler/VM | lib/lua_toolchain.dart; native/CMakeLists.txt; Android app CMake and Apple Runner source/link integration |
+| Lua | Retained upstream Lua 5.4.8 C compiler/VM | lib/lua_toolchain.dart; native/CMakeLists.txt; Android app CMake and Apple Runner source/link integration; 31e0107 |
 | Python | Retained upstream MicroPython C compiler/VM | lib/python_runner.dart, lib/python_ffi.dart; native/desktop, windows, linux, apple/podspec.rb; e4d0e40 |
 | Dart | Official SDK C++ VM / official Kernel compiler on desktop; dart_eval on mobile | lib/native_dart_toolchain.dart; native/dart-sdk/bundle.cmake and bundle_macos.sh; 138affc |
 | Java | OpenJDK javac + native JVM | lib/java_runner.dart, lib/mobile_jdk.dart; native/openjdk/android and ohos; iOS bridge absent |
-| Go | Official SDK desktop; vendored Yaegi native interpreter with C ABI on mobile | lib/go_runner.dart, lib/go_platform.dart, lib/native_go_bridge_ffi.dart; native/go_runtime; tool/build_ios_go_runtime.sh |
+| Go | Official SDK desktop; vendored Yaegi native interpreter with C ABI on mobile | lib/go_runner.dart, lib/go_platform.dart, lib/native_go_bridge_ffi.dart; native/go_runtime; tool/build_ios_go_runtime.sh; 68f91a5 |
 | Rust | rustc/Cargo desktop; pinned rustc/Miri embedded adapter | lib/rust_runner.dart, lib/native_miri_assets.dart; native/miri_adapter; scripts/package_miri_runtime.py |
 | SQL | Retained upstream SQLite C source; separate Oracle MySQL native port | lib/sqlite_ffi.dart, lib/sql_database.dart, lib/sql_runner.dart; native/runtime, platform FFI plugin; native/mysql OHOS |
 | WebForge | Upstream Nginx plus WebForge middleware; in-process Dart server on iOS | lib/web_runtime.dart; vendor/nginx; scripts/build_nginx_desktop.sh and bundle_nginx_macos.sh; c7614f8 |
@@ -38,11 +38,11 @@ recorded passes are identified below; they were not all replayed by this audit.
 | Product | Evidence inspected | Unresolved requirement |
 | --- | --- | --- |
 | C/C++ | Current runner routes through Clang first; current C chat reports active in-process compiler build | Verify its actual delivered compiler and platform tests; do not overwrite concurrent work |
-| Lua | native/README.md records Windows CTest, Flutter tests/analysis and AOT DLL execution; Apple/CMake source inspected | Confirm complete owning task evidence and committed platform changes; Apple/Linux application execution unverified |
+| Lua | 31e0107 delivered; prior Windows CTest, 44 Flutter tests/analysis and AOT DLL execution; ordinary Android release app passed source execution, syntax checking, compilation and compiled-bytecode reload through the real editor | Apple/Linux application execution and Android ARM runtime unverified |
 | Python | e4d0e40; Windows 34 native FFI cases, Linux SO 65 C cases, all 44 staged Flutter tests and clean analysis; fresh Android x86_64 APK passed 36/36 application-native checks | No cancellation API or reusable bytecode artifacts; Apple/MSVC/full Linux GUI unverified |
 | Dart | 138affc delivered; owning-repo 33 tests and clean analysis; standalone SDK installation plus 5 installed-bundle tests | Genuine mobile SDK/VM/compiler packaging; source inputs/download access; Apple/Linux execution unverified |
 | Java | Earlier Android attempt failed; latest owning-chat build and live ELF inspection confirm new x86_64 launcher/JVM 0x4000 LOAD alignment | Stage and execute the new image through the actual Android app; audit remaining dependencies and JVM page-size behavior; commit existing platform changes; iOS engine remains missing |
-| Go | native/go_runtime/README.md and owning chat record Android 3 cases, Windows six SDK actions, Linux backend/native tests, 38 app tests | Latest platform changes remain uncommitted; no Apple execution; installed SDK is a stated desktop prerequisite |
+| Go | 68f91a5 delivered; prior Android 3 cases, Windows six SDK actions, Linux backend/native tests and 38 working-tree tests; exact staged native-platform source independently passed 18 tests and full analysis | No Apple execution or Linux Flutter GUI pass; installed SDK is a stated desktop prerequisite |
 | Rust | Pinned rustc-dev/Miri design and generic target packaging/FFI source inspected; prior reference fixture evidence exists | Actual target-matching Android/Apple compiler-private source builds and application evidence remain required |
 | SQL | 7269c12; Windows native build, all 48 staged tests, 7 staged Android backend/default-workbench cases; all 3 SQLite ABIs 0x4000 aligned; Linux SO 5 C checks; ordinary Android app restored and launched | Oracle MySQL local lifecycle beyond OHOS remains missing; Apple/full Linux GUI unverified |
 | WebForge | c7614f8; 33 Windows tests/analysis and prior Android app smoke; fresh Linux upstream build passed static/proxy/404/stop checks | Native iOS Nginx missing; Apple and Linux Flutter application execution plus Android ARM runtime unverified |
@@ -57,9 +57,9 @@ recorded passes are identified below; they were not all replayed by this audit.
   execution passed. Full Linux Flutter application builds remain unverified.
 - Earlier Android ordinary-app installation requests returned automatic
   approval review HTTP 503. Subsequent installs succeeded for both SQL and
-  Python; Python's application-native self-check passed 36/36. A later WSL
-  read-only inspection of the existing Java image again hit review HTTP 503.
-  That WSL action did not execute; the service failure is not a compiler result.
+  Python; Python's application-native self-check passed 36/36. Two later WSL
+  read-only inspections of the existing Java image hit review HTTP 503.
+  Neither WSL action executed; the service failure is not a compiler result.
 - Windows HTTPS downloads of the Termux Dart recipe/index ended in Schannel TLS
   handshake failures. These are failed source downloads, not successful Android
   Dart implementation and not an approval rejection.

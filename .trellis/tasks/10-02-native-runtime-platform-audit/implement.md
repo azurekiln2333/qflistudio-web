@@ -14,7 +14,7 @@
 - [x] Verify standalone Linux Nginx (4 checks) and SQLite C library (5 checks).
 - [ ] Complete local native MySQL platform lifecycle beyond OHOS.
 - [ ] Complete Rust Android/Apple and C/C++/Java iOS support where native lifecycle integration is missing.
-- [ ] Audit Lua and Go builds, packaging, ABI loading and execution evidence across platforms.
+- [x] Audit and deliver Lua/Go platform integration separately (31e0107, 68f91a5). Lua's ordinary Android release app passed source/check/compile/bytecode reload; Go's exact staged source passed all 18 tests and analysis, with prior Android 3-case and Linux/Windows SDK evidence retained.
 - [ ] Verify all available environments and explicitly record every unavailable test target.
 - [ ] Perform a full requirement audit before marking this goal complete.
 
@@ -29,7 +29,7 @@ WSL is now available: Python, SQLite and Nginx native execution was verified.
 The earlier Android installation review failures were resolved: both ordinary
 debug APKs were installed successfully, Python passed 36/36 native self-checks,
 and SQL's normal application was restored and launched without AndroidRuntime
-errors. A subsequent read-only Java image inspection through WSL again returned
-automatic approval review HTTP 503; that action did not execute. Apple
+errors. Two subsequent read-only Java image inspection requests through WSL
+returned automatic approval review HTTP 503; neither action executed. Apple
 hardware/Xcode and Android arm64/32-bit devices are absent. Do not run or claim
 tests for an unavailable native environment. See research/verification-2026-10-02.md.
