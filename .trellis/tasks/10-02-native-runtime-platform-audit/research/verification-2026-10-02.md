@@ -140,6 +140,53 @@ This does not prove Linux Flutter packaging, private Dart middleware, SSE or
 WebSocket integration. Windows/Android retain their separately recorded app
 integration evidence.
 
+## Python Controlled Runs And Artifacts
+
+Implemented upstream MicroPython per-run cancellation and bytecode persistence
+in a new reviewed snapshot, build/native/platform-audit/python-lifecycle. FFI
+and Android JNI both return a run handle before execution finishes. Atomic
+tokens remain alive through queued work and worker cleanup; loop/sleep stops
+preserve earlier output, return 130, and do not interrupt other runs.
+
+Windows DLL built successfully. Real FFI regression passed 34/34. Full Flutter
+suite passed 57/57, including native loop/sleep/pre-start/queued stop, recovery,
+entry/import .mpy reload without source, invalid artifacts and project path
+checks; mobile/desktop widget compile/stop workflows also passed. Source analysis
+of lib/test/tool passed. A preceding full-directory analysis hit host commit
+memory exhaustion; it produced no source verdict and was replaced by the source
+analysis run with a 256 MiB parent VM budget. Product settings were not changed.
+
+The reviewed 23-file patch was applied to qfli_python and committed as 2f5ed81,
+feat(python): add native cancellation and reusable bytecode artifacts. The owning
+repository rebuilt its Windows DLL and independently passed all 57 tests and
+source analysis. Startup, OHOS, agent metadata and pre-existing untracked desktop
+README changes were not included. Test-only absolute dependency paths stayed in
+the snapshot; historical patch files remain untracked research.
+
+The ordinary x86_64 debug APK was installed on emulator-5560. PID 19804 logged
+MicroPython 1.24.1 (ecfdd5d), all 46 JNI cases and 46/46 completion. An isolated
+UI project, PythonLifecycleAudit, stopped a real loop and retained native-before
+plus KeyboardInterrupt, exit 130. The tools page compiled main.py to main.mpy;
+after main.py was renamed to main.py.audit-source, main.mpy executed with
+compiled-native 42, artifact-stderr and exit 0. Existing AndroidImportDemo was
+preserved. Screenshots live under build/native/platform-audit/python-android-*.
+
+The final release APK (PID 32507) was also installed and passed real UI
+compilation, loop stop and source-free main.mpy execution after shrinking.
+No AndroidRuntime errors were recorded. Its native LOAD alignment is 0x4000;
+debug/release APKs passed zipalign -c -P 16 4. Native dependencies are libm.so,
+libdl.so and libc.so. Release APK SHA256:
+51EEA2F6D3805F960E1484C2F32DF5901D015D0B560F88A0E97EE37C387281D2,
+26,971,354 bytes. Debug APK SHA256:
+F9638F457A9B91FC1672B58486BCA12C5AAB2094BFF251FEBCA4248375E9803E,
+68,968,589 bytes. This is the pre-release debug snapshot, not the final release.
+
+Apple source/link integration includes the new exports; execution is skipped
+without Apple hardware/Xcode. No Android ARM devices or MSVC GUI tools exist.
+The earlier 65-case Linux result is not new lifecycle evidence; re-execution of
+this slice awaits WSL approval-service recovery. OHOS retains the old channel
+capabilities and C ABI; new artifact/stop operations are not advertised there.
+
 ## Environment and Pending Gates
 
 - The emulator's previous 2 GiB configuration exhausted memory. It was

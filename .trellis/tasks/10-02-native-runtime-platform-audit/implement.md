@@ -9,7 +9,12 @@
 - [ ] Implement native mobile Dart; its existing dart_eval backend does not satisfy this requirement.
 - [x] Verify and deliver Python desktop/Apple FFI (e4d0e40): Windows 34 native FFI cases, Linux 65 C cases, 44 staged Flutter tests, clean analysis and Android x86_64 regression build.
 - [x] Install and execute the fresh Python APK; application-native MicroPython self-check passed 36/36 on emulator-5560. Restore and launch the ordinary SQL APK.
-- [ ] Add native Python cancellation and reusable compiler artifacts.
+- [x] Add native Python cancellation and reusable compiler artifacts (2f5ed81).
+  - [x] Implement token ownership, VM interruption and bounded sleep cancellation.
+  - [x] Connect early runner results and cancellation through FFI and Android JNI.
+  - [x] Compile/load upstream .mpy artifacts and expose project compilation.
+  - [x] Run real Windows native/runner and Android regression/lifecycle cases: 34 native FFI cases, 57 Flutter tests, clean source analysis, Android 46 JNI cases and normal debug/release UI compile/stop/artifact execution.
+  - [x] Review the narrow delivery patch, update the runtime contract and commit (2f5ed81); the owning repository rebuilt its DLL and passed 57/57 tests plus clean source analysis.
 - [x] Deliver SQLite Android/desktop/Apple FFI (7269c12): Windows build, 48 staged Flutter tests and 7 Android backend/default-workbench cases.
 - [x] Verify standalone Linux Nginx (4 checks) and SQLite C library (5 checks).
 - [ ] Complete local native MySQL platform lifecycle beyond OHOS.

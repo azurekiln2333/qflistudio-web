@@ -38,6 +38,25 @@ SDK trees, selects the current ABI, and signs Mach-O inputs with sandbox
 inheritance and the VM's JIT entitlement. Missing target SDKs fail packaging.
 Apple execution remains unverified without an Apple host.
 
+## Python Run Lifecycle And Artifacts
+
+Add a per-invocation opaque cancellation token, retaining the existing tokenless
+C ABI for OHOS. Only the worker reads VM state; cancellation threads atomically
+set a token flag. Check it before execution, in upstream VM hooks, and during
+bounded sleep intervals. Keep the token alive through queued and executing work,
+release it after the worker completes, and make late cancellation harmless.
+The runner must return its streams, exit future and cancel callback before the
+native worker finishes. Android retains Kotlin/JNI routing and registers each
+token before submitting execution; the channel exposes prepareRun and cancel.
+
+Use upstream persistent-code save/load for bytecode-only .mpy artifacts. Compile
+without executing, save through the existing project file path contract, and
+support running .mpy entry files with source/input/path/exit/error behavior intact.
+No custom bytecode format or runtime substitute is allowed. Synchronize port
+configuration and generated headers; retain the new FFI symbols on Apple.
+Verify real Windows native execution and Android JNI plus normal app workflow.
+Apple execution is explicitly unavailable on this host.
+
 ## SQLite Platform Integration
 
 SQL's current primary local engine is SQLite. Its retained upstream amalgamation
