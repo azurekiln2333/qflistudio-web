@@ -187,6 +187,50 @@ The earlier 65-case Linux result is not new lifecycle evidence; re-execution of
 this slice awaits WSL approval-service recovery. OHOS retains the old channel
 capabilities and C ABI; new artifact/stop operations are not advertised there.
 
+## Android Java Delivery
+
+Delivered qfli_java ea7b4df, fix(java): support x86_64 and 16 KiB Android JDKs.
+The existing full OpenJDK 17.0.20 image was exported from qfli-java-build, not
+replaced with an evaluator or rebuilt from scratch. Structured LLVM inspection
+found 46 relevant ELF files. The launcher/JVM were aligned, but the pinned 2021
+libandroid-spawn.so package had 4 KiB LOAD alignment. Staging correctly failed.
+
+GitHub direct downloads timed out. The same fixed Termux commit's unmodified
+spawn source/header/license were obtained through its public CDN, retained in
+the owning repository with SHA-256 provenance, and rebuilt by the original
+Android Clang wrapper. All 46 image files then passed x86_64, 16 KiB alignment,
+offset/address congruence and DT_NEEDED dependency closure. Staging now checks
+all Android launchers, helpers and libraries. The build recipe supports both
+ABIs and packages the spawn BSD license with upstream JDK legal notices.
+
+Android installation selects its data ABI from the actual packaged ELF header.
+DataInputStream.readFully retains minSdk 28 API compatibility. The owning local
+Mobile JDK spec was updated; this repository intentionally ignores its specs.
+The committed native README files retain the delivery contract and evidence.
+
+The review snapshot passed 19/19 Windows Flutter tests, including real host-JDK
+compilation, stdin, UTF-8, errors and exit codes. Source analysis of lib/test/tools
+passed. Bash syntax checks of the owning build/wrapper passed. The Android smoke
+APK passed all eight application-native checks on emulator-5560, API 37, 16 KiB
+pages. PID 29972 emitted QFLI_JDK_SMOKE ok:true with java-version, javac-version,
+multiple-sources, stdin, utf8, compiler-diagnostics, exit-code and cancel.
+
+The normal app was restored, built again in qfli_java and installed. The editor
+created JavaNativeAudit and ran its real Main.java through javac/JVM; output was
+Hello, QFLIStudio+!, exit 0. The final owning APK's 46 native files all pass 16 KiB
+ELF checks, and zipalign -c -P 16 4 passed. SHA-256:
+BBB63C656BB2D3903331EC698E6481B54AB5938A01A2E64655FF05186EF9929E,
+180,699,601 bytes. It includes both staged data ZIPs but only x86_64 native code.
+Ignored evidence is under build/native/platform-audit/java-android: elf-audit.json,
+apk-elf-audit.json, android-smoke.log, normal-ui.xml and normal-run.png.
+
+An initial Android build hit host memory exhaustion; a smaller test-only Gradle
+heap then exhausted metaspace. The next incremental build succeeded. The owning
+build passed with per-command memory limits; its Gradle properties were preserved.
+Unrelated startup/OHOS/metadata changes were excluded from ea7b4df. No Apple or
+Android ARM/API 28 execution was run. The cached old ARM image must be rebuilt
+with the new recipe before claiming its 16 KiB compatibility.
+
 ## Environment and Pending Gates
 
 - The emulator's previous 2 GiB configuration exhausted memory. It was
@@ -200,14 +244,14 @@ capabilities and C ABI; new artifact/stop operations are not advertised there.
   and Python's fresh native self-check passed 36/36.
 - The optional Python formatter also hit the same review-service failure.
   Compiled tests, full analysis and staged whitespace checks passed.
-- The existing new Java x86_64 image's launcher and JVM have 0x4000 LOAD
-  alignment. The image's complete dependencies, staged package and real app
-  execution still need verification; its owning changes are uncommitted.
+- The new Java x86_64 image and owning ordinary APK passed complete native
+  alignment/dependency and real application checks; ea7b4df delivers the fix.
 - Two subsequent read-only WSL inspections of that Java image failed at
   automatic approval review with HTTP 503. Neither inspection executed. The
   service reported no available channel for codex-auto-review. Preserve the
-  earlier Linux passes and keep Java staging/execution pending; the user was
-  asked to repair the review service or manually export the existing image.
+  earlier Linux passes. Subsequent WSL inspection/export and native compilation
+  recovered, so manual image export and review-service repair are no longer
+  prerequisites for the Java slice.
 
 The audit remains in progress. Dart mobile, Rust target builds, Java/Web iOS,
 local Oracle MySQL outside OHOS, outstanding language delivery and unavailable

@@ -70,3 +70,19 @@ native calls on an isolate. Explicit injected channels retain their behavior.
 This slice changes SQL native packaging, the SQLite invocation boundary, tests
 and its engine contract. Cloud MySQL and the existing OHOS bridge retain their
 ownership. Local native Oracle MySQL outside OHOS remains an unresolved gap.
+
+## Android Java Delivery
+
+Use the existing OpenJDK 17 Android x86_64 image built in qfli-java-build.
+Export a dereferenced image into this task's ignored build evidence and audit
+every packaged ELF's ABI, 16 KiB LOAD alignment and required shared libraries.
+Stage the full upstream modules and native JVM with the owning stage.ps1;
+Android executes launchers in nativeLibraryDir and installs data in files/usr.
+The layout manifest joins these two locations through library symlinks.
+
+The behavior gap is the earlier failed 16 KiB emulator launch. Delivery owns
+the Android build recipe, dependency lock, staging validation, ABI selection,
+runtime documentation and device evidence. Preserve unrelated startup/OHOS
+changes. Verify version probes, multiple sources, stdin, UTF-8, diagnostics,
+exit status and cancellation inside the application, then restore its normal
+entry point. Android ARM and Apple execution remain unavailable here.

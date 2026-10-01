@@ -7,6 +7,10 @@
 - [x] Verify SDK bundle installation and execution independently of the source SDK (5 installed-bundle tests).
 - [x] Apply the verified Dart patch to qfli_dart and commit its own paths (138affc; 33 owning-repository tests and clean analysis).
 - [ ] Implement native mobile Dart; its existing dart_eval backend does not satisfy this requirement.
+- [x] Deliver the existing Android x86_64 OpenJDK image (ea7b4df).
+  - [x] Export and audit every packaged ELF and shared-library dependency (46 ELF files; rebuild the retained upstream spawn library).
+  - [x] Stage, build and execute all eight in-app JDK smoke checks on the 16 KiB emulator (API 37, emulator-5560).
+  - [x] Restore and verify the normal Java app, review native changes and commit separately (ea7b4df; owning APK editor run exit 0).
 - [x] Verify and deliver Python desktop/Apple FFI (e4d0e40): Windows 34 native FFI cases, Linux 65 C cases, 44 staged Flutter tests, clean analysis and Android x86_64 regression build.
 - [x] Install and execute the fresh Python APK; application-native MicroPython self-check passed 36/36 on emulator-5560. Restore and launch the ordinary SQL APK.
 - [x] Add native Python cancellation and reusable compiler artifacts (2f5ed81).
