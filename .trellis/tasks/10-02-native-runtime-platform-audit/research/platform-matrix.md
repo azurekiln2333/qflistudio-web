@@ -11,7 +11,7 @@ recorded passes are identified below; they were not all replayed by this audit.
 | C/C++ | Clang/GCC desktop, native Clang Android; in-process LLVM/Wasm iOS work in progress | lib/forge_runner.dart, lib/clang_runner.dart, lib/android_clang_runner.dart; native/toolchain; current C chat |
 | Lua | Retained upstream Lua 5.4.8 C compiler/VM | lib/lua_toolchain.dart; native/CMakeLists.txt; Android app CMake and Apple Runner source/link integration; 31e0107 |
 | Python | Retained upstream MicroPython C compiler/VM | lib/python_runner.dart, lib/python_ffi.dart; native/desktop, windows, linux, apple/podspec.rb; e4d0e40 and controlled lifecycle/artifact delivery 2f5ed81 |
-| Dart | Official SDK C++ VM / official Kernel compiler on desktop; dart_eval on mobile | lib/native_dart_toolchain.dart; native/dart-sdk/bundle.cmake and bundle_macos.sh; 138affc |
+| Dart | Official SDK C++ VM / official Kernel compiler on Android and desktop; dart_eval on iOS/OHOS | lib/native_dart_toolchain.dart, lib/android_dart_sdk.dart; native/dart-sdk/android, bundle.cmake and bundle_macos.sh; 138affc, 1765860 |
 | Java | OpenJDK javac + native JVM | lib/java_runner.dart, lib/mobile_jdk.dart; native/openjdk/android and ohos; iOS bridge absent |
 | Go | Official SDK desktop; vendored Yaegi native interpreter with C ABI on mobile | lib/go_runner.dart, lib/go_platform.dart, lib/native_go_bridge_ffi.dart; native/go_runtime; tool/build_ios_go_runtime.sh; 68f91a5 |
 | Rust | rustc/Cargo desktop; pinned rustc/Miri embedded adapter | lib/rust_runner.dart, lib/native_miri_assets.dart; native/miri_adapter; scripts/package_miri_runtime.py |
@@ -25,7 +25,7 @@ recorded passes are identified below; they were not all replayed by this audit.
 | C/C++ | Native Clang bridge and packaged toolchain; owning chat actively changing compiler/Wasm support | Installed/bundled Clang/GCC discovery, native process compilation and execution | Same installed/bundled compiler path | Native in-process compiler/Wasm design and source work still in progress; no verified deliverable |
 | Lua | CMake shared library, FFI load and application runner | CMake builds and bundles shared library, FFI discovery | Runner compiles native engine; process symbol loading | Runner compiles native engine; retained FFI process symbols; restricted subprocess APIs |
 | Python | Shared C engine, per-run JNI cancellation and upstream .mpy compile/load; 46/46 debug native cases and real debug/release UI workflows | Local FFI plugin and controlled worker lifecycle; Windows native cancellation/artifacts passed; earlier Linux engine execution passed | Shared C source pod, process-symbol loader and retained controlled FFI exports | Shared C source pod, process-symbol loader and retained controlled FFI exports |
-| Dart | Existing evaluator; native VM/compiler missing | Full official SDK bundled via CMake, process run and .dill compilation | Per-ABI SDK bundle, helper signing/JIT entitlements and architecture selection | Existing evaluator; native VM/compiler missing |
+| Dart | Complete pinned upstream SDK for ARM64/x86_64; installed native/data layout, real VM/Kernel, stdin/artifacts/stop; in-app x86_64 9/9 and ordinary UI passed (1765860) | Full official SDK bundled via CMake, process run and .dill compilation | Per-ABI SDK bundle, helper signing/JIT entitlements and architecture selection | Existing evaluator; native VM/compiler missing |
 | Java | ARM64/x86_64 OpenJDK recipes and launch bridge; x86_64 in-app 8/8 and normal editor execution passed on 16 KiB emulator (ea7b4df) | Installed JDK discovery and real process run | Installed JDK discovery and real process run | Runner currently rejects platform; no native JVM bridge |
 | Go | Packaged native interpreter SO and cancellable C ABI | Official SDK commands; installed SDK required | Official SDK commands; installed SDK required | C archive Xcode build/link, retained C ABI and process-symbol loader |
 | Rust | Mobile now routes to native Miri assets/FFI; matching runtime libraries still need source build and delivery | Cargo/rustc process backend; generic embedded runtime packaging source exists | Desktop compiler path plus generic runtime framework packaging source | Native Miri routing/framework packaging source exists; compiler-private libraries and actual build remain required |
@@ -40,7 +40,7 @@ recorded passes are identified below; they were not all replayed by this audit.
 | C/C++ | Current runner routes through Clang first; current C chat reports active in-process compiler build | Verify its actual delivered compiler and platform tests; do not overwrite concurrent work |
 | Lua | 31e0107 delivered; prior Windows CTest, 44 Flutter tests/analysis and AOT DLL execution; ordinary Android release app passed source execution, syntax checking, compilation and compiled-bytecode reload through the real editor | Apple/Linux application execution and Android ARM runtime unverified |
 | Python | e4d0e40 platforms and 2f5ed81 lifecycle/artifacts; new slice passed 34 native FFI cases, staged and owning-repo 57/57 Flutter tests and clean source analysis; Android 46/46 JNI cases plus debug/release UI compile/stop/source-free .mpy execution | Apple/MSVC/full Linux GUI unverified; Linux re-execution of the new lifecycle slice awaits WSL approval recovery; arbitrary blocking native I/O is not cancellable |
-| Dart | 138affc delivered; owning-repo 33 tests and clean analysis; standalone SDK installation plus 5 installed-bundle tests | Genuine mobile SDK/VM/compiler packaging; source inputs/download access; Apple/Linux execution unverified |
+| Dart | 138affc desktop and 1765860 Android delivered; owning repo 34 tests/clean source analysis; upstream Android SDK 3.13.5 in-app 9/9 and ordinary Run/compile/source-free .dill/Stop passed; all 30 staged and owning-APK SDK ELF files pass checks | Native iOS integration missing; Android ARM runtime, Apple and Linux execution unverified |
 | Java | ea7b4df delivered: upstream spawn source rebuilt; all 46 image and 46 owning-APK native files pass 16 KiB checks; in-app JDK 8/8, 19 Windows Flutter tests and clean source analysis; owning ordinary APK editor run exit 0 | Android ARM/API 28 execution unverified; cached old ARM image needs rebuilding with the updated recipe; iOS engine remains missing |
 | Go | 68f91a5 delivered; prior Android 3 cases, Windows six SDK actions, Linux backend/native tests and 38 working-tree tests; exact staged native-platform source independently passed 18 tests and full analysis | No Apple execution or Linux Flutter GUI pass; installed SDK is a stated desktop prerequisite |
 | Rust | Pinned rustc-dev/Miri design and generic target packaging/FFI source inspected; prior reference fixture evidence exists | Actual target-matching Android/Apple compiler-private source builds and application evidence remain required |
@@ -63,8 +63,9 @@ recorded passes are identified below; they were not all replayed by this audit.
   Later WSL export and native compilation succeeded; Android Java delivery
   completed after rebuilding its single incompatible spawn dependency.
 - Windows HTTPS downloads of the Termux Dart recipe/index ended in Schannel TLS
-  handshake failures. These are failed source downloads, not successful Android
-  Dart implementation and not an approval rejection.
+  handshake failures. Later pinned recipe retrieval through the public CDN and
+  both hash-verified SDK downloads through the USTC mirror succeeded. Android
+  native delivery and application verification then completed as 1765860.
 
 The complete cross-product goal remains active while these implementation gaps
 and delivery requirements remain. Do not turn this matrix into a whole-goal pass.

@@ -19,8 +19,9 @@ Dart desktop support was delivered in qfli_dart commit 138affc. It uses the
 official SDK's C++ VM, preserves stdout/stderr and program exit codes, supports
 stop, and produces reusable Kernel .dill artifacts. Compiler front-end code in
 the official SDK is itself written in Dart; this does not make the VM a Dart
-interpreter. EVC remains a separate existing portable backend until a native
-mobile port is implemented. Do not claim native mobile Dart support.
+interpreter. EVC remains a separate portable backend on iOS/OHOS. Android SDK
+and Kernel integration was subsequently delivered as 1765860 with actual in-app
+evidence; do not infer native iOS/OHOS support from it.
 
 ## Delivery
 
@@ -86,3 +87,33 @@ runtime documentation and device evidence. Preserve unrelated startup/OHOS
 changes. Verify version probes, multiple sources, stdin, UTF-8, diagnostics,
 exit status and cancellation inside the application, then restore its normal
 entry point. Android ARM and Apple execution remain unavailable here.
+
+## Android Dart SDK Delivery
+
+Use the upstream Dart 3.13.5 Android SDK packaged by the pinned Termux recipe,
+with immutable per-ABI download hashes. The x86_64 package is verified and its
+real VM returns android_x64 on the connected emulator. Its native programs use
+64 KiB LOAD alignment and only public Android system libraries. Stage the full
+SDK: installed native code belongs in nativeLibraryDir; data, platform libraries,
+licenses and configuration belong in an atomically provisioned files directory.
+Record the native/data mapping in a versioned content manifest.
+
+Android execution and Kernel compilation use the actual upstream dartvm with
+its compiler options and frontend resources. They must not fall back to the
+portable evaluator. The existing desktop SDK path remains the owner for its
+process execution. Extend the native runner's input.txt feeding and .dill entry
+dispatch, and give the tools page a way to execute its saved compiled artifact.
+Keep cancellation and output/exit behavior through ProgramRunResult.
+
+Expected owning changes are Android Gradle/Kotlin installation, an Android SDK
+layout channel, native_dart_toolchain.dart and local runner/profile/tool routing,
+native staging/input provenance and focused runtime tests/docs. Review in an
+ignored source snapshot and deliver a narrow patch after actual in-app checks.
+No shared-core or OHOS changes belong to this slice. Native iOS Dart remains an
+unresolved requirement; this Android delivery cannot close the complete goal.
+
+Delivered as qfli_dart 1765860. Both verified ABI packages are staged with all
+30 native files and complete data SDKs. The owning repository passed 34 tests,
+source analysis and its ordinary Android build. In-app smoke passed 9/9; ordinary
+editor Run, source-free tools Kernel Run and tools Stop passed on the 16 KiB
+x86_64 emulator. ARM64 execution and native Apple targets remain unverified.

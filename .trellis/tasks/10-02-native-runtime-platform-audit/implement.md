@@ -6,7 +6,12 @@
 - [x] Run 33 Dart snapshot tests and static analysis on Windows.
 - [x] Verify SDK bundle installation and execution independently of the source SDK (5 installed-bundle tests).
 - [x] Apply the verified Dart patch to qfli_dart and commit its own paths (138affc; 33 owning-repository tests and clean analysis).
-- [ ] Implement native mobile Dart; its existing dart_eval backend does not satisfy this requirement.
+- [ ] Complete native mobile Dart; Android is delivered, native iOS remains unresolved.
+  - [x] Recover upstream recipe and verify x86_64 SDK package SHA-256; actual Android VM version probe passed.
+  - [x] Verify ARM64 input and stage/package both full native SDKs with data/installed-code layout; 30 ELF files pass ABI, 16 KiB LOAD and system dependency checks.
+  - [x] Route Android execution and Kernel compilation through the real VM; support stdin, EOF, artifacts and stop.
+  - [x] Verify in-app 9/9 checks, ordinary editor/tools workflows, source analysis and 34 owning-repository tests; deliver 1765860.
+  - [ ] Implement native iOS SDK/VM/compiler integration; no Apple execution claim without an available environment.
 - [x] Deliver the existing Android x86_64 OpenJDK image (ea7b4df).
   - [x] Export and audit every packaged ELF and shared-library dependency (46 ELF files; rebuild the retained upstream spawn library).
   - [x] Stage, build and execute all eight in-app JDK smoke checks on the 16 KiB emulator (API 37, emulator-5560).

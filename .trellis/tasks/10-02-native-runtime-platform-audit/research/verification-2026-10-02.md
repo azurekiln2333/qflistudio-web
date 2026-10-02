@@ -253,6 +253,68 @@ with the new recipe before claiming its 16 KiB compatibility.
   recovered, so manual image export and review-service repair are no longer
   prerequisites for the Java slice.
 
-The audit remains in progress. Dart mobile, Rust target builds, Java/Web iOS,
+The audit remains in progress. Native Dart iOS, Rust target builds, Java/Web iOS,
 local Oracle MySQL outside OHOS, outstanding language delivery and unavailable
 target validation must not be reported as complete.
+
+## Android Dart Delivery
+
+Delivered qfli_dart 1765860, feat(dart): integrate native Android SDK and kernel
+execution. The complete real upstream Dart 3.13.5 Android SDK is pinned to
+Termux recipe d0f94da1e578a0c9550a84d408bc8ed0003882ec, source hash
+2da077bf89f3a14ae5a741728549371d87013265df49b8cace6475bd9ffc59e3.
+Both package sizes/SHA-256 values matched the lock. The Linux preparation
+script independently downloaded, verified, extracted and dereferenced the ARM64
+image. Its absolute vm_platform_strong.dill alias is repaired during export.
+
+Both SDK images passed full staging: 15 native files per ABI, 1,025 x86_64 data
+files and 1,024 ARM64 data files. Every native ELF passed architecture and
+16 KiB LOAD checks. All 30 use only libc.so, libm.so, libdl.so and liblog.so.
+Native code, including every AOT snapshot, is installed through extracted
+jniLibs. Data/library paths and content markers are provisioned in files/dart-sdk
+on a Kotlin executor and connected to installed native code by symlinks.
+
+Android uses upstream dartvm for source/.dill execution and Kernel compilation,
+with no evaluator fallback. Native run feeds input.txt and EOF, preserves streams
+and native exits, and kills its owned process on Stop. Tools can execute their
+saved .dill without saving/recreating its source. Public runner dispatch and
+the tools compiled-run button have real source-free coverage.
+
+The review snapshot and owning repository each passed 34/34 Flutter tests and
+source analysis. The application smoke emitted QFLI_DART_ANDROID_SMOKE ok:true,
+PID 15143: native-version, self-package-import, stdin, async-file-io, utf8,
+source-free-kernel, compiler-diagnostics, exit-code and cancel (9/9). Device:
+emulator-5560, API 37, x86_64, actual 16,384-byte pages.
+
+The ordinary application created DartNativeAudit. Its editor ran main.dart with
+Hello, QFLIStudio+!, exit 0. The tools page compiled build/src/main.dill and ran
+it with exit 0 after moving main.dart to main.dart.audit-source; no new source
+file was created. Tools ran a real loop, displayed native-loop-started, and Stop
+returned 130. The original audit source was restored afterwards.
+
+The final ordinary APK was built in qfli_dart, and all 30 packaged SDK ELF hashes
+match the audited staged inputs. zipalign -c -P 16 4 passed. APK SHA-256:
+0C594E3EB5FEBDCFB3B25D0C048828225B0B250046882B9AE0E5B5289917D2F8,
+425,181,855 bytes. The update initially exhausted Android installation space;
+package-manager uninstall -k preserved data/cache before reinstalling the same
+signature. The final owning APK retained DartNativeAudit and its editor again
+produced the actual greeting and exit 0. No AndroidRuntime crash was observed.
+
+Host allocation failures interrupted the initial test/analysis/build attempts.
+Releasing only this task's idle Gradle/Kotlin and dedicated WSL processes,
+serial verification and per-command build memory limits resolved them. The local
+default NDK 28.2 image is incomplete; qfliDartNdkVersion selected the installed
+27.0.12077973. A compile failure from unavailable Os.unlink was corrected to
+public Os.remove. The build gate was checked to reject a 32-bit target mixed
+with x86_64. Snapshot-only Gradle memory and absolute dependency paths were
+excluded from the delivery patch. Existing OHOS and agent changes remain dirty.
+
+Committed Android/native docs and the existing tracked backend specs retain the
+contracts. The ignored local frontend spec was updated without adding it to the
+commit. Evidence lives under build/native/platform-audit/dart-android:
+android-smoke.log, elf-audit.json, apk-elf-audit.json, editor-run.png,
+tools-artifact.png, tools-stop.png and owning-editor-run.png.
+
+Android ARM runtime, Apple execution and full Windows GUI builds were not run:
+the devices/Xcode/MSVC toolchains are absent. Native iOS Dart remains a real
+implementation gap; this Android delivery does not complete the overall audit.
