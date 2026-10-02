@@ -148,3 +148,35 @@ after a simultaneous run exhausted Windows virtual memory. Changed-source
 analysis is clean. Linux used the installed Oracle 8.0.46 server; Windows used
 the pinned official 8.4.6 distribution. Desktop GUI and Apple execution are
 not claimed. Android MySQL and product engine-selection work remain open.
+
+## Android Oracle MySQL Delivery
+
+Build actual Oracle 8.4.6 with Android NDK 27/Bionic, pinned upstream source and
+OpenSSL inputs, and the existing real host generators. Keep a separate source
+and build tree; OHOS build inputs and artifacts must not be changed. Package
+PIE mysqld/parent launcher and the native C client bridge in nativeLibraryDir,
+with private installed message/resource data and versioned content provenance.
+All native inputs must pass ABI, public-dependency and 16 KiB alignment checks.
+
+Reuse LocalMySqlRuntime's initialization, credentials, private socket, readiness,
+query serialization and stop through an injected Android layout. Android paths
+must come from the platform installer, since executable code cannot be launched
+from mutable app files. Cache only successful preparation and preserve data on
+resource/app upgrades. Explicit channels retain their behavior.
+
+Expected changes are native/mysql/android build/patch/staging inputs, Kotlin
+resource/layout installation plus Gradle packaging gates, Android Dart layout
+dispatch and shared runtime path support. Extend the existing engine preference
+with local Oracle and make workbench/editor selection coherent, preserving the
+concurrent cloud implementation and existing SQLite default. Tests must exercise
+the actual x86_64 engine in the app and normal CRUD/editor/persistence/stop paths.
+ARM64 inputs are built/inspected but cannot establish execution without a device.
+Apple integration remains a separate unresolved requirement.
+
+Android backend delivered as qfli_sql 497f969. Both 64-bit builds and staging
+passed. Two actual x86_64 application cases, owning 51/51 tests, changed-source
+analysis and the ordinary application's Oracle 8.4.6 query passed. Local engine
+selection is applied/tested but its commit overlaps preexisting cloud/core work
+and awaits the requested ownership decision. First test-tool cleanup removed
+the ordinary package's data; subsequent test targets use a separate application
+ID. See research/mysql-android-verification-2026-10-02.md for limits and evidence.

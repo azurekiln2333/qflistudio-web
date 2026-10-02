@@ -30,6 +30,10 @@
   - [x] Deliver Windows/Linux Oracle service ownership, credentialed native FFI and desktop bundles (qfli_sql 0e02cb2).
   - [x] Verify staged and owning Windows/Linux installed runtime bundles, each with 11 real-engine checks; staged/owning Flutter tests pass 51/51 with clean changed-source analysis.
   - [ ] Build and integrate the Android server and connect local engine selection to the workbench/editor.
+    - [x] Deliver Android Oracle/OpenSSL x86_64 and ARM64 build, installed code/resources, FFI and private server lifecycle (qfli_sql 497f969).
+    - [x] Pass two real x86_64 application integration cases, owning 51/51 tests, changed-source analysis and ordinary APK query/version inspection.
+    - [x] Audit eight staged native inputs and all six x86_64 owning APK native files for ABI, 16 KiB LOAD, dependencies and Oracle input identity.
+    - [ ] Commit the applied local engine selector and its device tests; overlapping existing cloud SQL/core API work awaits the requested ownership decision.
   - [ ] Complete macOS bundle/signing and native iOS hosting; portable desktop source alone does not establish Apple delivery.
 - [ ] Complete Rust Android/Apple and C/C++/Java iOS support where native lifecycle integration is missing.
 - [x] Audit and deliver Lua/Go platform integration separately (31e0107, 68f91a5). Lua's ordinary Android release app passed source/check/compile/bytecode reload; Go's exact staged source passed all 18 tests and analysis, with prior Android 3-case and Linux/Windows SDK evidence retained.

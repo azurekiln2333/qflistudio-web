@@ -1,0 +1,1068 @@
+diff --git a/.trellis/spec/backend/index.md b/.trellis/spec/backend/index.md
+index 82203d3..909d4b6 100644
+--- a/.trellis/spec/backend/index.md
++++ b/.trellis/spec/backend/index.md
+@@ -24,6 +24,7 @@ This directory contains guidelines for backend development. Fill in each file wi
+ | [SQLite Native Runtime](./sqlite-native-runtime.md) | Multi-platform C packaging, FFI, queries and real runtime evidence | Implemented |
+ | [Oracle MySQL Workspace](./mysql-workspace.md) | Oracle metadata, primary keys, binary values, and native client | Documented |
+ | [Oracle Desktop Runtime](./mysql-desktop-runtime.md) | Windows/Linux private server lifecycle, FFI and bundle contract | Implemented |
++| [Oracle Android Runtime](./mysql-android-runtime.md) | Bionic build, installed code/data layout and private server lifecycle | Implemented; x86_64 device verified |
+ 
+ ---
+ 
+@@ -31,6 +32,7 @@ This directory contains guidelines for backend development. Fill in each file wi
+ 
+ - Read SQLite Native Runtime for SQLite engine, FFI and packaging changes.
+ - Read Oracle Desktop Runtime for local MySQL client, lifecycle or desktop packaging changes.
++- Read Oracle Android Runtime for Android Oracle build, installation and lifecycle changes.
+ 
+ ## Quality Check
+ 
+diff --git a/.trellis/spec/backend/mysql-android-runtime.md b/.trellis/spec/backend/mysql-android-runtime.md
+new file mode 100644
+index 0000000..8499217
+--- /dev/null
++++ b/.trellis/spec/backend/mysql-android-runtime.md
+@@ -0,0 +1,78 @@
++# Oracle Android Runtime
++
++## 1. Scope / Trigger
++
++Read this for Android Oracle build, staging, resource installation, FFI or
++local server lifecycle changes. Compilation alone does not establish an
++application pass. Apple and ARM execution require their own available hosts.
++
++## 2. Signatures
++
++- `qfli_sql/mysql_runtime.layout()` returns a map of absolute paths:
++  `bundleDirectory`, `dataDirectory`, `temporaryDirectory`, `libraryDirectory`,
++  `serverPath`, `launcherPath`, `libraryPath`.
++- `AndroidMySqlRuntime.prepare()` caches only successful preparation.
++  `stop()` stops a prepared server without triggering new installation.
++- `LocalMySqlRuntime` adds optional `libraryDirectory` and `temporaryDirectory`.
++  The query/script result and existing OHOS C++ signatures remain unchanged.
++- `stage.ps1 -Abi <arm64-v8a|x86_64> -Runtime <export> -ReadElf <NDK tool>`
++  audits native inputs and writes ignored Android jniLibs/assets.
++
++## 3. Contracts
++
++Build actual Oracle 8.4.6 and OpenSSL 3.5.3 from the pinned archive hashes in
++the Android README. Use independent source/build directories and matching
++host generators; never execute target generators or reuse OHOS binaries.
++The WSL compiler uses NDK27 Bionic/libc++, compiler-rt and static libunwind.
++Use emulated TLS for API28 dynamically loaded code and 16 KiB LOAD alignment.
++Link the server with Android liblog. Configure the client's MYSQL_OPT_RETRY_COUNT
++for interrupted Bionic I/O before connecting; never replay a SQL operation.
++
++Native code lives in extracted nativeLibraryDir. Resources use a versioned,
++atomically installed private generation. Message, charset and ICU inputs are
++required. Preserve data and prior resource generations on upgrades. The Dart
++child environment supplies native library, private temp and ICU data paths.
++Initialization and queries reuse the desktop ownership/credentials contract.
++Version mismatches fail with user data intact, and TCP cannot be a fallback.
++Explicit injected channels retain their existing behavior.
++
++## 4. Validation & Error Matrix
++
++| Condition | Behavior |
++| --- | --- |
++| Unsupported/missing staged ABI | Packaging fails |
++| Wrong ELF ABI/interpreter/alignment/dependency | Staging fails |
++| Resource installation fails | Channel reports error; prepare can retry |
++| Native files missing or not executable | No server startup |
++| Malformed resource identity | Reject before installation |
++| Existing data lacks valid initialization metadata | Fail, retain data |
++| SQL error after connection | available true, real SQLSTATE/code/message |
++| App dies | Parent-bound launcher signals its server |
++
++## 5. Good / Base / Bad Cases
++
++Good: a schema retains BIGINT `9007199254740993` and NULL after server restart.
++Base: the installed x86_64 bundle returns Oracle 8.4.6 over its private socket.
++Bad: chmod a writable data copy and claim it runs on modern Android, or test
++the host Oracle server and report an Android application pass.
++
++## 6. Tests Required
++
++Use `integration_test/mysql_native_test.dart` on an available device for actual
++engine, workspace, preferred editor, persistence, credentials and stop checks.
++Retain existing SQL/SQLite/desktop tests. Audit every final APK native input,
++not only build outputs. Restore the normal application and preserve its data.
++An x86_64 pass does not establish ARM execution; missing Apple hosts are skips.
++Flutter integration-test targets use the separate .integrationtest application
++ID because the test tool uninstalls its application after execution.
++The API 37 x86_64 emulator with 16 KiB pages passed both actual-engine integration
++tests on 2026-10-02. Both x86_64 and ARM64 Oracle/OpenSSL builds and four-file
++staging audits passed. No ARM or Apple execution result is established.
++
++## 7. Wrong Vs Correct
++
++Wrong: load a desktop library, omit ICU data, silently fall back to SQLite,
++delete a version-mismatched datadir, or include concurrent cloud work unnoticed.
++
++Correct: build/inspect matching Bionic code, use the native installed layout,
++preserve real errors and user data, and review narrow owning delivery patches.
+diff --git a/.trellis/spec/backend/mysql-desktop-runtime.md b/.trellis/spec/backend/mysql-desktop-runtime.md
+index 5dc46d2..63abff8 100644
+--- a/.trellis/spec/backend/mysql-desktop-runtime.md
++++ b/.trellis/spec/backend/mysql-desktop-runtime.md
+@@ -4,15 +4,17 @@
+ 
+ Windows/Linux local Oracle MySQL backend and packaging. The default product
+ engine preference currently remains SQLite/cloud; selection of this local
+-backend is a subsequent integration requirement. macOS bundle/signing, Android
+-server integration and native iOS hosting remain implementation gaps. Never
++backend is a separate workbench integration change. Android has its own verified
++runtime contract in mysql-android-runtime.md. macOS bundle/signing and native
++iOS hosting remain implementation gaps. Never
+ report those platforms as delivered based on portable source or desktop tests.
+ 
+ ## Interfaces And Transport
+ 
+ - `NativeMySqlDatabase({MethodChannel? channel, LocalMySqlRuntime? runtime})`:
+   an explicit channel wins. Otherwise desktop calls use the injected/shared
+-  runtime; Android/OHOS/iOS retain their existing channel path for now.
++  runtime; Android prepares the installed layout described in its runtime spec.
++  OHOS/iOS retain their existing channel path.
+ - `LocalMySqlRuntime.invoke(method, arguments)` accepts `query` and
+   `executeScript`. `schema` is a schema name, including empty server scope;
+   `source` is SQL, `params` is nullable strings for prepared queries.
+diff --git a/android/app/build.gradle.kts b/android/app/build.gradle.kts
+index 07c407b..84813d0 100644
+--- a/android/app/build.gradle.kts
++++ b/android/app/build.gradle.kts
+@@ -5,6 +5,16 @@ plugins {
+     id("dev.flutter.flutter-gradle-plugin")
+ }
+ 
++val flutterTarget = (project.findProperty("target") as? String)?.replace('\\', '/') ?: ""
++val isIntegrationTest = flutterTarget.startsWith("integration_test/") ||
++    flutterTarget.contains("/integration_test/")
++val mysqlAbiMapping = mapOf("android-arm64" to "arm64-v8a", "android-x64" to "x86_64")
++val mysqlPlatforms = (project.findProperty("target-platform") as? String)
++    ?.split(",") ?: mysqlAbiMapping.keys.toList()
++val mysqlAbis = mysqlPlatforms.map { target ->
++    mysqlAbiMapping[target] ?: throw GradleException("Oracle Android supports only android-arm64 and android-x64")
++}
++
+ android {
+     namespace = "com.azurekiln.qfli.sqlab"
+     compileSdk = flutter.compileSdkVersion
+@@ -22,15 +32,38 @@ android {
+     defaultConfig {
+         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+         applicationId = "com.azurekiln.qfli.sqlab"
++        if (isIntegrationTest) applicationIdSuffix = ".integrationtest"
+         // You can update the following values to match your application needs.
+         // For more information, see: https://flutter.dev/to/review-gradle-config.
+-        minSdk = flutter.minSdkVersion
++        minSdk = maxOf(28, flutter.minSdkVersion)
+         targetSdk = flutter.targetSdkVersion
+         versionCode = flutter.versionCode
+         versionName = flutter.versionName
++        ndk {
++            abiFilters.clear()
++            abiFilters += mysqlAbis
++        }
++    }
++
++    sourceSets.getByName("main") {
++        jniLibs.srcDir("../../native/build/mysql-android/jniLibs")
++        assets.srcDir("../../native/build/mysql-android/assets")
++    }
++
++    packaging {
++        jniLibs.useLegacyPackaging = true
++        jniLibs.keepDebugSymbols += "**/libqfli_mysql*.so"
++        jniLibs.keepDebugSymbols += "**/libc++_shared.so"
++        jniLibs.pickFirsts += "**/libc++_shared.so"
+     }
+ 
+     buildTypes {
++        configureEach {
++            ndk {
++                abiFilters.clear()
++                abiFilters += mysqlAbis
++            }
++        }
+         release {
+             // TODO: Add your own signing config for the release build.
+             // Signing with the debug keys for now, so `flutter run --release` works.
+@@ -39,6 +72,26 @@ android {
+     }
+ }
+ 
++val checkAndroidMySql by tasks.registering {
++    doLast {
++        check(mysqlPlatforms.isNotEmpty()) {
++            "Oracle Android supports only android-arm64 and android-x64"
++        }
++        val base = rootProject.file("../native/build/mysql-android")
++        for (abi in mysqlAbis) {
++            for (name in listOf("libqfli_mysqld_exec.so", "libqfli_mysql_launcher_exec.so", "libqfli_mysql_bridge.so", "libc++_shared.so")) {
++                check(file("$base/jniLibs/$abi/$name").isFile) {
++                    "Stage Android Oracle $abi using native/mysql/android/stage.ps1: missing $name"
++                }
++            }
++            check(file("$base/assets/mysql-$abi.json").isFile && file("$base/assets/mysql-$abi.zip").isFile) {
++                "Stage Android Oracle resources for $abi"
++            }
++        }
++    }
++}
++tasks.named("preBuild").configure { dependsOn(checkAndroidMySql) }
++
+ flutter {
+     source = "../.."
+ }
+diff --git a/android/app/src/main/kotlin/com/example/qflistudio/c/MainActivity.kt b/android/app/src/main/kotlin/com/example/qflistudio/c/MainActivity.kt
+index 5aab0c6..cf5330d 100644
+--- a/android/app/src/main/kotlin/com/example/qflistudio/c/MainActivity.kt
++++ b/android/app/src/main/kotlin/com/example/qflistudio/c/MainActivity.kt
+@@ -1,5 +1,34 @@
+ package com.azurekiln.qfli.sqlab
+ 
+ import io.flutter.embedding.android.FlutterActivity
++import io.flutter.embedding.engine.FlutterEngine
++import io.flutter.plugin.common.MethodChannel
++import java.util.concurrent.Executors
+ 
+-class MainActivity : FlutterActivity()
++class MainActivity : FlutterActivity() {
++    private val installer = Executors.newSingleThreadExecutor()
++
++    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
++        super.configureFlutterEngine(flutterEngine)
++        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "qfli_sql/mysql_runtime")
++            .setMethodCallHandler { call, result ->
++                if (call.method != "layout") {
++                    result.notImplemented()
++                } else {
++                    installer.execute {
++                        try {
++                            val layout = MySqlRuntime(applicationContext).prepare()
++                            runOnUiThread { result.success(layout) }
++                        } catch (error: Exception) {
++                            runOnUiThread { result.error("mysql_layout", error.message, null) }
++                        }
++                    }
++                }
++            }
++    }
++
++    override fun onDestroy() {
++        installer.shutdown()
++        super.onDestroy()
++    }
++}
+diff --git a/android/app/src/main/kotlin/com/example/qflistudio/c/MySqlRuntime.kt b/android/app/src/main/kotlin/com/example/qflistudio/c/MySqlRuntime.kt
+new file mode 100644
+index 0000000..0b81d10
+--- /dev/null
++++ b/android/app/src/main/kotlin/com/example/qflistudio/c/MySqlRuntime.kt
+@@ -0,0 +1,91 @@
++package com.azurekiln.qfli.sqlab
++
++import android.content.Context
++import android.system.Os
++import org.json.JSONObject
++import java.io.DataInputStream
++import java.io.File
++import java.util.zip.ZipInputStream
++
++internal class MySqlRuntime(private val context: Context) {
++    fun prepare(): Map<String, String> {
++        val native = File(context.applicationInfo.nativeLibraryDir)
++        val server = File(native, "libqfli_mysqld_exec.so")
++        val launcher = File(native, "libqfli_mysql_launcher_exec.so")
++        val bridge = File(native, "libqfli_mysql_bridge.so")
++        val header = DataInputStream(server.inputStream()).use { input ->
++            ByteArray(20).also { input.readFully(it) }
++        }
++        check(header[0] == 127.toByte() && header[1] == 69.toByte() &&
++            header[2] == 76.toByte() && header[3] == 70.toByte() &&
++            header[4] == 2.toByte() && header[5] == 1.toByte()) { "Invalid Android Oracle server" }
++        val machine = (header[18].toInt() and 255) or ((header[19].toInt() and 255) shl 8)
++        val abi = when (machine) {
++            62 -> "x86_64"
++            183 -> "arm64-v8a"
++            else -> error("Unsupported Android Oracle ABI: $machine")
++        }
++        check(server.canExecute() && launcher.canExecute() && bridge.isFile) {
++            "Android Oracle native files are missing or not executable"
++        }
++        val manifest = context.assets.open("mysql-$abi.json").bufferedReader().use {
++            JSONObject(it.readText())
++        }
++        check(manifest.getInt("version") == 1) { "Unsupported Android Oracle resource layout" }
++        val id = manifest.getString("id")
++        check(id.matches(Regex("${Regex.escape(abi)}-[a-f0-9]{64}")) &&
++            manifest.getString("serverVersion") == "8.4.6") { "Invalid Android Oracle resource identity" }
++        val resources = File(context.filesDir, "mysql-resources")
++        check(resources.isDirectory || resources.mkdirs()) { "Cannot create Oracle resources directory" }
++        val home = File(resources, id)
++        val marker = File(home, ".qfli-resource-id")
++        if (!marker.isFile || marker.readText() != id || !File(home, "share/english/errmsg.sys").isFile ||
++            !File(home, "share/icu/icudt77l/unames.icu").isFile) {
++            val staging = File(resources, "$id-install")
++            check(!staging.exists() || staging.deleteRecursively()) { "Cannot replace Oracle resource staging" }
++            check(staging.mkdirs()) { "Cannot create Oracle resource staging" }
++            try {
++                val root = staging.canonicalPath + File.separator
++                ZipInputStream(context.assets.open("mysql-$abi.zip")).use { zip ->
++                    var entry = zip.nextEntry
++                    while (entry != null) {
++                        val file = File(staging, entry.name)
++                        check(file.canonicalPath.startsWith(root)) { "Invalid Oracle resource archive path" }
++                        if (entry.isDirectory) {
++                            check(file.isDirectory || file.mkdirs()) { "Cannot create Oracle resource directory" }
++                        } else {
++                            check(file.parentFile!!.isDirectory || file.parentFile!!.mkdirs()) {
++                                "Cannot create Oracle resource parent"
++                            }
++                            file.outputStream().use { zip.copyTo(it) }
++                        }
++                        zip.closeEntry()
++                        entry = zip.nextEntry
++                    }
++                }
++                check(File(staging, "share/english/errmsg.sys").isFile) { "Oracle messages are missing" }
++                check(File(staging, "share/icu/icudt77l/unames.icu").isFile) { "Oracle ICU data is missing" }
++                File(staging, ".qfli-resource-id").writeText(id)
++                check(!home.exists() || home.deleteRecursively()) { "Cannot replace incomplete Oracle resources" }
++                check(staging.renameTo(home)) { "Cannot install Oracle resources" }
++            } finally {
++                staging.deleteRecursively()
++            }
++        }
++        val data = File(context.filesDir, "mysql-runtime")
++        val temporary = File(context.cacheDir, "mysql")
++        for (directory in listOf(home, data, temporary)) {
++            check(directory.isDirectory || directory.mkdirs()) { "Cannot create Oracle runtime directory" }
++            Os.chmod(directory.path, 448)
++        }
++        return mapOf(
++            "bundleDirectory" to home.path,
++            "dataDirectory" to data.path,
++            "temporaryDirectory" to temporary.path,
++            "libraryDirectory" to native.path,
++            "serverPath" to server.path,
++            "launcherPath" to launcher.path,
++            "libraryPath" to bridge.path
++        )
++    }
++}
+diff --git a/lib/android_mysql_runtime.dart b/lib/android_mysql_runtime.dart
+new file mode 100644
+index 0000000..d9a77ae
+--- /dev/null
++++ b/lib/android_mysql_runtime.dart
+@@ -0,0 +1,45 @@
++import 'dart:io';
++
++import 'package:flutter/services.dart';
++
++import 'local_mysql_runtime.dart';
++
++/// Native code lives in the APK's extracted library directory, data in filesDir.
++abstract final class AndroidMySqlRuntime {
++  static const _channel = MethodChannel('qfli_sql/mysql_runtime');
++  static Future<LocalMySqlRuntime>? _prepared;
++
++  static Future<void> stop() async {
++    final pending = _prepared;
++    if (pending != null) await (await pending).stop();
++  }
++
++  static Future<LocalMySqlRuntime> prepare() => _prepared ??= _prepare().then(
++    (runtime) => runtime,
++    onError: (Object error, StackTrace stack) {
++      _prepared = null;
++      Error.throwWithStackTrace(error, stack);
++    },
++  );
++
++  static Future<LocalMySqlRuntime> _prepare() async {
++    final layout = await _channel.invokeMapMethod<String, String>('layout');
++    String path(String name) {
++      final value = layout?[name];
++      if (value == null || value.isEmpty || !value.startsWith('/')) {
++        throw FormatException('Invalid Android MySQL layout: $name');
++      }
++      return value;
++    }
++
++    return LocalMySqlRuntime(
++      bundleDirectory: Directory(path('bundleDirectory')),
++      dataDirectory: Directory(path('dataDirectory')),
++      temporaryDirectory: Directory(path('temporaryDirectory')),
++      libraryDirectory: path('libraryDirectory'),
++      serverPath: path('serverPath'),
++      launcherPath: path('launcherPath'),
++      libraryPath: path('libraryPath'),
++    );
++  }
++}
+diff --git a/lib/local_mysql_runtime.dart b/lib/local_mysql_runtime.dart
+index ac96803..4b40177 100644
+--- a/lib/local_mysql_runtime.dart
++++ b/lib/local_mysql_runtime.dart
+@@ -16,11 +16,16 @@ class LocalMySqlRuntime {
+     required this.launcherPath,
+     this.serverPath,
+     this.serverUser,
++    this.libraryDirectory,
++    this.temporaryDirectory,
+     this.readinessTimeout = const Duration(seconds: 45),
+   });
+ 
+   static bool get supported =>
+-      Platform.isWindows || Platform.isLinux || Platform.isMacOS;
++      Platform.isAndroid ||
++      Platform.isWindows ||
++      Platform.isLinux ||
++      Platform.isMacOS;
+ 
+   static final LocalMySqlRuntime shared = _discover();
+   static final Set<String> _ownedDirectories = {};
+@@ -32,6 +37,8 @@ class LocalMySqlRuntime {
+   final String? serverPath;
+   // Only explicit host fixtures may ask mysqld to run as root.
+   final String? serverUser;
++  final String? libraryDirectory;
++  final Directory? temporaryDirectory;
+   final Duration readinessTimeout;
+   Future<void> _tail = Future<void>.value();
+   Process? _server;
+@@ -81,7 +88,7 @@ class LocalMySqlRuntime {
+     if (_server != null && _exitCode == null) return;
+     await _stop();
+     if (!supported) {
+-      throw UnsupportedError('Local Oracle MySQL requires a desktop host.');
++      throw UnsupportedError('Local Oracle MySQL is unavailable on this host.');
+     }
+     final server =
+         serverPath ??
+@@ -97,6 +104,7 @@ class LocalMySqlRuntime {
+     }
+     await dataDirectory.create(recursive: true);
+     await _makePrivate(dataDirectory.path);
++    await temporaryDirectory?.create(recursive: true);
+     final resolved = await dataDirectory.resolveSymbolicLinks();
+     final owned = Platform.isWindows ? resolved.toLowerCase() : resolved;
+     if (!_ownedDirectories.add(owned)) {
+@@ -153,10 +161,14 @@ class LocalMySqlRuntime {
+             '--no-defaults',
+             '--initialize-insecure',
+             '--basedir=${bundleDirectory.path}',
++            if (Platform.isAndroid)
++              '--lc-messages-dir=${p.join(bundleDirectory.path, 'share')}',
+             '--datadir=${staging.path}',
+             '--performance-schema=OFF',
+             '--innodb-buffer-pool-size=32M',
+             '--innodb-redo-log-capacity=16M',
++            if (temporaryDirectory != null)
++              '--tmpdir=${temporaryDirectory!.path}',
+             if (serverUser != null) '--user=$serverUser',
+           ], timeout: const Duration(minutes: 3));
+           _password = _randomHex(32);
+@@ -179,7 +191,8 @@ class LocalMySqlRuntime {
+       if (Platform.isWindows) {
+         _socket = 'qfli_mysql_${_randomHex(16)}';
+       } else {
+-        _ipcDirectory = await Directory.systemTemp.createTemp('qfli-mysql-');
++        _ipcDirectory = await (temporaryDirectory ?? Directory.systemTemp)
++            .createTemp('qfli-mysql-');
+         await _makePrivate(_ipcDirectory!.path);
+         _socket = p.join(_ipcDirectory!.path, 'mysql.sock');
+       }
+@@ -197,7 +210,7 @@ class LocalMySqlRuntime {
+         '--lc-messages-dir=${p.join(bundleDirectory.path, 'share')}',
+         '--socket=$_socket',
+         '--skip-networking',
+-        '--mysqlx=0',
++        '--loose-mysqlx=0',
+         '--skip-log-bin',
+         '--performance-schema=OFF',
+         '--max-connections=20',
+@@ -210,6 +223,7 @@ class LocalMySqlRuntime {
+         '--max-allowed-packet=8M',
+         '--innodb-buffer-pool-size=32M',
+         '--innodb-redo-log-capacity=16M',
++        if (temporaryDirectory != null) '--tmpdir=${temporaryDirectory!.path}',
+         '--init-file=${init.path}',
+         '--pid-file=${p.join(dataDirectory.path, 'mysqld.pid')}',
+         '--log-error=${p.join(dataDirectory.path, 'mysqld.log')}',
+@@ -266,9 +280,12 @@ class LocalMySqlRuntime {
+       if (Platform.isWindows)
+         'PATH':
+             '${p.join(bundleDirectory.path, 'bin')};${p.join(bundleDirectory.path, 'lib')};${Platform.environment['PATH'] ?? ''}',
+-      if (Platform.isLinux)
++      if (Platform.isLinux || Platform.isAndroid)
+         'LD_LIBRARY_PATH':
+-            '${p.join(bundleDirectory.path, 'lib')}:${Platform.environment['LD_LIBRARY_PATH'] ?? ''}',
++            '${libraryDirectory ?? p.join(bundleDirectory.path, 'lib')}:${Platform.environment['LD_LIBRARY_PATH'] ?? ''}',
++      if (temporaryDirectory != null) 'TMPDIR': temporaryDirectory!.path,
++      if (Platform.isAndroid)
++        'ICU_DATA': p.join(bundleDirectory.path, 'share', 'icu'),
+     },
+   );
+ 
+@@ -374,10 +391,10 @@ class LocalMySqlRuntime {
+ 
+   static Future<void> _makePrivate(String path, {bool directory = true}) async {
+     if (Platform.isWindows) return;
+-    final result = await Process.run('/bin/chmod', [
+-      directory ? '700' : '600',
+-      path,
+-    ]);
++    final result = await Process.run(
++      Platform.isAndroid ? '/system/bin/chmod' : '/bin/chmod',
++      [directory ? '700' : '600', path],
++    );
+     if (result.exitCode != 0) {
+       throw FileSystemException('Cannot make MySQL storage private.', path);
+     }
+diff --git a/lib/mysql_database.dart b/lib/mysql_database.dart
+index 7f07e65..ba7f123 100644
+--- a/lib/mysql_database.dart
++++ b/lib/mysql_database.dart
+@@ -1,19 +1,27 @@
++import 'dart:io';
++
+ import 'package:flutter/services.dart';
+ 
+ import 'sql_database.dart';
+ import 'sql_native_channel.dart';
+ import 'local_mysql_runtime.dart';
++import 'android_mysql_runtime.dart';
+ 
+-/// Desktop FFI and the OHOS channel both own a real private Oracle runtime.
++/// Native FFI and the OHOS channel own a real private Oracle runtime.
+ class NativeMySqlDatabase implements SqlDatabase, SqlScriptDatabase {
+   const NativeMySqlDatabase({this.channel, this.runtime});
+ 
+   final MethodChannel? channel;
+   final LocalMySqlRuntime? runtime;
+ 
+-  Future<Object?> _invoke(String method, Map<String, Object?> arguments) {
++  Future<Object?> _invoke(String method, Map<String, Object?> arguments) async {
+     if (channel == null && (runtime != null || LocalMySqlRuntime.supported)) {
+-      return (runtime ?? LocalMySqlRuntime.shared).invoke(method, arguments);
++      final selected =
++          runtime ??
++          (Platform.isAndroid
++              ? await AndroidMySqlRuntime.prepare()
++              : LocalMySqlRuntime.shared);
++      return selected.invoke(method, arguments);
+     }
+     return (channel ?? mysqlNativeChannel).invokeMethod<Object?>(
+       method,
+diff --git a/native/mysql/android/0001-android-platform.patch b/native/mysql/android/0001-android-platform.patch
+new file mode 100644
+index 0000000..ec082cd
+--- /dev/null
++++ b/native/mysql/android/0001-android-platform.patch
+@@ -0,0 +1,48 @@
++--- a/libmysql/dns_srv.cc
+++++ b/libmysql/dns_srv.cc
++@@ -42,3 +42,3 @@
++ static bool get_dns_srv(Dns_srv_data &data, const char *dnsname, int &error) {
++-#if defined(LINUX_ALPINE) || defined(__OHOS__)
+++#if defined(LINUX_ALPINE) || defined(__OHOS__) || defined(__ANDROID__)
++   res_init();
++@@ -54,3 +54,3 @@
++-#if defined(LINUX_ALPINE) || defined(__OHOS__)
+++#if defined(LINUX_ALPINE) || defined(__OHOS__) || defined(__ANDROID__)
++   int res = res_search(dnsname, ns_c_in, ns_t_srv, query_buffer,
++                        sizeof(query_buffer));
++@@ -94,3 +94,3 @@
++-#if defined(LINUX_ALPINE) || defined(__OHOS__)
+++#if defined(LINUX_ALPINE) || defined(__OHOS__) || defined(__ANDROID__)
++   // nothing
++ #else
++--- a/mysys/my_thread.cc
+++++ b/mysys/my_thread.cc
++@@ -142,3 +142,3 @@
++ int my_thread_cancel(my_thread_handle *thread) {
++-#if defined(__OHOS__)
+++#if defined(__OHOS__) || defined(__ANDROID__)
++   (void)thread;
++--- a/storage/innobase/buf/buf0buf.cc
+++++ b/storage/innobase/buf/buf0buf.cc
++@@ -1263,3 +1263,3 @@
++-#ifndef __OHOS__
+++#if !defined(__OHOS__) && !defined(__ANDROID__)
++   cpu_set_t cpuset;
++ 
++--- a/storage/innobase/buf/buf0flu.cc
+++++ b/storage/innobase/buf/buf0flu.cc
++@@ -3011,3 +3011,3 @@
++-#if defined(UNIV_LINUX) && !defined(__OHOS__)
+++#if defined(UNIV_LINUX) && !defined(__OHOS__) && !defined(__ANDROID__)
++ /**
++ Set priority for page_cleaner threads.
++@@ -3130,3 +3130,3 @@
++-#if defined(UNIV_LINUX) && !defined(__OHOS__)
+++#if defined(UNIV_LINUX) && !defined(__OHOS__) && !defined(__ANDROID__)
++   /* linux might be able to set different setting for each thread.
++   worth to try to set high priority for page cleaner threads */
++@@ -3546,3 +3546,3 @@
++ static void buf_flush_page_cleaner_thread() {
++-#if defined(UNIV_LINUX) && !defined(__OHOS__)
+++#if defined(UNIV_LINUX) && !defined(__OHOS__) && !defined(__ANDROID__)
++   /* linux might be able to set different setting for each thread
+diff --git a/native/mysql/android/0002-android-types.patch b/native/mysql/android/0002-android-types.patch
+new file mode 100644
+index 0000000..d733617
+--- /dev/null
++++ b/native/mysql/android/0002-android-types.patch
+@@ -0,0 +1,9 @@
++--- a/include/my_inttypes.h
+++++ b/include/my_inttypes.h
++@@ -49,3 +49,6 @@
++ typedef unsigned short ushort;
++ #endif
+++#if defined(__ANDROID__) && !defined(MYSQL_ABI_CHECK)
+++typedef unsigned short ushort;
+++#endif
++ #if !defined(HAVE_ULONG) && !defined(MYSQL_ABI_CHECK)
+diff --git a/native/mysql/android/README.md b/native/mysql/android/README.md
+new file mode 100644
+index 0000000..6cae097
+--- /dev/null
++++ b/native/mysql/android/README.md
+@@ -0,0 +1,100 @@
++# Oracle MySQL On Android
++
++This port builds upstream Oracle MySQL 8.4.6 for Android/Bionic, using the
++existing Oracle C client and JSON FFI. It requires a 64-bit ABI and API 28.
++The source, bridge, launcher, resources and application lifecycle must all be
++verified before claiming a delivered platform. ARM execution requires a device.
++
++## Inputs
++
++| Input | Version | SHA256 |
++| --- | --- | --- |
++| Oracle community source | 8.4.6 | `a1e523dc8be96d18a5ade106998661285ca01b6f5b46c08b2654110e40df2fb7` |
++| OpenSSL source | 3.5.3 | `c9489d2abcf943cdc8329a57092331c598a402938054dc3a22218aea8a8ec3bf` |
++| Android NDK | 27.0.12077973 | Installed NDK input; runtime provenance includes its notices |
++
++Official downloads are listed in `../README.md`. Use Linux Clang/LLVM 18,
++LLD, CMake 3.28+, Make and Perl. The toolchain also accepts the Windows NDK's
++sysroot and compiler resources from WSL. It uses NDK libc++ headers/libraries
++and its static unwind library, not the host C++ runtime. Emulated TLS allows
++loading the Oracle client dynamically on API 28. Every LOAD uses at least
++16 KiB alignment.
++
++Supply the matching upstream host generators `comp_err`, `comp_client_err`,
++`comp_sql`, `uca9dump`, `gen_lex_token`, `gen_keyword_list`, `gen_lex_hash` and
++`protoc` (24.4). The host-build configuration in `../build-mysql-ohos.sh` shows
++the upstream host targets. Reusing verified generators does not modify OHOS.
++
++## Build And Stage
++
++Use a fresh work directory on the Linux filesystem, separate from other ports.
++Preparation fingerprints the verified archive and source patches. A changed
++preparation fingerprint requires a fresh source tree; never reset user data.
++
++```bash
++export QFLI_MYSQL_ANDROID_WORK=/path/to/android-work
++export QFLI_ANDROID_NDK=/path/to/ndk/27.0.12077973
++export QFLI_ANDROID_ABI=x86_64 # or arm64-v8a
++export QFLI_MYSQL_HOST_TOOLS=/path/to/matching-host-tools
++export QFLI_MYSQL_ARCHIVE=/path/to/mysql-8.4.6.tar.gz
++export QFLI_OPENSSL_ARCHIVE=/path/to/openssl-3.5.3.tar.gz
++bash native/mysql/android/build-openssl.sh
++bash native/mysql/android/configure.sh
++cmake --build "$QFLI_MYSQL_ANDROID_WORK/android-build-$QFLI_ANDROID_ABI" \
++  --target qfli_mysql_bridge qfli_mysql_launcher mysqld --parallel 1
++export QFLI_MYSQL_ANDROID_OUTPUT=/path/to/new-runtime-export
++bash native/mysql/android/export-runtime.sh
++```
++
++From PowerShell, stage that exported directory with the installed NDK's
++`llvm-readelf.exe`:
++
++```powershell
++./native/mysql/android/stage.ps1 -Abi x86_64 -Runtime /path/to/export `
++  -ReadElf /path/to/ndk/toolchains/llvm/prebuilt/windows-x86_64/bin/llvm-readelf.exe
++flutter build apk --debug --target-platform android-x64
++```
++
++Stage each requested ABI. Ordinary builds accept `android-arm64,android-x64`;
++missing inputs fail the Gradle gate. Staging verifies ELF64 ABI, PIE interpreters,
++16 KiB LOAD congruence and public/package dependencies. It preserves licenses,
++English messages, charsets and ICU data, and writes a content identity and
++input hashes. Generated files under `native/build/mysql-android` are ignored.
++
++## Installed Layout
++
++- APK native code is extracted into `applicationInfo.nativeLibraryDir`:
++  `libqfli_mysqld_exec.so`, `libqfli_mysql_launcher_exec.so`,
++  `libqfli_mysql_bridge.so`, `libc++_shared.so`.
++- Resources are atomically provisioned in `files/mysql-resources/<content-id>`.
++  Existing resource generations and database data survive app updates.
++- Database state is `files/mysql-runtime`; transient files and short private
++  sockets use `cache/mysql`. The installer never deletes database state.
++- `qfli_sql/mysql_runtime.layout` returns seven absolute paths, consumed by
++  `AndroidMySqlRuntime.prepare`. Installation runs off the Android UI thread.
++- `LocalMySqlRuntime` owns initialization, credential metadata, locks,
++  readiness, serialized FFI and shutdown. It sets native library/TMPDIR/ICU_DATA
++  paths. The launcher ties server lifetime to the app parent with PDEATHSIG.
++
++Executable code must not be copied into writable app data. Local transport is
++a private Unix socket with a generated credential, and TCP stays disabled.
++Oracle version mismatches fail without upgrading or replacing user data.
++
++## Verification
++
++`integration_test/mysql_native_test.dart` uses the installed Android files and
++actual engine for initialization/version, exact BIGINT, NULL/binary, prepared
++values, ICU regex, rollback/partial scripts, authentication, persistence,
++editor execution and real workbench selection/editing/shutdown. Existing
++SQLite and desktop suites remain separate checks.
++Integration-test entry points receive a separate `.integrationtest` application
++ID, since the Flutter test tool uninstalls the test package when it exits.
++
++On 2026-10-02, both integration cases passed on an x86_64 API 37 emulator with
++16 KiB pages. Both 64-bit Oracle/OpenSSL builds and their staging audits passed.
++ARM execution remains unverified because no ARM device is available.
++Android client connections set the upstream `MYSQL_OPT_RETRY_COUNT` option to
++handle interrupted Bionic I/O during handshake. This never replays a SQL script.
++
++Release distributions must provide corresponding source archives, patches,
++build inputs and application/native sources required by their licenses.
+diff --git a/native/mysql/android/android-targets.cmake b/native/mysql/android/android-targets.cmake
+new file mode 100644
+index 0000000..7b662c2
+--- /dev/null
++++ b/native/mysql/android/android-targets.cmake
+@@ -0,0 +1,19 @@
++if(NOT CMAKE_CROSSCOMPILING OR NOT QFLI_ANDROID_NDK)
++  message(FATAL_ERROR "This runtime requires the Android NDK toolchain")
++endif()
++get_filename_component(QFLI_MYSQL_REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
++target_link_libraries(mysqld log)
++add_library(qfli_mysql_bridge SHARED
++  "${QFLI_MYSQL_REPO_ROOT}/native/src/qfli_mysql_client.cpp"
++  "${QFLI_MYSQL_REPO_ROOT}/native/src/qfli_mysql_ffi.cpp")
++target_include_directories(qfli_mysql_bridge PRIVATE
++  "${QFLI_MYSQL_REPO_ROOT}/native/src" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_BINARY_DIR}/include")
++target_include_directories(qfli_mysql_bridge SYSTEM PRIVATE "${CMAKE_SOURCE_DIR}/extra/rapidjson/include")
++target_link_libraries(qfli_mysql_bridge PRIVATE mysqlclient)
++target_compile_features(qfli_mysql_bridge PRIVATE cxx_std_17)
++target_link_options(qfli_mysql_bridge PRIVATE "LINKER:--no-undefined")
++add_executable(qfli_mysql_launcher "${CMAKE_CURRENT_LIST_DIR}/../desktop/launcher.cpp")
++target_compile_features(qfli_mysql_launcher PRIVATE cxx_std_17)
++set_target_properties(qfli_mysql_bridge qfli_mysql_launcher PROPERTIES
++  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qfli-runtime/lib"
++  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qfli-runtime/bin")
+diff --git a/native/mysql/android/android-toolchain.cmake b/native/mysql/android/android-toolchain.cmake
+new file mode 100644
+index 0000000..0234544
+--- /dev/null
++++ b/native/mysql/android/android-toolchain.cmake
+@@ -0,0 +1,41 @@
++set(QFLI_ANDROID_NDK "" CACHE PATH "Android NDK 27 root")
++set(QFLI_ANDROID_ABI "x86_64" CACHE STRING "Android 64-bit ABI")
++set(QFLI_ANDROID_API "28" CACHE STRING "Minimum Oracle Android API")
++set(QFLI_CLANG "/usr/bin/clang-18" CACHE FILEPATH "Host LLVM 18 compiler")
++set(QFLI_CLANGXX "/usr/bin/clang++-18" CACHE FILEPATH "Host LLVM 18 C++ compiler")
++list(APPEND CMAKE_TRY_COMPILE_PLATFORM_VARIABLES
++  QFLI_ANDROID_NDK QFLI_ANDROID_ABI QFLI_ANDROID_API QFLI_CLANG QFLI_CLANGXX)
++set(QFLI_NDK_PREBUILT "${QFLI_ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64")
++if(NOT EXISTS "${QFLI_NDK_PREBUILT}/sysroot")
++  set(QFLI_NDK_PREBUILT "${QFLI_ANDROID_NDK}/toolchains/llvm/prebuilt/windows-x86_64")
++endif()
++if(QFLI_ANDROID_ABI STREQUAL "x86_64")
++  set(QFLI_ANDROID_TRIPLE x86_64-linux-android)
++  set(CMAKE_SYSTEM_PROCESSOR x86_64)
++elseif(QFLI_ANDROID_ABI STREQUAL "arm64-v8a")
++  set(QFLI_ANDROID_TRIPLE aarch64-linux-android)
++  set(CMAKE_SYSTEM_PROCESSOR aarch64)
++else()
++  message(FATAL_ERROR "Oracle MySQL requires a 64-bit Android target")
++endif()
++set(CMAKE_SYSTEM_NAME Linux)
++set(CMAKE_C_COMPILER "${QFLI_CLANG}")
++set(CMAKE_CXX_COMPILER "${QFLI_CLANGXX}")
++set(CMAKE_C_COMPILER_TARGET "${QFLI_ANDROID_TRIPLE}${QFLI_ANDROID_API}")
++set(CMAKE_CXX_COMPILER_TARGET "${QFLI_ANDROID_TRIPLE}${QFLI_ANDROID_API}")
++set(CMAKE_SYSROOT "${QFLI_NDK_PREBUILT}/sysroot")
++set(QFLI_ANDROID_LIBDIR "${CMAKE_SYSROOT}/usr/lib/${QFLI_ANDROID_TRIPLE}")
++set(CMAKE_C_FLAGS_INIT "-resource-dir=${QFLI_NDK_PREBUILT}/lib/clang/18 -rtlib=compiler-rt -femulated-tls -fPIC")
++set(CMAKE_CXX_FLAGS_INIT "${CMAKE_C_FLAGS_INIT} -stdlib=libc++ -nostdinc++ -isystem ${CMAKE_SYSROOT}/usr/include/c++/v1")
++set(CMAKE_CXX_STANDARD_LIBRARIES
++  "${QFLI_NDK_PREBUILT}/lib/clang/18/lib/linux/${CMAKE_SYSTEM_PROCESSOR}/libunwind.a -Wl,--exclude-libs,libunwind.a")
++set(CMAKE_EXE_LINKER_FLAGS_INIT "-fuse-ld=lld -Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384")
++set(CMAKE_SHARED_LINKER_FLAGS_INIT "${CMAKE_EXE_LINKER_FLAGS_INIT}")
++set(CMAKE_FIND_ROOT_PATH "${CMAKE_SYSROOT}")
++set(CMAKE_LIBRARY_PATH "${QFLI_ANDROID_LIBDIR}/${QFLI_ANDROID_API}" "${QFLI_ANDROID_LIBDIR}")
++set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
++set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
++set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
++set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
++set(CMAKE_AR /usr/bin/llvm-ar-18)
++set(CMAKE_RANLIB /usr/bin/llvm-ranlib-18)
+diff --git a/native/mysql/android/build-openssl.sh b/native/mysql/android/build-openssl.sh
+new file mode 100644
+index 0000000..936cf68
+--- /dev/null
++++ b/native/mysql/android/build-openssl.sh
+@@ -0,0 +1,29 @@
++#!/usr/bin/env bash
++set -euo pipefail
++HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++WORK="${QFLI_MYSQL_ANDROID_WORK:?Set a separate Android work directory}"
++NDK="${QFLI_ANDROID_NDK:?Set Android NDK 27 root}"
++ABI="${QFLI_ANDROID_ABI:-x86_64}"
++API=28
++case "$ABI" in
++  x86_64) TRIPLE=x86_64-linux-android; CONFIG=linux-x86_64;;
++  arm64-v8a) TRIPLE=aarch64-linux-android; CONFIG=linux-aarch64;;
++  *) printf 'Unsupported Oracle ABI: %s\n' "$ABI" >&2; exit 1;;
++esac
++ARCHIVE="${QFLI_OPENSSL_ARCHIVE:?Set the verified OpenSSL 3.5.3 archive}"
++printf '%s  %s\n' c9489d2abcf943cdc8329a57092331c598a402938054dc3a22218aea8a8ec3bf "$ARCHIVE" | sha256sum --check --status
++PREBUILT="$NDK/toolchains/llvm/prebuilt/linux-x86_64"
++[[ -d "$PREBUILT" ]] || PREBUILT="$NDK/toolchains/llvm/prebuilt/windows-x86_64"
++SOURCE="$WORK/openssl-3.5.3"
++BUILD="$WORK/openssl-build-$ABI"
++PREFIX="$WORK/openssl-$ABI"
++mkdir -p "$WORK" "$BUILD"
++if [[ ! -d "$SOURCE" ]]; then tar --no-same-owner -xzf "$ARCHIVE" -C "$WORK"; fi
++export CC="/usr/bin/clang-18 --target=$TRIPLE$API --sysroot=$PREBUILT/sysroot -resource-dir=$PREBUILT/lib/clang/18 -fuse-ld=lld"
++export AR=/usr/bin/llvm-ar-18 RANLIB=/usr/bin/llvm-ranlib-18
++export CFLAGS='-O1 -fPIC'
++export LDFLAGS='-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384'
++cd "$BUILD"
++perl "$SOURCE/Configure" "$CONFIG" no-shared no-tests no-docs no-apps no-asm --prefix="$PREFIX" --libdir=lib
++make -j1 build_libs
++make install_dev
+diff --git a/native/mysql/android/configure.sh b/native/mysql/android/configure.sh
+new file mode 100644
+index 0000000..62ce5c3
+--- /dev/null
++++ b/native/mysql/android/configure.sh
+@@ -0,0 +1,54 @@
++#!/usr/bin/env bash
++set -euo pipefail
++HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++WORK="${QFLI_MYSQL_ANDROID_WORK:?Set a separate Android work directory}"
++NDK="${QFLI_ANDROID_NDK:?Set Android NDK 27 root}"
++ABI="${QFLI_ANDROID_ABI:-x86_64}"
++HOST_TOOLS="${QFLI_MYSQL_HOST_TOOLS:?Set matching Oracle host generators}"
++ARCHIVE="${QFLI_MYSQL_ARCHIVE:?Set official MySQL 8.4.6 archive}"
++printf '%s  %s\n' a1e523dc8be96d18a5ade106998661285ca01b6f5b46c08b2654110e40df2fb7 "$ARCHIVE" | sha256sum --check --status
++mkdir -p "$WORK"
++SOURCE="$WORK/mysql-8.4.6"
++STAMP="$(sha256sum "$ARCHIVE" "$HERE/../patches/0001-ohos-platform.patch" "$HERE/0001-android-platform.patch" "$HERE/0002-android-types.patch" | sha256sum | cut -d ' ' -f1)"
++if [[ -d "$SOURCE" ]]; then
++  [[ -f "$SOURCE/.qfli-android-prepared" && $(< "$SOURCE/.qfli-android-prepared") == "$STAMP" ]] || {
++    printf 'Source has different preparation inputs; use a fresh Android work directory.\n' >&2; exit 1;
++  }
++fi
++if [[ ! -d "$SOURCE" ]]; then
++  tar --no-same-owner -xzf "$ARCHIVE" -C "$WORK"
++  patch --directory="$SOURCE" -p1 --batch < "$HERE/../patches/0001-ohos-platform.patch"
++  patch --directory="$SOURCE" -p1 --batch < "$HERE/0001-android-platform.patch"
++  patch --directory="$SOURCE" -p1 --batch < "$HERE/0002-android-types.patch"
++  printf '%s\n' "$STAMP" > "$SOURCE/.qfli-android-prepared"
++fi
++for tool in comp_err comp_client_err comp_sql uca9dump gen_lex_token gen_keyword_list gen_lex_hash protoc; do test -x "$HOST_TOOLS/$tool"; done
++PREFIX="$WORK/openssl-$ABI"
++test -f "$PREFIX/lib/libssl.a"
++PREBUILT="$NDK/toolchains/llvm/prebuilt/linux-x86_64"
++[[ -d "$PREBUILT" ]] || PREBUILT="$NDK/toolchains/llvm/prebuilt/windows-x86_64"
++case "$ABI" in
++  x86_64) TRIPLE=x86_64-linux-android;;
++  arm64-v8a) TRIPLE=aarch64-linux-android;;
++  *) printf 'Unsupported Oracle ABI\n' >&2; exit 1;;
++esac
++cmake --fresh -S "$SOURCE" -B "$WORK/android-build-$ABI" \
++  -DCMAKE_TOOLCHAIN_FILE="$HERE/android-toolchain.cmake" \
++  -DQFLI_ANDROID_NDK="$NDK" -DQFLI_ANDROID_ABI="$ABI" \
++  -DQFLI_MYSQL_HOST_TOOLS="$HOST_TOOLS" -DWITH_PROTOC="$HOST_TOOLS/protoc" \
++  -DQFLI_MYSQL_PLATFORM_CMAKE="$HERE/android-targets.cmake" \
++  -DQFLI_MYSQL_WITHOUT_LINE_EDITING=ON -DQFLI_MYSQL_WITHOUT_ZSTD_DICT_BUILDER=ON \
++  -DQFLI_MYSQL_STATIC_ABSEIL=ON -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
++  -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE='-O1 -DNDEBUG' -DCMAKE_CXX_FLAGS_RELEASE='-O1 -DNDEBUG' \
++  -DHAVE_SETNS=FALSE -DHAVE_CLOCK_GETTIME=TRUE -DHAVE_CLOCK_REALTIME=TRUE \
++  -DHAVE_FALLOC_PUNCH_HOLE_AND_KEEP_SIZE=FALSE -DHAVE___BUILTIN_FFS=FALSE \
++  -DRESOLV_LIBRARY="$PREBUILT/sysroot/usr/lib/$TRIPLE/28/libc.so" \
++  -DWITH_SSL=system -DOPENSSL_ROOT_DIR="$PREFIX" -DOPENSSL_INCLUDE_DIR="$PREFIX/include" \
++  -DOPENSSL_SSL_LIBRARY="$PREFIX/lib/libssl.a" -DOPENSSL_CRYPTO_LIBRARY="$PREFIX/lib/libcrypto.a" \
++  -DWITH_TIRPC=bundled -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_LIBPROTOC=ON \
++  -DWITH_ROUTER=OFF -DWITH_MYSQLX=OFF -DWITH_NDB=OFF -DWITH_NDBCLUSTER_STORAGE_ENGINE=OFF \
++  -DWITH_GROUP_REPLICATION=OFF -DWITH_UNIT_TESTS=OFF -DWITH_AUTHENTICATION_CLIENT_PLUGINS=OFF \
++  -DWITH_AUTHENTICATION_LDAP=OFF -DWITH_AUTHENTICATION_KERBEROS=OFF -DWITH_AUTHENTICATION_WEBAUTHN=OFF \
++  -DWITH_NUMA=OFF -DWITH_SYSTEMD=OFF -DWITH_EXT_BACKTRACE=OFF -DWITH_EDITLINE=system \
++  -DWITH_SASL=system -DWITH_LDAP=system -DWITH_KERBEROS=none -DWITH_FIDO=none -DWITH_CURL=none \
++  -DUSE_BISON_RESULTS_FROM_MAKE_DIST=ON
+diff --git a/native/mysql/android/export-runtime.sh b/native/mysql/android/export-runtime.sh
+new file mode 100644
+index 0000000..0f022ed
+--- /dev/null
++++ b/native/mysql/android/export-runtime.sh
+@@ -0,0 +1,36 @@
++#!/usr/bin/env bash
++set -euo pipefail
++WORK="${QFLI_MYSQL_ANDROID_WORK:?Set the Android work directory}"
++NDK="${QFLI_ANDROID_NDK:?Set Android NDK 27 root}"
++ABI="${QFLI_ANDROID_ABI:-x86_64}"
++BUILD="$WORK/android-build-$ABI"
++SOURCE="$WORK/mysql-8.4.6"
++OUTPUT="${QFLI_MYSQL_ANDROID_OUTPUT:?Set an empty runtime export directory}"
++case "$ABI" in
++  x86_64) TRIPLE=x86_64-linux-android;;
++  arm64-v8a) TRIPLE=aarch64-linux-android;;
++  *) exit 64;;
++esac
++test ! -e "$OUTPUT"
++PREBUILT="$NDK/toolchains/llvm/prebuilt/linux-x86_64"
++[[ -d "$PREBUILT" ]] || PREBUILT="$NDK/toolchains/llvm/prebuilt/windows-x86_64"
++mkdir -p "$OUTPUT/bin" "$OUTPUT/lib" "$OUTPUT/share/english" "$OUTPUT/share/icu" "$OUTPUT/licenses"
++cp "$BUILD/runtime_output_directory/mysqld" "$OUTPUT/bin/mysqld"
++cp "$BUILD/qfli-runtime/bin/qfli_mysql_launcher" "$OUTPUT/bin/qfli_mysql_launcher"
++cp "$BUILD/qfli-runtime/lib/libqfli_mysql_bridge.so" "$OUTPUT/lib/"
++cp "$PREBUILT/sysroot/usr/lib/$TRIPLE/libc++_shared.so" "$OUTPUT/lib/"
++cp "$BUILD/share/english/errmsg.sys" "$OUTPUT/share/english/"
++cp -a "$SOURCE/share/charsets" "$OUTPUT/share/"
++cp -a "$SOURCE/extra/icu/icudt77l" "$OUTPUT/share/icu/"
++cp "$SOURCE/LICENSE" "$OUTPUT/licenses/mysql-LICENSE"
++cp "$SOURCE/Docs/INFO_SRC" "$OUTPUT/licenses/mysql-INFO_SRC"
++cp "$WORK/openssl-3.5.3/LICENSE.txt" "$OUTPUT/licenses/openssl-LICENSE.txt"
++cp "$PREBUILT/sysroot/usr/include/c++/v1/__config" "$OUTPUT/licenses/libcxx-config"
++cp "$NDK/NOTICE" "$OUTPUT/licenses/android-ndk-NOTICE"
++printf '%s\n' 'Oracle MySQL 8.4.6; Android API 28; OpenSSL 3.5.3; NDK 27.0.12077973' > "$OUTPUT/PROVENANCE.txt"
++for file in "$OUTPUT/bin/"* "$OUTPUT/lib/"*; do
++  /usr/bin/llvm-strip-18 --strip-debug "$file"
++done
++find "$OUTPUT" -type f -exec chmod 644 {} +
++chmod 755 "$OUTPUT/bin/"*
++printf 'Exported Android Oracle runtime: %s\n' "$OUTPUT"
+diff --git a/native/mysql/android/stage.ps1 b/native/mysql/android/stage.ps1
+new file mode 100644
+index 0000000..463bcef
+--- /dev/null
++++ b/native/mysql/android/stage.ps1
+@@ -0,0 +1,99 @@
++param(
++    [Parameter(Mandatory)][ValidateSet('arm64-v8a','x86_64')][string]$Abi,
++    [Parameter(Mandatory)][string]$Runtime,
++    [Parameter(Mandatory)][string]$ReadElf
++)
++$ErrorActionPreference = 'Stop'
++$Runtime = (Resolve-Path -LiteralPath $Runtime).ProviderPath
++$ReadElf = (Resolve-Path -LiteralPath $ReadElf).ProviderPath
++$repo = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).ProviderPath
++$required = @('bin/mysqld','bin/qfli_mysql_launcher','lib/libqfli_mysql_bridge.so',
++    'lib/libc++_shared.so','share/english/errmsg.sys','share/charsets/Index.xml','share/icu/icudt77l/unames.icu',
++    'licenses/mysql-LICENSE','licenses/openssl-LICENSE.txt','licenses/android-ndk-NOTICE','PROVENANCE.txt')
++foreach ($name in $required) {
++    if (-not (Test-Path -LiteralPath (Join-Path $Runtime $name) -PathType Leaf)) {
++        throw "Incomplete Android Oracle runtime: $name"
++    }
++}
++$nativeNames = @{
++    'bin/mysqld' = 'libqfli_mysqld_exec.so'
++    'bin/qfli_mysql_launcher' = 'libqfli_mysql_launcher_exec.so'
++    'lib/libqfli_mysql_bridge.so' = 'libqfli_mysql_bridge.so'
++    'lib/libc++_shared.so' = 'libc++_shared.so'
++}
++$out = Join-Path $repo 'native/build/mysql-android'
++$native = Join-Path $out "jniLibs/$Abi"
++$assets = Join-Path $out 'assets'
++New-Item -ItemType Directory -Force -Path $native,$assets | Out-Null
++$data = [Collections.Generic.List[IO.FileInfo]]::new()
++$digests = [Collections.Generic.List[string]]::new()
++$publicLibraries = @('libc.so','libm.so','libdl.so','liblog.so','libc++_shared.so')
++foreach ($file in Get-ChildItem -LiteralPath $Runtime -Recurse -File | Sort-Object FullName) {
++    $relative = [IO.Path]::GetRelativePath($Runtime,$file.FullName).Replace('\','/')
++    $bytes = [IO.File]::ReadAllBytes($file.FullName)
++    $isElf = $bytes.Length -ge 64 -and $bytes[0] -eq 127 -and $bytes[1] -eq 69 -and $bytes[2] -eq 76 -and $bytes[3] -eq 70
++    if ($nativeNames.ContainsKey($relative) -and -not $isElf) { throw "Oracle native input is not ELF: $relative" }
++    if ($isElf) {
++        if (-not $nativeNames.ContainsKey($relative)) { throw "Unexpected Android Oracle native file: $relative" }
++        $expected = if ($Abi -eq 'x86_64') { 62 } else { 183 }
++        if ($bytes[4] -ne 2 -or $bytes[5] -ne 1 -or [BitConverter]::ToUInt16($bytes,18) -ne $expected -or [BitConverter]::ToUInt16($bytes,16) -ne 3) {
++            throw "Oracle native input must be a matching ELF64 PIE/shared object: $relative"
++        }
++        $table = [BitConverter]::ToUInt64($bytes,32)
++        $size = [BitConverter]::ToUInt16($bytes,54)
++        $count = [BitConverter]::ToUInt16($bytes,56)
++        $hasInterpreter = $false
++        for ($index = 0; $index -lt $count; $index++) {
++            $entry = [int]($table + $index * $size)
++            $type = [BitConverter]::ToUInt32($bytes,$entry)
++            if ($type -eq 3) {
++                $hasInterpreter = $true
++                $start = [int][BitConverter]::ToUInt64($bytes,$entry + 8)
++                $length = [int][BitConverter]::ToUInt64($bytes,$entry + 32)
++                if ([Text.Encoding]::ASCII.GetString($bytes,$start,$length).TrimEnd([char]0) -ne '/system/bin/linker64') {
++                    throw "Oracle input has a non-Android interpreter: $relative"
++                }
++            }
++            if ($type -ne 1) { continue }
++            $alignment = [BitConverter]::ToUInt64($bytes,$entry + 48)
++            $offset = [BitConverter]::ToUInt64($bytes,$entry + 8)
++            $address = [BitConverter]::ToUInt64($bytes,$entry + 16)
++            if ($alignment -lt 16384 -or $offset % 16384 -ne $address % 16384) {
++                throw "Oracle input lacks 16 KiB LOAD compatibility: $relative"
++            }
++        }
++        if ($relative.StartsWith('bin/') -and -not $hasInterpreter) { throw "Oracle executable lacks Android interpreter: $relative" }
++        $dynamic = (& $ReadElf --dynamic $file.FullName 2>&1) -join "`n"
++        if ($LASTEXITCODE -ne 0) { throw "Cannot inspect ELF dependencies: $relative" }
++        foreach ($match in [regex]::Matches($dynamic,'\(NEEDED\).*?\[([^\]]+)\]')) {
++            if ($match.Groups[1].Value -notin $publicLibraries) {
++                throw "Unpackaged or private Android dependency $($match.Groups[1].Value): $relative"
++            }
++        }
++        Copy-Item -LiteralPath $file.FullName -Destination (Join-Path $native $nativeNames[$relative]) -Force
++    } else {
++        $data.Add($file)
++    }
++    $digests.Add($relative + ':' + (Get-FileHash -LiteralPath $file.FullName).Hash.ToLowerInvariant())
++}
++$id = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($digests -join "`n"))).ToLowerInvariant()
++$manifest = @{
++    version = 1
++    id = "$Abi-$id"
++    serverVersion = '8.4.6'
++    api = 28
++    sourceSha256 = 'a1e523dc8be96d18a5ade106998661285ca01b6f5b46c08b2654110e40df2fb7'
++    opensslSha256 = 'c9489d2abcf943cdc8329a57092331c598a402938054dc3a22218aea8a8ec3bf'
++    inputs = @($digests.ToArray())
++} | ConvertTo-Json -Depth 4 -Compress
++[IO.File]::WriteAllText((Join-Path $assets "mysql-$Abi.json"),$manifest,[Text.UTF8Encoding]::new($false))
++$zipPath = Join-Path $assets "mysql-$Abi.zip"
++if (Test-Path -LiteralPath $zipPath) { Remove-Item -LiteralPath $zipPath }
++$zip = [IO.Compression.ZipFile]::Open($zipPath,[IO.Compression.ZipArchiveMode]::Create)
++try {
++    foreach ($file in $data) {
++        $relative = [IO.Path]::GetRelativePath($Runtime,$file.FullName).Replace('\','/')
++        [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip,$file.FullName,$relative) | Out-Null
++    }
++} finally { $zip.Dispose() }
++Write-Output "Android Oracle ${Abi}: $($nativeNames.Count) native files, $($data.Count) resource files; $zipPath"
+diff --git a/native/src/qfli_mysql_client.cpp b/native/src/qfli_mysql_client.cpp
+index c9cbaf4..2b5825e 100644
+--- a/native/src/qfli_mysql_client.cpp
++++ b/native/src/qfli_mysql_client.cpp
+@@ -130,6 +130,14 @@ std::unique_ptr<MYSQL, ConnectionCloser> connect(
+         set_error(result, connection.get());
+         return {};
+     }
++#endif
++#ifdef __ANDROID__
++    // Dart's worker sampling signals can interrupt Bionic poll during handshake.
++    const unsigned int interrupted_io_retries = 32;
++    if (mysql_options(connection.get(), MYSQL_OPT_RETRY_COUNT, &interrupted_io_retries) != 0) {
++        set_error(result, connection.get());
++        return {};
++    }
+ #endif
+     if (!mysql_real_connect(connection.get(), "localhost", "root", password.c_str(),
+                             schema.empty() ? nullptr : schema.c_str(), 0,

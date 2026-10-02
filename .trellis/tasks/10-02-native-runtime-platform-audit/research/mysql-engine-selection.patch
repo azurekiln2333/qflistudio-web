@@ -1,0 +1,690 @@
+diff --git a/.trellis/spec/frontend/sql-workbench.md b/.trellis/spec/frontend/sql-workbench.md
+index c7c9ca3..4d6d3c7 100644
+--- a/.trellis/spec/frontend/sql-workbench.md
++++ b/.trellis/spec/frontend/sql-workbench.md
+@@ -8,9 +8,9 @@ remains reachable through `HomePage`; database UI belongs in this package.
+ ## 2. Signatures
+ 
+ `SqlWorkbenchPage` accepts `repositoryFactory` and `queryLibraryFactory` for
+-boundary tests. Production opens `SqlWorkspaceRepository.openDefault()` on
+-Android/Windows/Linux/iOS/macOS and `MySqlWorkspaceRepository.openLocal()` on
+-the existing OHOS path, plus `SqlQueryLibrary.openDefault()`.
++boundary tests. Production loads `SqlEnginePreference` and opens local SQLite,
++local Oracle, or the existing signed-in cloud repository. The existing OHOS
++default remains native Oracle. Query-library storage remains independent.
+ Compact view controls are located by their tooltips in device tests.
+ 
+ ## 3. Contracts
+@@ -18,6 +18,14 @@ Compact view controls are located by their tooltips in device tests.
+ - Object names, columns, rows, and row identifiers come from the repository.
+ - Use a drawer below 700 logical pixels; keep table data horizontally scrollable.
+ - `_busy` serializes workspace commands. Disable mutation controls during work.
++- The engine menu selects persisted SQLite/localMysql. Unsupported SQLite is
++  omitted. Display the selected engine; both workbench and preferred editor
++  consume `sql_engine.json` (`sqlite`, `localMysql`, or existing `cloud`). Loading
++  callers await the same pending read. Save publishes memory state only after
++  a successful atomic write. A selected native engine cannot silently fall back.
++- Engine changes clear previous object/row/schema/result/filter state before
++  async work. Leaving local Oracle stops its prepared runtime, then reloads the
++  selected repository. Query text and the independent saved-query library stay.
+ - A selected database/table and `_tablePage` must refer to the same objects.
+ - Query-history failures must preserve a successful SQL result and display a
+   separate storage error with retry.
+@@ -64,6 +72,8 @@ Compact view controls are located by their tooltips in device tests.
+ tables, failed selection loads, query-library commands, and storage errors.
+ `integration_test/sql_workbench_test.dart` uses the native repository and checks
+ grid edits, SQL results, and saved-query reopening.
++`integration_test/mysql_native_test.dart` covers actual Oracle/SQLite selection,
++persisted choice, row edits, old-data clearing, server stop, and preferred editor.
+ 
+ ## 7. Wrong vs Correct
+ 
+diff --git a/integration_test/mysql_native_test.dart b/integration_test/mysql_native_test.dart
+new file mode 100644
+index 0000000..8d8f360
+--- /dev/null
++++ b/integration_test/mysql_native_test.dart
+@@ -0,0 +1,299 @@
++import 'dart:convert';
++import 'dart:io';
++
++import 'package:flutter/material.dart';
++import 'package:flutter_test/flutter_test.dart';
++import 'package:integration_test/integration_test.dart';
++import 'package:path/path.dart' as p;
++import 'package:qfli_sql/android_mysql_runtime.dart';
++import 'package:qfli_sql/mysql_database.dart';
++import 'package:qfli_sql/mysql_ffi.dart';
++import 'package:qfli_sql/mysql_workspace_repository.dart';
++import 'package:qfli_sql/sql_runner.dart';
++import 'package:qfli_sql/sql_engine_preference.dart';
++import 'package:qfli_sql/sql_workspace_repository.dart';
++import 'package:qfli_sql/sql_query_library.dart';
++import 'package:qfli_sql/sql_workbench_page.dart';
++import 'package:qfli_studio_core/services/app_paths.dart';
++import 'package:qfli_studio_core/store/auth_store.dart';
++import 'package:qfli_studio_core/store/project_store.dart';
++import 'package:qfli_studio_core/store/settings_store.dart';
++
++void main() {
++  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
++  testWidgets(
++    'actual Android Oracle lifecycle, workspace and editor',
++    (tester) async {
++      final runtime = await AndroidMySqlRuntime.prepare();
++      final previousEngine = await SqlEnginePreference.load();
++      await SqlEnginePreference.save(SqlEngineKind.localMysql);
++      addTearDown(() => SqlEnginePreference.save(previousEngine));
++      const database = NativeMySqlDatabase();
++      final schema = 'android_${DateTime.now().millisecondsSinceEpoch}';
++      final project = await Directory.systemTemp.createTemp('oracle-project-');
++      final workspace = MySqlWorkspaceRepository(
++        runtimeDirectory: project,
++        database: database,
++      );
++      addTearDown(() async {
++        await database.query(
++          databasePath: '',
++          source: 'DROP DATABASE IF EXISTS `$schema`',
++        );
++        await runtime.stop();
++        await project.delete(recursive: true);
++      });
++
++      final version = await database.query(
++        databasePath: '',
++        source:
++            'SELECT VERSION(), @@version_comment, @@port, @@skip_networking',
++      );
++      expect(version.success, isTrue, reason: version.error);
++      expect(version.rows.single.first, '8.4.6');
++      expect(version.rows.toString(), isNot(contains('MariaDB')));
++      expect(version.rows.single.last, '1');
++      await workspace.createDatabase(schema);
++      await workspace.createTable(schema, 'people', const [
++        SqlColumnDraft(name: 'id', type: 'BIGINT', primaryKey: true),
++        SqlColumnDraft(name: 'name', type: 'TEXT'),
++        SqlColumnDraft(name: 'note', type: 'TEXT'),
++      ]);
++      await workspace.insertRow(schema, 'people', {
++        'id': '9007199254740993',
++        'name': "O'Brien",
++        'note': null,
++      });
++      var page = await workspace.loadTable(schema, 'people');
++      expect(page.rows, [
++        ['9007199254740993', "O'Brien", null],
++      ]);
++      await workspace.updateCell(
++        schema,
++        'people',
++        page.rowIds.single,
++        'note',
++        'persisted',
++      );
++      page = await workspace.loadTable(schema, 'people');
++      expect(page.rows.single.last, 'persisted');
++
++      final binary = await database.query(
++        databasePath: schema,
++        source: 'SELECT ? AS value, NULL AS missing, X\'00FF\' AS bytes',
++        parameters: ['quoted; value'],
++      );
++      expect(binary.success, isTrue, reason: binary.error);
++      expect(binary.rows, [
++        ['quoted; value', null, '00FF'],
++      ]);
++      final unicode = await database.query(
++        databasePath: schema,
++        source:
++            "SELECT REGEXP_LIKE('\u4f60\u597d\u4e16\u754c', '^\u4f60\u597d')",
++      );
++      expect(unicode.success, isTrue, reason: unicode.error);
++      expect(unicode.rows, [
++        ['1'],
++      ]);
++      final script = await database.executeScript(
++        databasePath: schema,
++        source:
++            "START TRANSACTION; INSERT INTO people VALUES (2,'rollback',NULL); ROLLBACK; "
++            "SELECT COUNT(*) FROM people; SELECT 'semi;colon';",
++      );
++      expect(script.success, isTrue, reason: script.error);
++      expect(script.results[3].rows, [
++        ['1'],
++      ]);
++      expect(script.results[4].rows, [
++        ['semi;colon'],
++      ]);
++      final partial = await database.executeScript(
++        databasePath: schema,
++        source:
++            'INSERT INTO people VALUES (3,\'committed\',NULL); SELECT missing FROM people;',
++      );
++      expect(partial.available, isTrue);
++      expect(partial.success, isFalse);
++      expect(partial.results.first.affectedRows, 1);
++      expect(partial.error, contains('missing'));
++
++      final socketResult = await database.query(
++        databasePath: '',
++        source: 'SELECT @@socket',
++      );
++      expect(socketResult.success, isTrue, reason: socketResult.error);
++      final socket = socketResult.rows.single.single!;
++      final rejected = await MySqlFfi.invoke(runtime.libraryPath, {
++        'method': 'query',
++        'socket': socket,
++        'password': 'wrong',
++        'schema': schema,
++        'source': 'SELECT 1',
++        'params': <String?>[],
++      });
++      expect(rejected['available'], isFalse);
++      expect(rejected['error'].toString(), contains('Access denied'));
++      final metadata =
++          jsonDecode(
++                await File(
++                  p.join(runtime.dataDirectory.path, 'initialized.json'),
++                ).readAsString(),
++              )
++              as Map;
++      expect(metadata['password'], matches(r'^[a-f0-9]{64}$'));
++
++      await runtime.stop();
++      final persisted = await database.query(
++        databasePath: schema,
++        source: 'SELECT id,note FROM people ORDER BY id',
++      );
++      expect(persisted.success, isTrue, reason: persisted.error);
++      expect(persisted.rows, [
++        ['3', null],
++        ['9007199254740993', 'persisted'],
++      ]);
++
++      const editor = PreferredSqlEngine();
++      final written = await editor.execute(
++        SqlProgramRequest(
++          projectPath: project.path,
++          source:
++              "CREATE TABLE items (value TEXT); INSERT INTO items VALUES ('editor'); SELECT value FROM items;",
++        ),
++      );
++      expect(written.exitCode, 0, reason: written.stderr.join('\n'));
++      expect(written.stdout.join('\n'), contains('editor'));
++      final projectMarker =
++          jsonDecode(
++                await File(
++                  p.join(project.path, '.qfli', 'mysql.json'),
++                ).readAsString(),
++              )
++              as Map;
++      final read = await editor.execute(
++        SqlProgramRequest(
++          projectPath: project.path,
++          source: 'SELECT value FROM items;',
++        ),
++      );
++      expect(read.exitCode, 0, reason: read.stderr.join('\n'));
++      expect(read.stdout.join('\n'), contains('editor'));
++      await database.query(
++        databasePath: '',
++        source: 'DROP DATABASE `${projectMarker['schema']}`',
++      );
++    },
++    timeout: const Timeout(Duration(minutes: 8)),
++  );
++
++  testWidgets(
++    'workbench switches actual engines and stops its Oracle server',
++    (tester) async {
++      final previous = await SqlEnginePreference.load();
++      final temporary = await Directory.systemTemp.createTemp(
++        'oracle-workbench-',
++      );
++      final runtime = await AndroidMySqlRuntime.prepare();
++      final oracle = await MySqlWorkspaceRepository.openLocal();
++      final sqlite = await SqlWorkspaceRepository.openDefault();
++      final name = 'engine_${DateTime.now().millisecondsSinceEpoch}';
++      await oracle.createDatabase(name);
++      await sqlite.createDatabase(name);
++      final store = ProjectStore();
++      final auth = AuthStore();
++      final settings = SettingsStore();
++      addTearDown(() async {
++        await oracle.deleteDatabase(name);
++        await sqlite.deleteDatabase(name);
++        await runtime.stop();
++        await SqlEnginePreference.save(previous);
++        await temporary.delete(recursive: true);
++        store.dispose();
++        auth.dispose();
++        settings.dispose();
++      });
++      for (final repository in [oracle, sqlite]) {
++        await repository.createTable(name, 'items', const [
++          SqlColumnDraft(name: 'id', type: 'INTEGER', primaryKey: true),
++          SqlColumnDraft(name: 'value', type: 'TEXT'),
++        ]);
++        await repository.insertRow(name, 'items', {
++          'value': repository == oracle ? 'OracleOnly' : 'SQLiteOnly',
++        });
++      }
++      final library = await SqlQueryLibrary.open(
++        File(p.join(temporary.path, 'queries.json')),
++      );
++      await SqlEnginePreference.save(SqlEngineKind.sqlite);
++      await tester.pumpWidget(
++        MaterialApp(
++          home: SqlWorkbenchPage(
++            store: store,
++            auth: auth,
++            settings: settings,
++            queryLibraryFactory: () async => library,
++          ),
++        ),
++      );
++      await tester.pumpAndSettle();
++
++      Future<void> selectTable() async {
++        final scaffold = tester.state<ScaffoldState>(
++          find.byType(Scaffold).first,
++        );
++        if (scaffold.hasDrawer) {
++          scaffold.openDrawer();
++          await tester.pumpAndSettle();
++        }
++        await tester.tap(find.widgetWithText(ListTile, name).first);
++        await tester.pumpAndSettle();
++        await tester.tap(find.widgetWithText(ListTile, 'items').first);
++        await tester.pumpAndSettle();
++      }
++
++      await selectTable();
++      expect(find.text('SQLiteOnly'), findsOneWidget);
++      await tester.tap(find.byTooltip('数据库引擎'));
++      await tester.pumpAndSettle();
++      await tester.tap(find.text('本机 MySQL').last);
++      await tester.pumpAndSettle();
++      await selectTable();
++      expect(find.text('OracleOnly'), findsOneWidget);
++      expect(find.text('SQLiteOnly'), findsNothing);
++      final storage = await AppPaths.storageDirectory();
++      final saved =
++          jsonDecode(
++                await File(p.join(storage!, 'sql_engine.json')).readAsString(),
++              )
++              as Map;
++      expect(saved['engine'], 'localMysql');
++      await tester.tap(find.text('OracleOnly'));
++      await tester.pumpAndSettle();
++      await tester.enterText(find.byType(TextField).last, 'Edited');
++      await tester.tap(find.text('保存'));
++      await tester.pumpAndSettle();
++      expect(
++        (await oracle.loadTable(name, 'items')).rows.single.last,
++        'Edited',
++      );
++      final serverPid = int.parse(
++        await File(
++          p.join(runtime.dataDirectory.path, 'mysqld.pid'),
++        ).readAsString(),
++      );
++      await tester.tap(find.byTooltip('数据库引擎'));
++      await tester.pumpAndSettle();
++      await tester.tap(find.text('SQLite').last);
++      await tester.pumpAndSettle();
++      expect(await File('/proc/$serverPid/stat').exists(), isFalse);
++      await selectTable();
++      expect(find.text('SQLiteOnly'), findsOneWidget);
++      expect(find.text('Edited'), findsNothing);
++      expect(tester.takeException(), isNull);
++      await tester.pumpWidget(const SizedBox.shrink());
++    },
++    timeout: const Timeout(Duration(minutes: 8)),
++  );
++}
+diff --git a/lib/sql_engine_preference.dart b/lib/sql_engine_preference.dart
+index 37f24dc..3a3ed13 100644
+--- a/lib/sql_engine_preference.dart
++++ b/lib/sql_engine_preference.dart
+@@ -6,11 +6,12 @@ import 'package:qfli_studio_core/services/app_paths.dart';
+ 
+ /// Where SQLab runs SQL. SQLite on the device is the default; cloud MySQL is a
+ /// per-user practice space on a server isolated from business data.
+-enum SqlEngineKind { sqlite, cloud }
++enum SqlEngineKind { sqlite, cloud, localMysql }
+ 
+ abstract final class SqlEnginePreference {
+   static SqlEngineKind _current = SqlEngineKind.sqlite;
+   static bool _loaded = false;
++  static Future<SqlEngineKind>? _loading;
+ 
+   /// Supplies the signed-in QFLI token; set by the app entry point.
+   static String? Function() token = () => null;
+@@ -22,15 +23,20 @@ abstract final class SqlEnginePreference {
+     return storage == null ? null : File(p.join(storage, 'sql_engine.json'));
+   }
+ 
+-  static Future<SqlEngineKind> load() async {
+-    if (_loaded) return _current;
+-    _loaded = true;
++  static Future<SqlEngineKind> load() {
++    if (_loaded) return Future.value(_current);
++    return _loading ??= _read().whenComplete(() => _loading = null);
++  }
++
++  static Future<SqlEngineKind> _read() async {
+     try {
+       final file = await _file();
+       if (file != null && await file.exists()) {
+         final data = jsonDecode(await file.readAsString());
+         if (data is Map && data['engine'] == 'cloud') {
+           _current = SqlEngineKind.cloud;
++        } else if (data is Map && data['engine'] == 'localMysql') {
++          _current = SqlEngineKind.localMysql;
+         }
+       }
+     } on FileSystemException {
+@@ -38,16 +44,22 @@ abstract final class SqlEnginePreference {
+     } on FormatException {
+       // Corrupt preferences fall back to local SQLite.
+     }
++    _loaded = true;
+     return _current;
+   }
+ 
+   static Future<void> save(SqlEngineKind kind) async {
+-    _current = kind;
+-    _loaded = true;
++    final loading = _loading;
++    if (loading != null) await loading;
+     final file = await _file();
+-    if (file == null) return;
++    if (file == null) {
++      throw const FileSystemException('无法访问应用数据目录，数据库引擎设置未保存。');
++    }
++    await file.parent.create(recursive: true);
+     final temporary = File('${file.path}.tmp');
+     await temporary.writeAsString(jsonEncode({'engine': kind.name}), flush: true);
+     await temporary.rename(file.path);
++    _current = kind;
++    _loaded = true;
+   }
+ }
+diff --git a/lib/sql_runner.dart b/lib/sql_runner.dart
+index 03d55b2..9208f25 100644
+--- a/lib/sql_runner.dart
++++ b/lib/sql_runner.dart
+@@ -253,7 +253,11 @@ class PreferredSqlEngine implements SqlProgramEngine {
+ 
+   @override
+   Future<SqlProgramExecutionResult> execute(SqlProgramRequest request) async {
+-    if (await SqlEnginePreference.load() == SqlEngineKind.cloud) {
++    final selected = await SqlEnginePreference.load();
++    if (selected == SqlEngineKind.localMysql) {
++      return const NativeMySqlEngine().execute(request);
++    }
++    if (selected == SqlEngineKind.cloud) {
+       final token = SqlEnginePreference.token();
+       if (token == null) {
+         return const SqlProgramExecutionResult(
+@@ -267,7 +271,7 @@ class PreferredSqlEngine implements SqlProgramEngine {
+         database: CloudMySqlDatabase(token: () => token),
+       ).execute(request);
+     }
+-    return const NativeSqliteEngine().execute(request);
++    return const NativeLocalSqlEngine().execute(request);
+   }
+ }
+ 
+@@ -278,8 +282,8 @@ class NativeLocalSqlEngine implements SqlProgramEngine {
+   @override
+   Future<SqlProgramExecutionResult> execute(SqlProgramRequest request) =>
+       SqliteFfi.supported
+-          ? const NativeSqliteEngine().execute(request)
+-          : const NativeMySqlEngine().execute(request);
++      ? const NativeSqliteEngine().execute(request)
++      : const NativeMySqlEngine().execute(request);
+ }
+ 
+ /// SQL 版 App 的运行后端。
+diff --git a/lib/sql_workbench_page.dart b/lib/sql_workbench_page.dart
+index c415882..2ab71f2 100644
+--- a/lib/sql_workbench_page.dart
++++ b/lib/sql_workbench_page.dart
+@@ -1,4 +1,5 @@
+ import 'dart:async';
++import 'dart:io';
+ 
+ import 'package:flutter/material.dart';
+ import 'package:qfli_studio_core/pages/home_page.dart';
+@@ -13,6 +14,9 @@ import 'sql_document_service.dart';
+ import 'sql_query_library.dart';
+ import 'sql_workspace_repository.dart';
+ import 'sqlite_ffi.dart';
++import 'android_mysql_runtime.dart';
++import 'local_mysql_runtime.dart';
++import 'sql_engine_preference.dart';
+ 
+ class SqlWorkbenchPage extends StatefulWidget {
+   const SqlWorkbenchPage({
+@@ -58,10 +62,12 @@ class _SqlWorkbenchPageState extends State<SqlWorkbenchPage> {
+   bool _busy = true;
+   bool _queryLibraryLoading = true;
+   int _page = 0;
++  SqlEngineKind _engine = SqlEngineKind.sqlite;
+ 
+   @override
+   void initState() {
+     super.initState();
++    SqlEnginePreference.token = () => widget.auth.token;
+     unawaited(_initialize());
+     unawaited(_loadQueryLibrary());
+   }
+@@ -79,11 +85,28 @@ class _SqlWorkbenchPageState extends State<SqlWorkbenchPage> {
+       _loadError = null;
+     });
+     try {
+-      final repository =
+-          await (widget.repositoryFactory?.call() ??
+-              (SqliteFfi.supported
+-                  ? SqlWorkspaceRepository.openDefault()
+-                  : MySqlWorkspaceRepository.openLocal()));
++      final factory = widget.repositoryFactory;
++      final SqlWorkspaceRepository repository;
++      if (factory != null) {
++        repository = await factory();
++      } else {
++        _engine = await SqlEnginePreference.load();
++        repository = await switch (_engine) {
++          SqlEngineKind.localMysql => MySqlWorkspaceRepository.openLocal(),
++          SqlEngineKind.sqlite =>
++            SqliteFfi.supported
++                ? SqlWorkspaceRepository.openDefault()
++                : MySqlWorkspaceRepository.openLocal(),
++          SqlEngineKind.cloud =>
++            widget.auth.token == null
++                ? Future<SqlWorkspaceRepository>.error(
++                    StateError('云 MySQL 需要登录。'),
++                  )
++                : MySqlWorkspaceRepository.openCloud(
++                    token: () => widget.auth.token ?? '',
++                  ),
++        };
++      }
+       if (!mounted) return;
+       _repository = repository;
+       await _refreshTree();
+@@ -100,6 +123,55 @@ class _SqlWorkbenchPageState extends State<SqlWorkbenchPage> {
+     }
+   }
+ 
++  String get _engineLabel => switch (_engine) {
++    SqlEngineKind.sqlite => SqliteFfi.supported ? 'SQLite' : '本机 MySQL',
++    SqlEngineKind.localMysql => '本机 MySQL',
++    SqlEngineKind.cloud => '云 MySQL',
++  };
++
++  Future<void> _selectEngine(SqlEngineKind kind) async {
++    if (_busy || kind == _engine) return;
++    final previous = _engine;
++    setState(() {
++      _busy = true;
++      _repository = null;
++      _loadError = null;
++      _databases = [];
++      _tables = [];
++      _database = null;
++      _table = null;
++      _tablePage = null;
++      _schemaColumns = null;
++      _queryResult = null;
++      _indexes = [];
++      _tableError = null;
++      _schemaError = null;
++      _filterColumn = null;
++      _sortColumn = null;
++      _descending = false;
++      _page = 0;
++      _filterController.clear();
++    });
++    try {
++      await SqlEnginePreference.save(kind);
++      if (previous == SqlEngineKind.localMysql) {
++        if (Platform.isAndroid) {
++          await AndroidMySqlRuntime.stop();
++        } else if (LocalMySqlRuntime.supported) {
++          await LocalMySqlRuntime.shared.stop();
++        }
++      }
++    } catch (error) {
++      if (mounted) {
++        ScaffoldMessenger.of(
++          context,
++        ).showSnackBar(SnackBar(content: Text(_message(error))));
++      }
++    } finally {
++      if (mounted) await _initialize();
++    }
++  }
++
+   Future<void> _perform(Future<void> Function() action) async {
+     if (!mounted || _busy || _repository == null) return;
+     setState(() => _busy = true);
+@@ -428,8 +500,9 @@ class _SqlWorkbenchPageState extends State<SqlWorkbenchPage> {
+     final database = _database;
+     final table = _table;
+     if (_busy || database == null || table == null) return;
+-    if (!await _confirm('删除列', '确定删除“${column.name}”及该列的所有数据吗？关联索引也可能被修改。'))
++    if (!await _confirm('删除列', '确定删除“${column.name}”及该列的所有数据吗？关联索引也可能被修改。')) {
+       return;
++    }
+     await _perform(() async {
+       await _repository!.deleteColumn(database, table, column.name);
+       _resetTableFilters();
+@@ -464,8 +537,9 @@ class _SqlWorkbenchPageState extends State<SqlWorkbenchPage> {
+       '删除索引',
+       '确定删除“${index.name}”吗？'
+           '${index.primary ? '该表将失去主键，现有行可能无法编辑。' : ''}',
+-    ))
++    )) {
+       return;
++    }
+     await _perform(() async {
+       await _repository!.deleteIndex(database, table, index.name);
+       await _refreshTable();
+@@ -513,8 +587,9 @@ class _SqlWorkbenchPageState extends State<SqlWorkbenchPage> {
+             '目标：${_database ?? 'MySQL 服务器'}。'
+             '脚本可能修改或删除数据；执行失败时，前面的语句可能已经生效。',
+         actionLabel: '导入',
+-      ))
++      )) {
+         return;
++      }
+       if (!mounted) return;
+       _queryController.text = source;
+       setState(() => _view = _WorkbenchView.sql);
+@@ -1132,8 +1207,47 @@ class _SqlWorkbenchPageState extends State<SqlWorkbenchPage> {
+             )
+           : null,
+       appBar: AppBar(
+-        title: const Text('QFLISQLab'),
++        title: Column(
++          crossAxisAlignment: CrossAxisAlignment.start,
++          children: [
++            const Text(
++              'QFLISQLab',
++              maxLines: 1,
++              overflow: TextOverflow.ellipsis,
++            ),
++            Text(_engineLabel, style: Theme.of(context).textTheme.bodySmall),
++          ],
++        ),
+         actions: [
++          if (widget.repositoryFactory == null)
++            PopupMenuButton<SqlEngineKind>(
++              tooltip: '数据库引擎',
++              enabled: !_busy,
++              icon: const Icon(Icons.storage_outlined),
++              onSelected: (kind) => unawaited(_selectEngine(kind)),
++              itemBuilder: (_) => [
++                for (final kind in [
++                  if (SqliteFfi.supported) SqlEngineKind.sqlite,
++                  SqlEngineKind.localMysql,
++                ])
++                  PopupMenuItem(
++                    value: kind,
++                    child: Row(
++                      children: [
++                        SizedBox(
++                          width: 28,
++                          child: kind == _engine
++                              ? const Icon(Icons.check, size: 18)
++                              : null,
++                        ),
++                        Text(
++                          kind == SqlEngineKind.sqlite ? 'SQLite' : '本机 MySQL',
++                        ),
++                      ],
++                    ),
++                  ),
++              ],
++            ),
+           IconButton(
+             tooltip: '刷新',
+             onPressed: _busy || _repository == null
+@@ -1160,18 +1274,21 @@ class _SqlWorkbenchPageState extends State<SqlWorkbenchPage> {
+           ? Center(
+               child: _loadError == null
+                   ? const CircularProgressIndicator()
+-                  : Column(
+-                      mainAxisSize: MainAxisSize.min,
+-                      children: [
+-                        Text(_loadError!),
+-                        TextButton.icon(
+-                          onPressed: _busy
+-                              ? null
+-                              : () => unawaited(_initialize()),
+-                          icon: const Icon(Icons.refresh),
+-                          label: const Text('重试'),
+-                        ),
+-                      ],
++                  : SingleChildScrollView(
++                      padding: const EdgeInsets.all(24),
++                      child: Column(
++                        mainAxisSize: MainAxisSize.min,
++                        children: [
++                          Text(_loadError!),
++                          TextButton.icon(
++                            onPressed: _busy
++                                ? null
++                                : () => unawaited(_initialize()),
++                            icon: const Icon(Icons.refresh),
++                            label: const Text('重试'),
++                          ),
++                        ],
++                      ),
+                     ),
+             )
+           : Row(
