@@ -27,6 +27,10 @@
 - [x] Deliver SQLite Android/desktop/Apple FFI (7269c12): Windows build, 48 staged Flutter tests and 7 Android backend/default-workbench cases.
 - [x] Verify standalone Linux Nginx (4 checks) and SQLite C library (5 checks).
 - [ ] Complete local native MySQL platform lifecycle beyond OHOS.
+  - [x] Deliver Windows/Linux Oracle service ownership, credentialed native FFI and desktop bundles (qfli_sql 0e02cb2).
+  - [x] Verify staged and owning Windows/Linux installed runtime bundles, each with 11 real-engine checks; staged/owning Flutter tests pass 51/51 with clean changed-source analysis.
+  - [ ] Build and integrate the Android server and connect local engine selection to the workbench/editor.
+  - [ ] Complete macOS bundle/signing and native iOS hosting; portable desktop source alone does not establish Apple delivery.
 - [ ] Complete Rust Android/Apple and C/C++/Java iOS support where native lifecycle integration is missing.
 - [x] Audit and deliver Lua/Go platform integration separately (31e0107, 68f91a5). Lua's ordinary Android release app passed source/check/compile/bytecode reload; Go's exact staged source passed all 18 tests and analysis, with prior Android 3-case and Linux/Windows SDK evidence retained.
 - [ ] Verify all available environments and explicitly record every unavailable test target.

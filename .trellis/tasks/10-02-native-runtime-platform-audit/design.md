@@ -117,3 +117,34 @@ Delivered as qfli_dart 1765860. Both verified ABI packages are staged with all
 source analysis and its ordinary Android build. In-app smoke passed 9/9; ordinary
 editor Run, source-free tools Kernel Run and tools Stop passed on the 16 KiB
 x86_64 emulator. ARM64 execution and native Apple targets remain unverified.
+
+## Local Oracle MySQL Desktop Lifecycle
+
+The clean NativeMySqlDatabase adapter currently invokes an OHOS-only channel;
+non-OHOS callers have no local Oracle startup or native query path. Reuse the
+existing qfli_mysql_client.cpp for a portable JSON C ABI, preserving prepared
+statements, exact values, private transport, scripts and output caps. Add an
+owned upstream mysqld process lifecycle with an app-private data directory,
+successful-initialization marker, version validation, readiness and shutdown.
+Windows uses Oracle named pipes; Linux/macOS use private Unix sockets. A native
+launcher owns parent-exit cleanup so an application crash cannot orphan its
+server. Platform queries execute on worker isolates.
+
+Expected changes are the clean MySQL adapter/client boundary, new FFI/lifecycle
+modules, portable launcher, desktop build/bundle inputs and focused real-engine
+verification. Preserve concurrent cloud preference/repository/runner changes.
+First deliver desktop lifecycle and native calls; Android server cross-build
+and product engine-selection integration remain required subsequent work.
+Apple builds/execution are skipped without Xcode; native iOS server lifecycle
+remains an explicit implementation gap, rather than a subprocess claim.
+
+Windows/Linux backend and bundles delivered as qfli_sql 0e02cb2. Preserve the
+old OHOS C++ signatures alongside credentialed overloads. Windows uses Oracle
+RSA exchange over its private named pipe for caching_sha2_password. Both staged
+and owning installed bundles passed 11/11 actual lifecycle checks, including
+parent-exit cleanup and persistent InnoDB crash recovery. Staged and owning
+Flutter suites passed 51/51; the owning run used one test process at a time
+after a simultaneous run exhausted Windows virtual memory. Changed-source
+analysis is clean. Linux used the installed Oracle 8.0.46 server; Windows used
+the pinned official 8.4.6 distribution. Desktop GUI and Apple execution are
+not claimed. Android MySQL and product engine-selection work remain open.
