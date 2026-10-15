@@ -4,7 +4,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:qfli_studio_core/services/studio_profile.dart';
 import 'package:qfli_studio_core/store/project_store.dart';
+import 'package:qfli_web/main.dart' show webProfile;
 import 'package:qfli_web/pages/web_tools_page.dart';
 
 void main() {
@@ -20,6 +22,7 @@ void main() {
   });
 
   tearDown(() {
+    StudioProfile.current = null;
     HttpOverrides.global = previousOverrides;
     store.dispose();
     temp.deleteSync(recursive: true);
@@ -121,5 +124,35 @@ void main() {
     await tester.tap(find.text('解码'));
     await tester.pump();
     expect(find.text('hello'), findsOneWidget);
+  });
+
+  group('offline product', () {
+    setUp(() => StudioProfile.current = webProfile);
+
+    testWidgets('HTTP tool is not reachable when offlineOnly', (tester) async {
+      await tester.pumpWidget(MaterialApp(home: WebToolsPage(store: store)));
+      await tester.pumpAndSettle();
+
+      // HTTP 工具可向任意外部主机发请求，离线产品下连 tab 都不存在。
+      expect(find.text('HTTP'), findsNothing);
+      expect(find.widgetWithText(TextField, 'URL'), findsNothing);
+      // 保留的离线 tab：本地服务与编解码。
+      expect(find.text('服务器'), findsOneWidget);
+      expect(find.text('编解码'), findsOneWidget);
+      expect(find.text('启动'), findsOneWidget);
+    });
+
+    testWidgets('offline codec tab still works', (tester) async {
+      await tester.pumpWidget(MaterialApp(home: WebToolsPage(store: store)));
+      await tester.tap(find.text('编解码'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextField, '输入'),
+        '{"ok":true}',
+      );
+      await tester.tap(find.text('格式化'));
+      await tester.pump();
+      expect(find.text('{\n  "ok": true\n}'), findsOneWidget);
+    });
   });
 }

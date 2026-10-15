@@ -6,22 +6,66 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:qfli_studio_core/services/local_web_server.dart';
+import 'package:qfli_studio_core/services/studio_profile.dart';
 import 'package:qfli_studio_core/store/project_store.dart';
 
 import '../services/web_project_config.dart';
 import '../services/web_runtime.dart';
 import '../services/web_runtime_session.dart';
 
-class WebToolsPage extends StatefulWidget {
+/// Whether this product must hide every entry that needs the network.
+///
+/// Mirrors the shared shell's gate: `webProfile` sets `isOffline: true`, which
+/// makes `offlineOnly` default to true, so the product-owned HTTP tool and the
+/// external API proxy editor are hidden too.
+bool get _offlineOnly => StudioProfile.current?.offlineOnly ?? false;
+
+/// 本地服务 + 编解码工具页。
+///
+/// 离线产品（WebForge）只保留这两个 tab；HTTP 工具和外部代理都在
+/// [WebServerToolsView] / [_WebProjectSettingsDialog] 内部按 [offlineOnly] 裁掉。
+class WebToolsPage extends StatelessWidget {
   const WebToolsPage({super.key, required this.store});
 
   final ProjectStore store;
 
   @override
-  State<WebToolsPage> createState() => _WebToolsPageState();
+  Widget build(BuildContext context) {
+    final tabs = <({String label, Widget body})>[
+      (label: '服务器', body: WebServerToolsView(store: store)),
+      (label: '编解码', body: const WebCodecToolsView()),
+      if (!_offlineOnly)
+        (label: 'HTTP', body: const _HttpTool()),
+    ];
+    return DefaultTabController(
+      length: tabs.length,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Web 工具'),
+          bottom: TabBar(
+            tabs: [for (final tab in tabs) Tab(text: tab.label)],
+          ),
+        ),
+        body: TabBarView(children: [for (final tab in tabs) tab.body]),
+      ),
+    );
+  }
 }
 
-class _WebToolsPageState extends State<WebToolsPage> {
+/// 本地 Web 预览服务（loopback-only）。
+///
+/// 起停、复制地址、在浏览器打开都指向 `127.0.0.1`，是离线产品唯一保留的
+/// Web 行为。它是独立 Widget，[WebToolsPage] 与工具页概览共用同一份实现。
+class WebServerToolsView extends StatefulWidget {
+  const WebServerToolsView({super.key, required this.store});
+
+  final ProjectStore store;
+
+  @override
+  State<WebServerToolsView> createState() => _WebServerToolsViewState();
+}
+
+class _WebServerToolsViewState extends State<WebServerToolsView> {
   WebRuntimeSession? _server;
   StreamSubscription<WebRequestEvent>? _requests;
   StreamSubscription<String>? _debug;
@@ -126,27 +170,6 @@ class _WebToolsPageState extends State<WebToolsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Web 工具'),
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: '服务器'),
-              Tab(text: 'HTTP'),
-              Tab(text: '编解码'),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: [_serverTab(), const _HttpTool(), const _TextTool()],
-        ),
-      ),
-    );
-  }
-
-  Widget _serverTab() {
     return ListenableBuilder(
       listenable: widget.store,
       builder: (context, _) {
@@ -197,7 +220,9 @@ class _WebToolsPageState extends State<WebToolsPage> {
               ],
             ),
             const SizedBox(height: 12),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 FilledButton.icon(
                   onPressed: path == null || _busy || _server != null
@@ -206,20 +231,17 @@ class _WebToolsPageState extends State<WebToolsPage> {
                   icon: const Icon(Icons.play_arrow),
                   label: const Text('启动'),
                 ),
-                const SizedBox(width: 8),
                 OutlinedButton.icon(
                   onPressed: _busy || _server == null ? null : _stop,
                   icon: const Icon(Icons.stop),
                   label: const Text('停止'),
                 ),
-                if (_busy) ...[
-                  const SizedBox(width: 12),
+                if (_busy)
                   const SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
-                ],
               ],
             ),
             if (_server case final server?) ...[
@@ -248,8 +270,12 @@ class _WebToolsPageState extends State<WebToolsPage> {
             const SizedBox(height: 20),
             Row(
               children: [
-                Text('请求与控制台', style: Theme.of(context).textTheme.titleMedium),
-                const Spacer(),
+                Expanded(
+                  child: Text(
+                    '请求与控制台',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
                 IconButton(
                   tooltip: '清空记录',
                   onPressed: _log.isEmpty ? null : () => setState(_log.clear),
@@ -303,6 +329,8 @@ class _WebProjectSettingsDialogState extends State<_WebProjectSettingsDialog> {
   final _proxies = <_ProxyDraft>[];
   final _removedProxies = <_ProxyDraft>[];
   Map<String, dynamic> _original = {};
+  /// API 代理会转发到任意外部主机，离线产品不展示也不改写这一节。
+  late final bool _showProxy = !_offlineOnly;
   bool _spaFallback = false;
   WebServerEngine _engine = WebServerEngine.auto;
   String? _error;
@@ -329,11 +357,13 @@ class _WebProjectSettingsDialogState extends State<_WebProjectSettingsDialog> {
       _root.text = decoded['root'] as String? ?? '';
       _port.text = '${decoded['port'] ?? 0}';
       _spaFallback = decoded['spaFallback'] as bool? ?? false;
-      for (final item in decoded['proxies'] as List? ?? const []) {
-        final rule = item as Map<String, dynamic>;
-        _proxies.add(
-          _ProxyDraft(rule['prefix'] as String, rule['target'] as String),
-        );
+      if (_showProxy) {
+        for (final item in decoded['proxies'] as List? ?? const []) {
+          final rule = item as Map<String, dynamic>;
+          _proxies.add(
+            _ProxyDraft(rule['prefix'] as String, rule['target'] as String),
+          );
+        }
       }
       _engine = WebProjectConfig.parse(widget.projectPath, decoded).engine;
     } catch (error) {
@@ -357,13 +387,18 @@ class _WebProjectSettingsDialogState extends State<_WebProjectSettingsDialog> {
     if (port != 0) data['port'] = port;
     data['spaFallback'] = _spaFallback;
     data['engine'] = _engine.name;
-    data['proxies'] = [
-      for (final draft in _proxies)
-        {
-          'prefix': draft.prefix.text.trim(),
-          'target': draft.target.text.trim(),
-        },
-    ];
+    if (_showProxy) {
+      data['proxies'] = [
+        for (final draft in _proxies)
+          {
+            'prefix': draft.prefix.text.trim(),
+            'target': draft.target.text.trim(),
+          },
+      ];
+    } else if (_original.containsKey('proxies')) {
+      // 离线产品不编辑代理，但已有配置必须原样保留，不能静默清空。
+      data['proxies'] = _original['proxies'];
+    }
     try {
       WebProjectConfig.parse(widget.projectPath, data);
       final file = File(p.join(widget.projectPath, '.qfli', 'web.json'));
@@ -446,60 +481,65 @@ class _WebProjectSettingsDialogState extends State<_WebProjectSettingsDialog> {
                 value: _spaFallback,
                 onChanged: (value) => setState(() => _spaFallback = value),
               ),
-              const Divider(),
-              Row(
-                children: [
-                  Text('API 代理', style: Theme.of(context).textTheme.titleSmall),
-                  const Spacer(),
-                  IconButton(
-                    tooltip: '添加代理',
-                    onPressed: () =>
-                        setState(() => _proxies.add(_ProxyDraft('', ''))),
-                    icon: const Icon(Icons.add),
-                  ),
-                ],
-              ),
-              for (final draft in _proxies)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          children: [
-                            TextField(
-                              controller: draft.prefix,
-                              decoration: const InputDecoration(
-                                labelText: '路径前缀',
-                                hintText: '/api',
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            TextField(
-                              controller: draft.target,
-                              keyboardType: TextInputType.url,
-                              decoration: const InputDecoration(
-                                labelText: '目标 URL',
-                                hintText: 'http://127.0.0.1:3000/',
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: '删除代理',
-                        onPressed: () => setState(() {
-                          _proxies.remove(draft);
-                          _removedProxies.add(draft);
-                        }),
-                        icon: const Icon(Icons.delete_outline),
-                      ),
-                    ],
-                  ),
+              if (_showProxy) ...[
+                const Divider(),
+                Row(
+                  children: [
+                    Text(
+                      'API 代理',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      tooltip: '添加代理',
+                      onPressed: () =>
+                          setState(() => _proxies.add(_ProxyDraft('', ''))),
+                      icon: const Icon(Icons.add),
+                    ),
+                  ],
                 ),
+                for (final draft in _proxies)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            children: [
+                              TextField(
+                                controller: draft.prefix,
+                                decoration: const InputDecoration(
+                                  labelText: '路径前缀',
+                                  hintText: '/api',
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: draft.target,
+                                keyboardType: TextInputType.url,
+                                decoration: const InputDecoration(
+                                  labelText: '目标 URL',
+                                  hintText: 'http://127.0.0.1:3000/',
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: '删除代理',
+                          onPressed: () => setState(() {
+                            _proxies.remove(draft);
+                            _removedProxies.add(draft);
+                          }),
+                          icon: const Icon(Icons.delete_outline),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
               if (_error != null)
                 Text(
                   _error!,
@@ -678,8 +718,12 @@ class _HttpToolState extends State<_HttpTool> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Text('响应', style: Theme.of(context).textTheme.titleMedium),
-              const Spacer(),
+              Expanded(
+                child: Text(
+                  '响应',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
               IconButton(
                 tooltip: '复制响应',
                 onPressed: () => Clipboard.setData(ClipboardData(text: result)),
@@ -698,14 +742,15 @@ class _HttpToolState extends State<_HttpTool> {
   }
 }
 
-class _TextTool extends StatefulWidget {
-  const _TextTool();
+/// JSON / URL / Base64 编解码，纯本机计算，离线安全。
+class WebCodecToolsView extends StatefulWidget {
+  const WebCodecToolsView({super.key});
 
   @override
-  State<_TextTool> createState() => _TextToolState();
+  State<WebCodecToolsView> createState() => _WebCodecToolsViewState();
 }
 
-class _TextToolState extends State<_TextTool> {
+class _WebCodecToolsViewState extends State<WebCodecToolsView> {
   final _input = TextEditingController();
   String _kind = 'JSON';
   String? _output;
@@ -741,17 +786,20 @@ class _TextToolState extends State<_TextTool> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        SegmentedButton<String>(
-          segments: const [
-            ButtonSegment(value: 'JSON', label: Text('JSON')),
-            ButtonSegment(value: 'URL', label: Text('URL')),
-            ButtonSegment(value: 'Base64', label: Text('Base64')),
-          ],
-          selected: {_kind},
-          onSelectionChanged: (value) => setState(() {
-            _kind = value.first;
-            _output = null;
-          }),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SegmentedButton<String>(
+            segments: const [
+              ButtonSegment(value: 'JSON', label: Text('JSON')),
+              ButtonSegment(value: 'URL', label: Text('URL')),
+              ButtonSegment(value: 'Base64', label: Text('Base64')),
+            ],
+            selected: {_kind},
+            onSelectionChanged: (value) => setState(() {
+              _kind = value.first;
+              _output = null;
+            }),
+          ),
         ),
         const SizedBox(height: 16),
         TextField(
@@ -766,6 +814,7 @@ class _TextToolState extends State<_TextTool> {
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
+          runSpacing: 8,
           children: [
             FilledButton(
               onPressed: () => _convert(true),
@@ -781,8 +830,12 @@ class _TextToolState extends State<_TextTool> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Text('结果', style: Theme.of(context).textTheme.titleMedium),
-              const Spacer(),
+              Expanded(
+                child: Text(
+                  '结果',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
               IconButton(
                 tooltip: '复制结果',
                 onPressed: () => Clipboard.setData(ClipboardData(text: output)),
