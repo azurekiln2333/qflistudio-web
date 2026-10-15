@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/frontend/content-import.md", "reason": "Offline catalog and code-import contracts this content must satisfy"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend pre-development checklist and quality gates"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Widget-test pattern and forbidden patterns for the product content tests"}
+{"file": ".trellis/tasks/10-01-content-code-import/design.md", "reason": "Prior content/import design decisions for WebForge catalogs"}
+{"file": ".trellis/tasks/10-01-content-code-import/research/content-import-validation.md", "reason": "Prior verification evidence and environment findings"}

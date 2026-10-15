@@ -1,0 +1,12 @@
+{
+  "name": "webforge-content-verification",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Browser checks for the bundled offline WebForge curriculum",
+  "scripts": {
+    "verify:content": "node scripts/run_examples.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.64.1"
+  }
+}

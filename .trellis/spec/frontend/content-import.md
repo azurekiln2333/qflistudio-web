@@ -33,6 +33,16 @@ EditorPage(project: project, auth: auth, store: projects, settings: settings,
   DOM/style/console/interaction results per entry, reject external resource
   requests and prove full lesson/example code correspondence. A marker, any
   nonempty console output or a parsed stylesheet alone is insufficient.
+- Inline media must retain the consumer's syntax: quote CSS `url("data:...")`
+  or percent-encode URL whitespace. A decodable SVG alone does not prove that
+  CSS accepted its declaration. Assert computed `backgroundImage` and image
+  decode; assert `complete && naturalWidth > 0` for expected HTML images. Only
+  the exact `html-example-006` `/missing.png` teaching case may fail to load,
+  and its oracle must prove the intended broken-image/alt-text behavior.
+- A font lesson must load its delivered font: `document.fonts.load` returns
+  at least one real face with status `loaded`. A base64 header, CSS font-family
+  string or readable fallback text cannot prove font validity. Generated media
+  sources retain their generator, tool versions and stable timestamps.
 - Catalogs use MD3 list rows with titles and summaries. Code is in detail routes.
 - Code blocks provide copy, import to editor and import to project icon buttons
   with localized tooltips. Imports receive the real HomePage stores.

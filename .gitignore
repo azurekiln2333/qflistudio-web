@@ -109,3 +109,6 @@ app.*.map.json
 /.gitstatus.txt
 /.gs.txt
 /.st.txt
+
+# Local browser tooling used to validate the bundled Web curriculum.
+/node_modules/

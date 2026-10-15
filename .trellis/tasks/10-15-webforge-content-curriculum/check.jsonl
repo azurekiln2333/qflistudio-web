@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/frontend/content-import.md", "reason": "Checks required for catalogs, imports and custom entries"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Test patterns and review checklist for content verification"}
+{"file": ".trellis/tasks/10-15-webforge-content-curriculum/design.md", "reason": "Design boundaries, schema and validation plan to check against"}
+{"file": ".trellis/tasks/10-15-webforge-content-curriculum/implement.md", "reason": "Verification gates the check must confirm"}
