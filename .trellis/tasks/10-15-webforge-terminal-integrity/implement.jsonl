@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend spec entry: pre-development checklist and quality check for qfli_web"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Required analyze/test commands and the widget-test pattern this suite must follow"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Async/mounted guards and dispose conventions used when mounting shared terminal widgets"}
+{"file": ".trellis/tasks/10-15-webforge-terminal-integrity/research/core-terminal-findings.md", "reason": "Read-only audit of the shared core terminal surfaces, contracts and offline gating"}
