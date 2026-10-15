@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/backend/web-runtime.md", "reason": "Native Nginx runtime contract, device smoke gate and the requirement to require the PASS marker per ABI"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Analyze/format expectations and forbidden patterns for qfli_web changes"}

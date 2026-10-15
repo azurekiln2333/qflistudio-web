@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/backend/web-runtime.md", "reason": "Verify the smoke gate still matches the documented per-ABI PASS requirement"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Quality check conventions for the new integration test"}
