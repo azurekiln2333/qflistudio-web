@@ -33,3 +33,9 @@ than claiming a new Linux-native pass.
 - Product runtime/current-file tests passed within the full run (77 passing, three unrelated stale content-contract assertions pending correction). Real Windows Nginx transport/stop/restart tests passed. Scoped analyze is clean.
 - All21 retained-source/archive/binary SHA-256 entries match. Android release and OHOS unsigned release builds succeeded before the final content freeze; final artifacts will be rebuilt. Apple source integration remains unbuilt on Windows.
 - Commit all native sources, scripts, OHOS static archives and NAPI/iOS bridges together so a clean checkout has the complete native delivery. Preserve unrelated historical cross-product audit patches.
+
+## Final metadata review
+
+OHOS AppScope still carried the template vendor `example`. Replace it with
+the existing product brand `QFLI`; retain the WebForge bundle identity and
+version. The final unsigned HAP must contain this metadata.
