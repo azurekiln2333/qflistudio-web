@@ -3,13 +3,14 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
+import 'package:qfli_studio_core/services/web_preview_file.dart';
 
 import 'web_project_config.dart';
 import 'web_runtime_session.dart';
 
 export 'web_runtime_session.dart' show WebRequestEvent;
 
-class WebDevServer implements WebRuntimeSession {
+class WebDevServer implements WebRuntimeSession, WebFilePreviewSession {
   WebDevServer._(this._server, this.config, this._client, this._publicPort);
 
   final HttpServer _server;
@@ -31,6 +32,15 @@ class WebDevServer implements WebRuntimeSession {
   String get engineName => 'WebForge';
   @override
   String get url => 'http://127.0.0.1:$port/';
+
+  /// Maps a project file to the URL this server serves it at. The real
+  /// document root is [config.root], so derived and explicit roots both work.
+  @override
+  String urlForFile(String absolutePath) => webPreviewUrlForFile(
+    baseUrl: url,
+    documentRoot: config.root,
+    filePath: absolutePath,
+  );
   @override
   Stream<WebRequestEvent> get requests => _requests.stream;
   @override

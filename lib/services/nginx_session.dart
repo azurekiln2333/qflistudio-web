@@ -3,25 +3,25 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
+import 'package:qfli_studio_core/services/web_preview_file.dart';
 
+import 'nginx_host.dart';
 import 'web_dev_server.dart';
 import 'web_project_config.dart';
 import 'web_runtime_session.dart';
 
-class NginxSession implements WebRuntimeSession {
+class NginxSession implements WebRuntimeSession, WebFilePreviewSession {
   NginxSession._(
-    this._process,
+    this._instance,
     this._bridge,
     this._prefix,
-    this._executable,
     this.port,
     this.version,
   );
 
-  final Process _process;
+  final NginxInstance _instance;
   final WebDevServer _bridge;
   final Directory _prefix;
-  final String _executable;
   final int port;
   final String version;
   final _debug = StreamController<String>.broadcast();
@@ -29,6 +29,7 @@ class NginxSession implements WebRuntimeSession {
   final _subscriptions = <StreamSubscription<dynamic>>[];
   Timer? _logTimer;
   int _logOffset = 0;
+  int _errorOffset = 0;
   Future<void>? _logRead;
   bool _exited = false;
   Future<void>? _stopFuture;
@@ -37,6 +38,16 @@ class NginxSession implements WebRuntimeSession {
   String get engineName => 'Nginx $version';
   @override
   String get url => 'http://127.0.0.1:$port/';
+
+  /// Maps a project file to its public URL. The public listener is [url]; the
+  /// real document root belongs to the middleware bridge, so an explicit or
+  /// derived root resolves exactly as the bridge would serve it.
+  @override
+  String urlForFile(String absolutePath) => webPreviewUrlForFile(
+    baseUrl: url,
+    documentRoot: _bridge.config.root,
+    filePath: absolutePath,
+  );
   @override
   Stream<String> get debugStream => _debug.stream;
   @override
@@ -46,15 +57,19 @@ class NginxSession implements WebRuntimeSession {
     String projectPath, {
     required String executable,
     WebProjectConfig? configuration,
+  }) => startWithHost(
+    projectPath,
+    host: ProcessNginxHost(executable),
+    configuration: configuration,
+  );
+
+  static Future<NginxSession> startWithHost(
+    String projectPath, {
+    required NginxHost host,
+    WebProjectConfig? configuration,
   }) async {
     final config = configuration ?? await WebProjectConfig.load(projectPath);
-    final info = await _runCommand(executable, ['-v']);
-    final version = RegExp(
-      r'nginx/(\d+\.\d+\.\d+)',
-    ).firstMatch('${info.stderr}')?.group(1);
-    if (info.exitCode != 0 || version == null) {
-      throw StateError('无法确认 Nginx 运行文件：${info.stderr}');
-    }
+    final version = await host.version();
     final prefix = await Directory.systemTemp.createTemp('webforge-nginx-');
     WebDevServer? bridge;
     NginxSession? session;
@@ -90,30 +105,9 @@ class NginxSession implements WebRuntimeSession {
       await File(
         p.join(prefix.path, 'nginx.conf'),
       ).writeAsString(_configuration(config, bridge.port, port, token));
-      final arguments = [
-        '-p',
-        '${prefix.path}${p.separator}',
-        '-c',
-        'nginx.conf',
-      ];
-      final check = await _runCommand(executable, [
-        ...arguments,
-        '-t',
-      ], workingDirectory: prefix.path);
-      if (check.exitCode != 0) throw StateError('Nginx 配置检查失败：${check.stderr}');
-      final process = await Process.start(
-        executable,
-        arguments,
-        workingDirectory: prefix.path,
-      );
-      session = NginxSession._(
-        process,
-        bridge,
-        prefix,
-        executable,
-        port,
-        version,
-      );
+      await host.validate(prefix);
+      final instance = await host.start(prefix);
+      session = NginxSession._(instance, bridge, prefix, port, version);
       session._listen();
       await session._waitUntilReady(token);
       return session;
@@ -130,7 +124,7 @@ class NginxSession implements WebRuntimeSession {
 
   void _listen() {
     _subscriptions.add(_bridge.debugStream.listen(_emit));
-    for (final stream in [_process.stdout, _process.stderr]) {
+    for (final stream in _instance.output) {
       _subscriptions.add(
         stream
             .transform(const Utf8Decoder(allowMalformed: true))
@@ -143,44 +137,26 @@ class NginxSession implements WebRuntimeSession {
       (_) => unawaited(_readAccessLog()),
     );
     unawaited(
-      _process.exitCode.then((code) {
-        _exited = true;
-        if (_stopFuture == null) {
-          _emit('Nginx 已停止（退出码 $code）');
-          unawaited(stop());
-        }
-      }),
+      _instance.exitCode.then(
+        (code) {
+          _exited = true;
+          if (_stopFuture == null) {
+            _emit('Nginx 已停止（退出码 $code）');
+            unawaited(stop());
+          }
+        },
+        onError: (Object error, StackTrace stack) {
+          _emit('Nginx 状态检查失败：$error');
+          unawaited(
+            stop().catchError((Object error) => _emit('Nginx 停止失败：$error')),
+          );
+        },
+      ),
     );
   }
 
   void _emit(String line) {
     if (!_debug.isClosed) _debug.add(line);
-  }
-
-  static Future<ProcessResult> _runCommand(
-    String executable,
-    List<String> arguments, {
-    String? workingDirectory,
-    Duration timeout = const Duration(seconds: 5),
-  }) async {
-    final process = await Process.start(
-      executable,
-      arguments,
-      workingDirectory: workingDirectory,
-    );
-    final output = Future.wait<Object>([
-      process.exitCode,
-      process.stdout.transform(const Utf8Decoder(allowMalformed: true)).join(),
-      process.stderr.transform(const Utf8Decoder(allowMalformed: true)).join(),
-    ]);
-    try {
-      final result = await output.timeout(timeout);
-      return ProcessResult(process.pid, result[0] as int, result[1], result[2]);
-    } catch (_) {
-      process.kill(ProcessSignal.sigkill);
-      await output;
-      rethrow;
-    }
   }
 
   Future<void> _waitUntilReady(String token) async {
@@ -215,7 +191,33 @@ class NginxSession implements WebRuntimeSession {
   Future<void> _readAccessLog() =>
       _logRead ??= _readLog().whenComplete(() => _logRead = null);
 
+  Future<void> _readErrorLog() async {
+    RandomAccessFile? handle;
+    try {
+      final file = File(p.join(_prefix.path, 'error.log'));
+      if (!await file.exists()) return;
+      handle = await file.open();
+      final length = await handle.length();
+      if (length < _errorOffset) _errorOffset = 0;
+      await handle.setPosition(_errorOffset);
+      final bytes = await handle.read((length - _errorOffset).clamp(0, 65536));
+      final newline = bytes.lastIndexOf(10);
+      if (newline < 0) return;
+      _errorOffset += newline + 1;
+      for (final line in const LineSplitter().convert(
+        utf8.decode(bytes.sublist(0, newline + 1), allowMalformed: true),
+      )) {
+        _emit('[nginx] $line');
+      }
+    } on IOException {
+      // The native worker may still be opening its diagnostic file.
+    } finally {
+      await handle?.close();
+    }
+  }
+
   Future<void> _readLog() async {
+    await _readErrorLog();
     RandomAccessFile? handle;
     try {
       final file = File(p.join(_prefix.path, 'access.log'));
@@ -258,28 +260,10 @@ class NginxSession implements WebRuntimeSession {
 
   Future<void> _stop() async {
     _logTimer?.cancel();
+    await _instance.stop();
     try {
-      if (!_exited) {
-        await _runCommand(
-          _executable,
-          [
-            '-p',
-            '${_prefix.path}${p.separator}',
-            '-c',
-            'nginx.conf',
-            '-s',
-            'stop',
-          ],
-          workingDirectory: _prefix.path,
-          timeout: const Duration(seconds: 3),
-        );
-      }
-      await _process.exitCode.timeout(const Duration(seconds: 3));
-    } catch (_) {
-      _process.kill(ProcessSignal.sigkill);
-      await _process.exitCode;
-    } finally {
       await _bridge.stop();
+    } finally {
       await _readAccessLog();
       for (final subscription in _subscriptions) {
         await subscription.cancel();

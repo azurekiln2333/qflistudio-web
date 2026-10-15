@@ -6,17 +6,15 @@ import {
   MethodCall,
   MethodResult,
 } from '@ohos/flutter_ohos';
-import { authentication } from '@kit.AccountKit';
 import { systemShare } from '@kit.ShareKit';
 import { common, Want, ConfigurationConstant } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { fileIo } from '@kit.CoreFileKit';
 import { GeneratedPluginRegistrant } from '../plugins/GeneratedPluginRegistrant';
 import { handlePickerCall, isPickerMethod } from './PickerBridge';
+import { configureNginxChannel, stopActiveNginx } from './NginxBridge';
 
 const CHANNEL_PLATFORM = 'qflistudio/platform';
-const CHANNEL_HUAWEI = 'qflistudio/huawei_account';
 
 export default class EntryAbility extends FlutterAbility {
   onWindowStageCreate(windowStage: window.WindowStage): void {
@@ -37,6 +35,10 @@ export default class EntryAbility extends FlutterAbility {
   configureFlutterEngine(flutterEngine: FlutterEngine) {
     super.configureFlutterEngine(flutterEngine)
     GeneratedPluginRegistrant.registerWith(flutterEngine)
+    // Native Nginx runs in-process through the embedded lifecycle ABI on
+    // HarmonyOS; the standalone executableBinaryPaths form is rejected by
+    // bm install on HarmonyOS 7.0.
+    configureNginxChannel(flutterEngine)
 
     const abilityContext = this.context as common.UIAbilityContext;
 
@@ -47,14 +49,6 @@ export default class EntryAbility extends FlutterAbility {
     );
     platformChannel.setMethodCallHandler({
       onMethodCall(call: MethodCall, result: MethodResult): void {
-        if (call.method === 'nginxPath') {
-          const libraryDir = abilityContext.applicationInfo.nativeLibraryPath;
-          const absoluteDir = libraryDir.startsWith('/')
-            ? libraryDir : `${abilityContext.bundleCodeDir}/${libraryDir}`;
-          const executable = `${absoluteDir}/libnginx_exec.so`;
-          result.success(fileIo.accessSync(executable) ? executable : null);
-          return;
-        }
         if (call.method === 'openUrl') {
           const url = call.argument('url') as string;
           const want: Want = {
@@ -95,48 +89,13 @@ export default class EntryAbility extends FlutterAbility {
       },
     });
 
-    // 华为账号（Account Kit v4 / API 11）：
-    // AuthorizationWithHuaweiIDRequest -> executeRequest -> authorizationCode，
-    // authorizationCode 交给服务端换取 token / userinfo。
-    const huaweiChannel = new MethodChannel(
-      flutterEngine.dartExecutor.getBinaryMessenger(),
-      CHANNEL_HUAWEI,
-    );
-    huaweiChannel.setMethodCallHandler({
-      onMethodCall(call: MethodCall, result: MethodResult): void {
-        if (call.method === 'login') {
-          try {
-            const provider = new authentication.HuaweiIDProvider();
-            const request: authentication.AuthorizationWithHuaweiIDRequest =
-              provider.createAuthorizationWithHuaweiIDRequest();
-            request.scopes = ['openid'];
-            request.permissions = [];
+  }
 
-            const controller =
-              new authentication.AuthenticationController(abilityContext);
-            controller.executeRequest(request)
-              .then((response: authentication.AuthenticationResponse) => {
-                const authResponse =
-                  response as authentication.AuthorizationWithHuaweiIDResponse;
-                const code: string =
-                  authResponse.data?.authorizationCode ?? '';
-                if (code.length > 0) {
-                  result.success(code);
-                } else {
-                  result.error('HUAWEI_LOGIN_EMPTY', '未获取到授权码', null);
-                }
-              })
-              .catch((err: BusinessError) => {
-                result.error('HUAWEI_LOGIN_FAILED', `${err.code}: ${err.message}`, null);
-              });
-          } catch (e) {
-            const err = e as BusinessError;
-            result.error('HUAWEI_LOGIN_ERROR', `${err.code}: ${err.message}`, null);
-          }
-        } else {
-          result.notImplemented();
-        }
-      },
-    });
+  onDestroy(): void {
+    // The embedded Nginx worker owns a pthread; stop the active session before
+    // the ability (and its engine) is torn down. Dart's own stop/release path
+    // still handles the normal case.
+    stopActiveNginx();
+    super.onDestroy();
   }
 }

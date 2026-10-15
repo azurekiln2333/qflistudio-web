@@ -17,6 +17,13 @@
     "patches_url": "https://github.com/termux/termux-packages/tree/master/packages/nginx",
     "glob_url": "https://github.com/termux/termux-packages/tree/master/packages/libandroid-glob"
   },
+  "embedded_inputs": {
+    "source_version": "1.31.6",
+    "patch": "vendor/nginx/patches/embedded.patch",
+    "abi_header": "native/nginx/embedded/qfli_nginx.h",
+    "ios_minimum": "13.0",
+    "status": "Linux embedded lifecycle verified; Apple build and runtime unverified"
+  },
   "ohos_inputs": {
     "clang_version": "15.0.4",
     "segment_alignment": 16384,

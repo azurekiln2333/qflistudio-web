@@ -1,0 +1,18 @@
+ngx_addon_name=qfli_nginx_embedded
+# The application owns its process; retain only the upstream event/HTTP engine.
+qfli_core_srcs=
+for qfli_source in $CORE_SRCS; do
+    case "$qfli_source" in
+        src/os/unix/ngx_process.c|src/os/unix/ngx_process_cycle.c|\
+        src/os/unix/ngx_daemon.c|src/os/unix/ngx_setproctitle.c) ;;
+        *) qfli_core_srcs="$qfli_core_srcs $qfli_source" ;;
+    esac
+done
+CORE_SRCS="$qfli_core_srcs"
+ngx_module_type=CORE
+ngx_module_name=qfli_nginx_module
+ngx_module_incs="$ngx_addon_dir"
+ngx_module_deps="$ngx_addon_dir/qfli_nginx.h $ngx_addon_dir/qfli_nginx_internal.h"
+ngx_module_srcs="$ngx_addon_dir/qfli_nginx.c"
+ngx_module_libs="-lpthread"
+. auto/module

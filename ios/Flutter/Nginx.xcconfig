@@ -1,0 +1,2 @@
+LIBRARY_SEARCH_PATHS = $(inherited) "$(BUILT_PRODUCTS_DIR)/qfli-nginx"
+OTHER_LDFLAGS = $(inherited) -lqfli_nginx

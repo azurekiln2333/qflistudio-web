@@ -4,6 +4,7 @@ import UIKit
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
+  private var nginxBridge: EmbeddedNginxBridge?
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -16,6 +17,7 @@ import UIKit
     guard let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "WebForgePlatform") else {
       return
     }
+    nginxBridge = EmbeddedNginxBridge(messenger: registrar.messenger())
     let channel = FlutterMethodChannel(
       name: "qflistudio/platform", binaryMessenger: registrar.messenger())
     channel.setMethodCallHandler { call, result in

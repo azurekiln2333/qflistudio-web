@@ -46,12 +46,32 @@ marks itself skipped when no native build exists; a skip is not runtime proof.
 
 ## iOS
 
-The iOS app uses the existing in-process WebForge server for local preview,
-proxying and live reload. It does not claim native Nginx. The upstream process
-lifecycle uses executable launch and signals, which are not available to an iOS
-application. An in-process Nginx port would need separate event-loop and global
-state integration. Explicit Nginx selection therefore reports an unavailable
-runtime rather than selecting a different engine.
+The iOS Runner builds the retained upstream C source as a static archive using
+`scripts/bundle_nginx_ios.sh`, then links `libqfli_nginx.a`. It builds separately
+for each requested arm64/x86_64 device/simulator target and checks every archive
+object's Apple platform before creating the final archive. The source checksum
+is verified before applying the separate `patches/embedded.patch`.
+
+`native/nginx/embedded` owns one pthread running Nginx's single-process event
+engine. It wakes Stop through a socketpair and reclaims connections, HTTP request
+pools, backend state, files and mappings before reporting completion. It does
+not install process signal handlers, redirect host stderr, modify the process
+environment, or launch a child. Sessions use monotonic tokens and are serialized
+until their completed worker is released. `EmbeddedNginxBridge.swift` exposes
+this lifecycle through `qflistudio/nginx`; the shared Dart session preserves
+configuration checks, health-token validation, diagnostics and middleware.
+
+The cross-target configure probes compile and link against the selected iOS SDK;
+type sizes and little endian byte order are checked with target static assertions.
+Numeric runtime probes and the historical Darwin timer bug probe are skipped;
+sendfile and legacy OSAtomic are disabled. No configure probe executes iOS code
+on the macOS build host. Native device verification remains required.
+
+The identical embedded engine passed Linux HTTP/proxy/error/stop checks and
+100 lifecycle cycles under memory sanitizers. The Windows process integration
+and Android application smoke also pass. Xcode, Apple hardware and an iOS
+simulator are unavailable here: Apple compilation, signing and execution remain
+unverified. These Linux results do not establish an iOS runtime pass.
 
 ## Android
 
@@ -87,25 +107,28 @@ patches and C inputs retain LF on Windows checkouts through scoped attributes.
 ## HarmonyOS
 
 ```bash
-bash scripts/build_nginx_ohos.sh arm64-v8a /path/to/openharmony/native
-bash scripts/build_nginx_ohos.sh x86_64 /path/to/openharmony/native
+QFLI_NGINX_BUILD_ROOT=<windows-visible-dir> \
+  bash scripts/build_nginx_embedded.sh ohos <output> \
+  /path/to/openharmony/native <arm64-v8a|x86_64>
 ```
 
-The real upstream source cross-compiles with the OpenHarmony SDK. Outputs go to
-`ohos/entry/libs/<abi>/libnginx_exec.so`. `ohos_socket_compat.h` adapts the SDK's
-`CMSG_NXTHDR` signed comparison without disabling warnings. The SDK's definition
-is in `native/sysroot/usr/include/sys/socket.h`.
+The real upstream source cross-compiles with the OpenHarmony SDK into the
+embedded archive `libqfli_nginx.a`. `ohos/entry/src/main/cpp/CMakeLists.txt`
+links that archive into the NAPI module `libqfli_nginx_napi.so`
+(`externalNativeOptions` with `abiFilters` `arm64-v8a` + `x86_64`),
+`ohos/entry/src/main/ets/entryability/NginxBridge.ets` exposes the
+`qflistudio/nginx` channel, and `EmbeddedNginxHost` drives it.
+`ohos_socket_compat.h` adapts the SDK's `CMSG_NXTHDR` signed comparison without
+disabling warnings. The Windows SDK `clang.exe` needs WSL path translation and a
+Windows-visible build root; `native/nginx/embedded/ohos_cc.sh` handles both.
 
-The API 24 x86_64 phone simulator executed this binary with `-V` from the shell.
-The original application package resolved the library with mode `100644`, and
-`Process.run(..., ['-v'])` returned `Permission denied`. System `echo` execution
-inside the app succeeded. `module.executableBinaryPaths` now declares both
-`libs/<abi>/libnginx_exec.so` paths; the signed dual-ABI HAP retains these entries.
-Application execution after this manifest change is still unverified.
-Automatic selection uses WebForge when this exec permission error occurs;
-explicit Nginx selection reports the error. Further phone/device execution
-integration is required. `childProcessManager.startNativeChildProcess` is
-documented by the local SDK as available on PCs/2-in-1 devices and tablets.
+The standalone `scripts/build_nginx_ohos.sh` (`libnginx_exec.so`) is retained but
+**not shipped**: `module.executableBinaryPaths` made `bm install` fail with
+`9568449 ERR_INSTALL_CHECK_BIN_FILE_FAILED` on a HarmonyOS 7.0 phone, even though
+the ELF was a valid PIE. The signed dual-ABI HAP now installs with no
+executableBinaryPaths, and the in-app smoke passes HTML/CSS/404, native HTTP and
+WebSocket proxying, diagnostics, the native access log, port-conflict, stop,
+restart and `engine: auto` on the real phone. See `VALIDATION.md`.
 
 ## Product Integration
 
@@ -115,8 +138,15 @@ binary is missing or fails startup; it never silently substitutes another engine
 
 Nginx owns the public loopback listener. A private Dart middleware listener
 provides safe project files, SPA fallback, browser diagnostics and live reload.
-Each session validates native configuration with `nginx -t`, forwards native
-access/error logs, and stops the native process and middleware together.
+Each session validates native configuration, forwards native access/error logs,
+and stops the native engine and middleware together. Process hosts use `nginx -t`
+and signals; the iOS host uses the embedded lifecycle ABI.
+
+The embedded addon omits upstream process creation, daemon and process-title
+sources. Its build rejects those objects and checks static archive imports for
+fork/exec/process signals, retaining `undefined-symbols.txt`. Configuration-only
+daemon/master disabling does not make upstream process sources compile on iOS.
+Each build creates a new archive to remove obsolete members from reused outputs.
 
 `HASHES.sha256` covers the retained source, patches, libraries and native binaries:
 
@@ -128,4 +158,4 @@ Mobile runtime claims require device verification in addition to successful
 cross-compilation and packaging. See `VALIDATION.md` for evidence and remaining
 checks. Android x86_64 application execution passed on an API 37 emulator with
 16 KiB memory pages; arm64/32-bit devices remain unverified. iOS native Nginx
-integration is not established.
+build and device execution remain unverified.

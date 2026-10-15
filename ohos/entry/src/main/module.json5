@@ -10,10 +10,6 @@
     ],
     "deliveryWithInstall": true,
     "installationFree": false,
-    "executableBinaryPaths": [
-      { "path": "libs/arm64-v8a/libnginx_exec.so" },
-      { "path": "libs/x86_64/libnginx_exec.so" }
-    ],
     "pages": "$profile:main_pages",
     "abilities": [
       {
@@ -25,12 +21,6 @@
         "startWindowIcon": "$media:icon",
         "startWindowBackground": "$color:start_window_background",
         "exported": true,
-        "metadata": [
-          {
-            "name": "client_id",
-            "value": "REPLACE_WITH_AGC_CLIENT_ID"
-          }
-        ],
         "skills": [
           {
             "entities": [

@@ -1,0 +1,19 @@
+diff --git a/src/core/ngx_times.c b/src/core/ngx_times.c
+--- a/src/core/ngx_times.c
++++ b/src/core/ngx_times.c
+@@ -102,6 +102,15 @@
+ 
+     if (tp->sec == sec) {
+         tp->msec = msec;
++        /*
++         * Keep ngx_cached_time consistent with the live slot. ngx_time_init()
++         * points ngx_cached_time at slot 0 without resetting the slot cursor,
++         * so when the embedded engine runs a second cycle in the same second
++         * this early return would leave ngx_cached_time on the zeroed slot and
++         * ngx_time() would report 0. A zero ngx_time() equals the zeroed
++         * access-log disk_full_time, so the log handler drops every line.
++         */
++        ngx_cached_time = tp;
+         ngx_unlock(&ngx_time_lock);
+         return;
+     }

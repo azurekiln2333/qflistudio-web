@@ -1,0 +1,659 @@
+diff --git a/auto/endianness b/auto/endianness
+--- a/auto/endianness
++++ b/auto/endianness
+@@ -16,6 +16,9 @@
+ cat << END > $NGX_AUTOTEST.c
+ 
+ int main(void) {
++#if $QFLI_NGINX_IOS
++    _Static_assert(__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__, "iOS byte order mismatch");
++#endif
+     int i = 0x11223344;
+     char *p;
+ 
+@@ -32,7 +35,7 @@
+ eval "$ngx_test >> $NGX_AUTOCONF_ERR 2>&1"
+ 
+ if [ -x $NGX_AUTOTEST ]; then
+-    if $NGX_AUTOTEST >/dev/null 2>&1; then
++    if [ "${QFLI_NGINX_IOS:-0}" = 1 ] || $NGX_AUTOTEST >/dev/null 2>&1; then
+         echo " little endian"
+         have=NGX_HAVE_LITTLE_ENDIAN . auto/have
+     else
+diff --git a/auto/feature b/auto/feature
+--- a/auto/feature
++++ b/auto/feature
+@@ -5,6 +5,25 @@
+ 
+ echo $ngx_n "checking for $ngx_feature ...$ngx_c"
+ 
++if [ "${QFLI_NGINX_IOS:-0}" = 1 ]; then
++    case "$ngx_feature_run" in
++        yes) ngx_feature_run=no ;;
++        value|bug)
++            # Numeric runtime probes cannot be executed on the cross target.
++            echo " skipped for iOS cross target"
++            ngx_found=no
++            return
++        ;;
++    esac
++    case "$ngx_feature_name" in
++        NGX_HAVE_SENDFILE|NGX_DARWIN_ATOMIC)
++            echo " disabled for the portable embedded event engine"
++            ngx_found=no
++            return
++        ;;
++    esac
++fi
++
+ cat << END >> $NGX_AUTOCONF_ERR
+ 
+ ----------------------------------------
+diff --git a/auto/types/sizeof b/auto/types/sizeof
+--- a/auto/types/sizeof
++++ b/auto/types/sizeof
+@@ -14,6 +14,14 @@
+ 
+ ngx_size=
+ 
++if [ "${QFLI_NGINX_IOS:-0}" = 1 ]; then
++    case "$ngx_type" in
++        int|sig_atomic_t|pid_t|ino_t|nlink_t) ngx_size=4 ;;
++        long|"long long"|"void *"|size_t|off_t|time_t|rlim_t) ngx_size=8 ;;
++        *) echo "Unsupported iOS ABI type: $ngx_type" >&2; exit 1 ;;
++    esac
++fi
++
+ cat << END > $NGX_AUTOTEST.c
+ 
+ #include <sys/types.h>
+@@ -25,6 +33,10 @@
+ $NGX_INCLUDE_INTTYPES_H
+ $NGX_INCLUDE_AUTO_CONFIG_H
+ 
++#if $QFLI_NGINX_IOS
++_Static_assert(sizeof($ngx_type) == $ngx_size, "iOS ABI size mismatch");
++#endif
++
+ int main(void) {
+     printf("%d", (int) sizeof($ngx_type));
+     return 0;
+@@ -40,7 +52,9 @@
+ 
+ 
+ if [ -x $NGX_AUTOTEST ]; then
+-    ngx_size=`$NGX_AUTOTEST`
++    if [ "${QFLI_NGINX_IOS:-0}" != 1 ]; then
++        ngx_size=`$NGX_AUTOTEST`
++    fi
+     echo " $ngx_size bytes"
+ fi
+ 
+diff --git a/src/core/nginx.c b/src/core/nginx.c
+--- a/src/core/nginx.c
++++ b/src/core/nginx.c
+@@ -11,7 +11,6 @@
+ 
+ 
+ static void ngx_show_version_info(void);
+-static ngx_int_t ngx_add_inherited_sockets(ngx_cycle_t *cycle);
+ static void ngx_cleanup_environment(void *data);
+ static void ngx_cleanup_environment_variable(void *data);
+ static ngx_int_t ngx_get_options(int argc, char *const *argv);
+@@ -197,20 +196,29 @@ static char **ngx_os_environ;
+ 
+ 
+ int ngx_cdecl
+-main(int argc, char *const *argv)
++qfli_nginx_main(int argc, char *const *argv)
+ {
+     ngx_buf_t        *b;
+     ngx_log_t        *log;
+     ngx_uint_t        i;
+-    ngx_cycle_t      *cycle, init_cycle;
++    ngx_cycle_t      *cycle;
++    static ngx_cycle_t init_cycle;
++    static int       errors_initialized;
+     ngx_conf_dump_t  *cd;
+-    ngx_core_conf_t  *ccf;
+ 
+-    ngx_debug_init();
++    ngx_show_help = ngx_show_version = ngx_show_configure = 0;
++    ngx_prefix = ngx_error_log = ngx_conf_file = ngx_conf_params = NULL;
++    ngx_signal = NULL;
++    ngx_test_config = ngx_dump_config = ngx_quiet_mode = 0;
++    ngx_terminate = ngx_quit = ngx_exiting = ngx_reconfigure = ngx_reopen = 0;
++    ngx_inherited = ngx_daemonized = 0;
++    ngx_process = NGX_PROCESS_SINGLE;
++    ngx_use_stderr = 1;
+ 
+-    if (ngx_strerror_init() != NGX_OK) {
++    if (!errors_initialized && ngx_strerror_init() != NGX_OK) {
+         return 1;
+     }
++    errors_initialized = 1;
+ 
+     if (ngx_get_options(argc, argv) != NGX_OK) {
+         return 1;
+@@ -253,6 +265,7 @@
+     ngx_memzero(&init_cycle, sizeof(ngx_cycle_t));
+     init_cycle.log = log;
+     ngx_cycle = &init_cycle;
++    qfli_nginx_track_cycle(&init_cycle);
+ 
+     init_cycle.pool = ngx_create_pool(1024, log);
+     if (init_cycle.pool == NULL) {
+@@ -285,10 +298,6 @@
+ 
+     ngx_slab_sizes_init();
+ 
+-    if (ngx_add_inherited_sockets(&init_cycle) != NGX_OK) {
+-        return 1;
+-    }
+-
+ #if (NGX_CONTROL_API)
+     ngx_control_preinit();
+ #endif
+@@ -306,6 +315,8 @@
+ 
+         return 1;
+     }
++    qfli_nginx_track_cycle(cycle);
++    ngx_cycle = cycle;
+ 
+     if (ngx_test_config) {
+         if (!ngx_quiet_mode) {
+@@ -333,77 +344,7 @@
+         return 0;
+     }
+ 
+-    if (ngx_signal) {
+-        return ngx_signal_process(cycle, ngx_signal);
+-    }
+-
+-    ngx_os_status(cycle->log);
+-
+-    ngx_cycle = cycle;
+-
+-    ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
+-
+-    if (ccf->master && ngx_process == NGX_PROCESS_SINGLE) {
+-        ngx_process = NGX_PROCESS_MASTER;
+-    }
+-
+-#if !(NGX_WIN32)
+-
+-    if (ngx_init_signals(cycle->log) != NGX_OK) {
+-        return 1;
+-    }
+-
+-    if (!ngx_inherited && ccf->daemon) {
+-        if (ngx_daemon(cycle->log) != NGX_OK) {
+-            return 1;
+-        }
+-
+-        ngx_daemonized = 1;
+-    }
+-
+-    if (ngx_inherited) {
+-        ngx_daemonized = 1;
+-    }
+-
+-#endif
+-
+-#if (NGX_CONTROL_API)
+-    if (ngx_process == NGX_PROCESS_SINGLE) {
+-        ngx_log_error(NGX_LOG_WARN, cycle->log, 0,
+-                      "control API unavailable in single process mode");
+-
+-    } else {
+-        if (ngx_control_init(ngx_control_addr) != NGX_OK) {
+-            return 1;
+-        }
+-    }
+-#endif
+-
+-    if (ngx_create_pidfile(&ccf->pid, cycle->log) != NGX_OK) {
+-        return 1;
+-    }
+-
+-    if (ngx_log_redirect_stderr(cycle) != NGX_OK) {
+-        return 1;
+-    }
+-
+-    if (log->file->fd != ngx_stderr) {
+-        if (ngx_close_file(log->file->fd) == NGX_FILE_ERROR) {
+-            ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
+-                          ngx_close_file_n " built-in log failed");
+-        }
+-    }
+-
+-    ngx_use_stderr = 0;
+-
+-    if (ngx_process == NGX_PROCESS_SINGLE) {
+-        ngx_single_process_cycle(cycle);
+-
+-    } else {
+-        ngx_master_process_cycle(cycle);
+-    }
+-
+-    return 0;
++    return qfli_nginx_run_cycle(cycle);
+ }
+ 
+ 
+@@ -478,66 +419,6 @@
+ }
+ 
+ 
+-static ngx_int_t
+-ngx_add_inherited_sockets(ngx_cycle_t *cycle)
+-{
+-    u_char           *p, *v, *inherited;
+-    ngx_int_t         s;
+-    ngx_listening_t  *ls;
+-
+-    inherited = (u_char *) getenv(NGINX_VAR);
+-
+-    if (inherited == NULL) {
+-        return NGX_OK;
+-    }
+-
+-    ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0,
+-                  "using inherited sockets from \"%s\"", inherited);
+-
+-    if (ngx_array_init(&cycle->listening, cycle->pool, 10,
+-                       sizeof(ngx_listening_t))
+-        != NGX_OK)
+-    {
+-        return NGX_ERROR;
+-    }
+-
+-    for (p = inherited, v = p; *p; p++) {
+-        if (*p == ':' || *p == ';') {
+-            s = ngx_atoi(v, p - v);
+-            if (s == NGX_ERROR) {
+-                ngx_log_error(NGX_LOG_EMERG, cycle->log, 0,
+-                              "invalid socket number \"%s\" in " NGINX_VAR
+-                              " environment variable, ignoring the rest"
+-                              " of the variable", v);
+-                break;
+-            }
+-
+-            v = p + 1;
+-
+-            ls = ngx_array_push(&cycle->listening);
+-            if (ls == NULL) {
+-                return NGX_ERROR;
+-            }
+-
+-            ngx_memzero(ls, sizeof(ngx_listening_t));
+-
+-            ls->fd = (ngx_socket_t) s;
+-            ls->inherited = 1;
+-        }
+-    }
+-
+-    if (v != p) {
+-        ngx_log_error(NGX_LOG_EMERG, cycle->log, 0,
+-                      "invalid socket number \"%s\" in " NGINX_VAR
+-                      " environment variable, ignoring", v);
+-    }
+-
+-    ngx_inherited = 1;
+-
+-    return ngx_set_inherited_sockets(cycle);
+-}
+-
+-
+ char **
+ ngx_set_environment(ngx_cycle_t *cycle, ngx_uint_t *last)
+ {
+@@ -995,41 +876,10 @@
+ static ngx_int_t
+ ngx_save_argv(ngx_cycle_t *cycle, int argc, char *const *argv)
+ {
+-#if (NGX_FREEBSD)
+-
+-    ngx_os_argv = (char **) argv;
++    /* Embedded options are owned by the worker until its cycle is destroyed. */
++    ngx_os_argv = ngx_argv = (char **) argv;
+     ngx_argc = argc;
+-    ngx_argv = (char **) argv;
+-
+-#else
+-    size_t     len;
+-    ngx_int_t  i;
+-
+-    ngx_os_argv = (char **) argv;
+-    ngx_argc = argc;
+-
+-    ngx_argv = ngx_alloc((argc + 1) * sizeof(char *), cycle->log);
+-    if (ngx_argv == NULL) {
+-        return NGX_ERROR;
+-    }
+-
+-    for (i = 0; i < argc; i++) {
+-        len = ngx_strlen(argv[i]) + 1;
+-
+-        ngx_argv[i] = ngx_alloc(len, cycle->log);
+-        if (ngx_argv[i] == NULL) {
+-            return NGX_ERROR;
+-        }
+-
+-        (void) ngx_cpystrn((u_char *) ngx_argv[i], (u_char *) argv[i], len);
+-    }
+-
+-    ngx_argv[i] = NULL;
+-
+-#endif
+-
+     ngx_os_environ = environ;
+-
+     return NGX_OK;
+ }
+ 
+diff --git a/src/core/ngx_core.h b/src/core/ngx_core.h
+--- a/src/core/ngx_core.h
++++ b/src/core/ngx_core.h
+@@ -124,4 +124,6 @@
+ #define NGX_DISABLE_SYMLINKS_NOTOWNER   2
+ #endif
+ 
++#include <qfli_nginx_internal.h>
++
+ #endif /* _NGX_CORE_H_INCLUDED_ */
+diff --git a/src/core/ngx_cycle.c b/src/core/ngx_cycle.c
+--- a/src/core/ngx_cycle.c
++++ b/src/core/ngx_cycle.c
+@@ -39,7 +39,6 @@
+ ngx_init_cycle(ngx_cycle_t *old_cycle)
+ {
+     void                *rv, *data;
+-    char               **senv;
+     ngx_uint_t           i, n;
+     ngx_log_t           *log;
+     ngx_time_t          *tp;
+@@ -54,7 +53,7 @@
+     ngx_core_module_t   *module;
+     char                 hostname[NGX_MAXHOSTNAMELEN];
+ 
+-    ngx_timezone_update();
++    /* Do not mutate the host timezone or environment while it is running. */
+ 
+     /* force localtime update with a new timezone */
+ 
+@@ -248,7 +247,6 @@
+     }
+ 
+ 
+-    senv = environ;
+ 
+ 
+     ngx_memzero(&conf, sizeof(ngx_conf_t));
+@@ -278,13 +276,11 @@
+ #endif
+ 
+     if (ngx_conf_param(&conf) != NGX_CONF_OK) {
+-        environ = senv;
+         ngx_destroy_cycle_pools(&conf);
+         return NULL;
+     }
+ 
+     if (ngx_conf_parse(&conf, &cycle->conf_file) != NGX_CONF_OK) {
+-        environ = senv;
+         ngx_destroy_cycle_pools(&conf);
+         return NULL;
+     }
+@@ -306,7 +302,6 @@
+                                   cycle->conf_ctx[cycle->modules[i]->index])
+                 == NGX_CONF_ERROR)
+             {
+-                environ = senv;
+                 ngx_destroy_cycle_pools(&conf);
+                 return NULL;
+             }
+@@ -319,6 +314,12 @@
+ 
+     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
+ 
++    if (ccf->master || ccf->daemon || ccf->timer_resolution || ccf->debug_points) {
++        ngx_log_error(NGX_LOG_EMERG, log, 0,
++                      "embedded Nginx requires daemon/master off and no process timers/debug points");
++        goto failed;
++    }
++
+     if (ngx_test_config) {
+ 
+         if (ngx_create_pidfile(&ccf->pid, log) != NGX_OK) {
+@@ -647,8 +648,7 @@
+     pool->log = cycle->log;
+ 
+     if (ngx_init_modules(cycle) != NGX_OK) {
+-        /* fatal */
+-        exit(1);
++        goto failed;
+     }
+ 
+ 
+@@ -836,7 +836,7 @@
+         old_ccf = (ngx_core_conf_t *) ngx_get_conf(old_cycle->conf_ctx,
+                                                    ngx_core_module);
+         if (old_ccf->environment) {
+-            environ = old_ccf->environment;
++            /* Embedded mode never installs a process environment. */
+         }
+     }
+ 
+diff --git a/src/core/ngx_log.c b/src/core/ngx_log.c
+--- a/src/core/ngx_log.c
++++ b/src/core/ngx_log.c
+@@ -67,8 +67,6 @@
+ };
+ 
+ 
+-static ngx_log_t        ngx_log;
+-static ngx_open_file_t  ngx_log_file;
+ ngx_uint_t              ngx_use_stderr = 1;
+ 
+ 
+@@ -180,7 +178,9 @@
+             goto next;
+         }
+ 
+-        n = ngx_write_fd(log->file->fd, errstr, p - errstr);
++        n = log->file->fd == ngx_stderr
++            ? qfli_nginx_write_error(errstr, p - errstr)
++            : ngx_write_fd(log->file->fd, errstr, p - errstr);
+ 
+         if (n == -1 && ngx_errno == NGX_ENOSPC) {
+             log->disk_full_time = ngx_time();
+@@ -206,7 +206,7 @@
+ 
+     (void) ngx_sprintf(msg, "nginx: [%V] ", &err_levels[level]);
+ 
+-    (void) ngx_write_console(ngx_stderr, msg, p - msg);
++    (void) qfli_nginx_write_error(msg, p - msg);
+ }
+ 
+ 
+@@ -280,7 +280,7 @@
+ 
+     ngx_linefeed(p);
+ 
+-    (void) ngx_write_console(ngx_stderr, errstr, p - errstr);
++    (void) qfli_nginx_write_error(errstr, p - errstr);
+ }
+ 
+ 
+@@ -317,84 +317,7 @@
+ ngx_log_t *
+ ngx_log_init(u_char *prefix, u_char *error_log)
+ {
+-    u_char  *p, *name;
+-    size_t   nlen, plen;
+-
+-    ngx_log.file = &ngx_log_file;
+-    ngx_log.log_level = NGX_LOG_NOTICE;
+-
+-    if (error_log == NULL) {
+-        error_log = (u_char *) NGX_ERROR_LOG_PATH;
+-    }
+-
+-    name = error_log;
+-    nlen = ngx_strlen(name);
+-
+-    if (nlen == 0) {
+-        ngx_log_file.fd = ngx_stderr;
+-        return &ngx_log;
+-    }
+-
+-    p = NULL;
+-
+-#if (NGX_WIN32)
+-    if (name[1] != ':') {
+-#else
+-    if (name[0] != '/') {
+-#endif
+-
+-        if (prefix) {
+-            plen = ngx_strlen(prefix);
+-
+-        } else {
+-#ifdef NGX_PREFIX
+-            prefix = (u_char *) NGX_PREFIX;
+-            plen = ngx_strlen(prefix);
+-#else
+-            plen = 0;
+-#endif
+-        }
+-
+-        if (plen) {
+-            name = malloc(plen + nlen + 2);
+-            if (name == NULL) {
+-                return NULL;
+-            }
+-
+-            p = ngx_cpymem(name, prefix, plen);
+-
+-            if (!ngx_path_separator(*(p - 1))) {
+-                *p++ = '/';
+-            }
+-
+-            ngx_cpystrn(p, error_log, nlen + 1);
+-
+-            p = name;
+-        }
+-    }
+-
+-    ngx_log_file.fd = ngx_open_file(name, NGX_FILE_APPEND,
+-                                    NGX_FILE_CREATE_OR_OPEN,
+-                                    NGX_FILE_DEFAULT_ACCESS);
+-
+-    if (ngx_log_file.fd == NGX_INVALID_FILE) {
+-        ngx_log_stderr(ngx_errno,
+-                       "[alert] could not open error log file: "
+-                       ngx_open_file_n " \"%s\" failed", name);
+-#if (NGX_WIN32)
+-        ngx_event_log(ngx_errno,
+-                       "could not open error log file: "
+-                       ngx_open_file_n " \"%s\" failed", name);
+-#endif
+-
+-        ngx_log_file.fd = ngx_stderr;
+-    }
+-
+-    if (p) {
+-        ngx_free(p);
+-    }
+-
+-    return &ngx_log;
++    return qfli_nginx_initial_log();
+ }
+ 
+ 
+diff --git a/src/event/ngx_event.c b/src/event/ngx_event.c
+--- a/src/event/ngx_event.c
++++ b/src/event/ngx_event.c
+@@ -687,6 +687,8 @@
+ 
+         module = cycle->modules[m]->ctx;
+ 
++        /* Retain done even when backend initialization fails partway through. */
++        ngx_event_actions = module->actions;
+         if (module->actions.init(cycle, ngx_timer_resolution) != NGX_OK) {
+             /* fatal */
+             exit(2);
+@@ -798,6 +800,7 @@
+ 
+     cycle->free_connections = next;
+     cycle->free_connection_n = cycle->connection_n;
++    qfli_nginx_connections_ready();
+ 
+     /* for each listening socket */
+ 
+diff --git a/src/http/ngx_http_request.c b/src/http/ngx_http_request.c
+--- a/src/http/ngx_http_request.c
++++ b/src/http/ngx_http_request.c
+@@ -4091,6 +4091,22 @@
+ 
+ 
+ void
++qfli_nginx_close_http(ngx_connection_t *c)
++{
++    ngx_http_log_ctx_t *ctx = c->log->data;
++    if (ctx && ctx->request) {
++        ngx_http_request_t *r = ctx->request->main;
++        /* Keep the request alive while upstream cleanup finalizes its references. */
++        r->count++;
++        ngx_http_terminate_request(r, NGX_HTTP_CLIENT_CLOSED_REQUEST);
++        ngx_http_terminate_handler(r);
++        return;
++    }
++    ngx_http_close_connection(c);
++}
++
++
++void
+ ngx_http_close_connection(ngx_connection_t *c)
+ {
+     ngx_pool_t  *pool;
+diff --git a/src/os/unix/ngx_posix_init.c b/src/os/unix/ngx_posix_init.c
+--- a/src/os/unix/ngx_posix_init.c
++++ b/src/os/unix/ngx_posix_init.c
+@@ -34,23 +34,19 @@
+ ngx_int_t
+ ngx_os_init(ngx_log_t *log)
+ {
+-    ngx_time_t  *tp;
+     ngx_uint_t   n;
+ #if (NGX_HAVE_LEVEL1_DCACHE_LINESIZE)
+     long         size;
+ #endif
+ 
+-#if (NGX_HAVE_OS_SPECIFIC_INIT)
++#if (NGX_HAVE_OS_SPECIFIC_INIT && !NGX_DARWIN)
+     if (ngx_os_specific_init(log) != NGX_OK) {
+         return NGX_ERROR;
+     }
+ #endif
+ 
+-    if (ngx_init_setproctitle(log) != NGX_OK) {
+-        return NGX_ERROR;
+-    }
+-
+     ngx_pagesize = getpagesize();
++    ngx_pagesize_shift = 0;
+ 
+     if (ngx_cacheline_size == 0) {
+         ngx_cacheline_size = NGX_CPU_CACHE_LINE;
+@@ -91,9 +87,6 @@
+     ngx_inherited_nonblocking = 0;
+ #endif
+ 
+-    tp = ngx_timeofday();
+-    srandom(((unsigned) ngx_pid << 16) ^ tp->sec ^ tp->msec);
+-
+     return NGX_OK;
+ }
+ 
