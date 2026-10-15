@@ -10,6 +10,8 @@ import 'package:qfli_studio_core/store/auth_store.dart';
 import 'package:qfli_studio_core/store/project_store.dart';
 import 'package:qfli_studio_core/store/settings_store.dart';
 
+import 'content/webforge_content_repository.dart';
+import 'pages/web_tools_overview.dart';
 import 'pages/web_tools_page.dart';
 import 'services/web_runtime.dart';
 
@@ -31,10 +33,19 @@ const StudioProfile webProfile = StudioProfile(
   supportedFileExtensions: ['.html', '.css', '.js'],
   webPreviewFactory: WebRuntime.start,
   toolsPageBuilder: _buildWebTools,
+  toolsTabBuilder: _buildWebToolsTab,
+  // 教程/示例读 WebForge 自己的离线课程，而不是共享聚合内容。
+  contentRepositoryFactory: WebForgeContentRepository.new,
   entryFileNames: ['index.html', 'src/index.html'],
 );
 
+/// 该页面仍被内核的「内容工具」与编辑器当前文件菜单复用，因此保留。
 Widget _buildWebTools(ProjectStore store) => WebToolsPage(store: store);
+
+/// 工具 tab 的整合 body。设置后内核不再渲染单独的「Web 工具」入口卡片，
+/// 工具入口只剩这一个，避免首页与工具页割裂。
+Widget _buildWebToolsTab(ProjectStore store, VoidCallback onOpenTerminal) =>
+    WebToolsOverview(store: store, onOpenTerminal: onOpenTerminal);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

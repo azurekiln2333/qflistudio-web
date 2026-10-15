@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Checklist to verify against before reporting completion."}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Verify no nested Scaffold, disposed controllers, mounted guards."}
+{"file": ".trellis/tasks/10-15-webforge-offline-ui/prd.md", "reason": "Acceptance criteria for the final check."}
+{"file": ".trellis/tasks/10-15-webforge-offline-ui/design.md", "reason": "Offline gating and integration contract to verify was implemented as designed."}
