@@ -21,6 +21,18 @@ EditorPage(project: project, auth: auth, store: projects, settings: settings,
 
 ## 3. Contracts
 
+- WebForge uses its own `WebForgeContentRepository` and assets under
+  `assets/content/`; never rewrite another product's shared catalog to repair
+  WebForge curriculum. `language` names the subject (`html`, `css`,
+  `javascript`); `type` names the imported executable format. Complete documents
+  containing inline CSS/JavaScript use `type: html` so the default filename is
+  `.html` and both preview engines can serve them immediately. Preserve subject
+  coverage by checking `language`, not by mislabelling the executable format.
+- Every lesson has a runnable complete document, explanation, expected result,
+  concepts, pitfalls and exercises. Browser verification must check concrete
+  DOM/style/console/interaction results per entry, reject external resource
+  requests and prove full lesson/example code correspondence. A marker, any
+  nonempty console output or a parsed stylesheet alone is insufficient.
 - Catalogs use MD3 list rows with titles and summaries. Code is in detail routes.
 - Code blocks provide copy, import to editor and import to project icon buttons
   with localized tooltips. Imports receive the real HomePage stores.
@@ -60,6 +72,9 @@ EditorPage(project: project, auth: auth, store: projects, settings: settings,
   `flutter test --no-pub -d <android-device> integration_test/content_import_test.dart`.
   It uses packaged content, real plugins and files, verifies the active editor
   file, imports to existing projects and requests custom HTML through Nginx.
+  Also import an advanced example from each of the three subjects using its
+  unchanged default filename; assert `.html`, persisted source and HTTP HTML
+  preview through the real runtime.
 - Widget tests evict cached content assets and reinstall the mock handler for
   each test. Pump route transitions before interacting with detail/dialog UI;
   settle and ensure icon buttons are visible before tapping.

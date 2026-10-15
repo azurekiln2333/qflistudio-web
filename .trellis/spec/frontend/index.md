@@ -1,12 +1,7 @@
 # Frontend Development Guidelines
 
-> Best practices for frontend development in this project.
-
----
-
-## Overview
-
-This directory contains guidelines for frontend development. Fill in each file with your project's specific conventions.
+> Guidelines for the Flutter UI owned by `qfli_web`. Shared editor, shell and
+> stores come from `qfli_studio_core`.
 
 ---
 
@@ -14,38 +9,27 @@ This directory contains guidelines for frontend development. Fill in each file w
 
 | Guide | Description | Status |
 |-------|-------------|--------|
-| [Directory Structure](./directory-structure.md) | Module organization and file layout | To fill |
-| [Component Guidelines](./component-guidelines.md) | Component patterns, props, composition | To fill |
-| [Hook Guidelines](./hook-guidelines.md) | Custom hooks, data fetching patterns | To fill |
-| [State Management](./state-management.md) | Local state, global state, server state | To fill |
-| [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | To fill |
-| [Type Safety](./type-safety.md) | Type patterns, validation | To fill |
+| [Directory Structure](./directory-structure.md) | `lib/pages` layout, profile wiring, naming | Implemented |
+| [Component Guidelines](./component-guidelines.md) | Widget structure, props, async guards, a11y | Implemented |
+| [State Management](./state-management.md) | Store injection, local state, config persistence | Implemented |
+| [Quality Guidelines](./quality-guidelines.md) | Widget-test pattern, forbidden patterns, review checklist | Implemented |
 | [Content Imports](./content-import.md) | MD3 catalogs, custom filenames, editor and project imports | Implemented |
-
----
 
 ## Pre-Development Checklist
 
-- For offline catalogs and code imports, read [Content Imports](./content-import.md).
+- New or changed screen → read
+  [Directory Structure](./directory-structure.md) and
+  [Component Guidelines](./component-guidelines.md).
+- Touching stores, selection or persisted project settings → read
+  [State Management](./state-management.md).
+- Offline catalogs and code imports → read
+  [Content Imports](./content-import.md).
 
 ## Quality Check
 
-- Follow the Content Imports widget and Android integration checks when those
-  flows change. Confirm the selected editor file and actual disk contents.
-
----
-
-## How to Fill These Guidelines
-
-For each guideline file:
-
-1. Document your project's **actual conventions** (not ideals)
-2. Include **code examples** from your codebase
-3. List **forbidden patterns** and why
-4. Add **common mistakes** your team has made
-
-The goal is to help AI assistants and new team members understand how YOUR project works.
-
----
-
-**Language**: All documentation should be written in **English**.
+- Run `flutter analyze --no-pub lib test` and the affected widget suites.
+- Verify the persisted result (e.g. `.qfli/web.json`) and the visible editor
+  file, not just that an action was triggered.
+- Terminal/editor-surface changes → read the shared-surface section of
+  [Quality Guidelines](./quality-guidelines.md) and run
+  `flutter test --no-pub --concurrency=1 test/web_terminal_release_test.dart`.

@@ -1,12 +1,8 @@
 # Backend Development Guidelines
 
-> Best practices for backend development in this project.
-
----
-
-## Overview
-
-This directory contains guidelines for backend development. Fill in each file with your project's specific conventions.
+> Guidelines for the Dart services, web runtime and native build/packaging layer
+> of `qfli_web`. This is a Flutter product repository, so "backend" covers the
+> non-UI runtime rather than a server application.
 
 ---
 
@@ -14,34 +10,26 @@ This directory contains guidelines for backend development. Fill in each file wi
 
 | Guide | Description | Status |
 |-------|-------------|--------|
-| [Directory Structure](./directory-structure.md) | Module organization and file layout | To fill |
-| [Database Guidelines](./database-guidelines.md) | ORM patterns, queries, migrations | To fill |
-| [Error Handling](./error-handling.md) | Error types, handling strategies | To fill |
-| [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | To fill |
-| [Logging Guidelines](./logging-guidelines.md) | Structured logging, log levels | To fill |
-| [Web Runtime](./web-runtime.md) | Preview, project settings, proxies, diagnostics, and lifecycle | Implemented |
+| [Directory Structure](./directory-structure.md) | Repository and `lib/services` layout, naming | Implemented |
+| [Error Handling](./error-handling.md) | Error types, validation gate, diagnostics, HTTP status contract | Implemented |
+| [Quality Guidelines](./quality-guidelines.md) | Required checks, forbidden patterns, review checklist | Implemented |
+| [Native Nginx Runtime](./native-runtime.md) | Multi-platform engine build/packaging and platform limits | Implemented |
+| [Web Runtime](./web-runtime.md) | Preview, project settings, proxies, diagnostics, lifecycle contracts | Implemented |
+| [Release Verification](./release-verification.md) | Build modes, native test failures, signing and device evidence | Implemented |
 
 ## Pre-Development Checklist
 
-- For Web preview or tools changes, read [Web Runtime](./web-runtime.md).
+- Serving, preview, proxy or project-config change → read
+  [Web Runtime](./web-runtime.md).
+- Native engine, packaging or platform-runner change → read
+  [Native Nginx Runtime](./native-runtime.md).
+- Any runtime change → read [Error Handling](./error-handling.md) and
+  [Quality Guidelines](./quality-guidelines.md).
 
 ## Quality Check
 
-- Follow the Web Runtime tests and native verification requirements for affected platforms.
-
----
-
-## How to Fill These Guidelines
-
-For each guideline file:
-
-1. Document your project's **actual conventions** (not ideals)
-2. Include **code examples** from your codebase
-3. List **forbidden patterns** and why
-4. Add **common mistakes** your team has made
-
-The goal is to help AI assistants and new team members understand how YOUR project works.
-
----
-
-**Language**: All documentation should be written in **English**.
+- Run `flutter analyze --no-pub lib test` and the affected
+  `flutter test --no-pub --concurrency=1` suites.
+- Verify native claims against real engine behavior and per-platform evidence
+  (see [Native Nginx Runtime](./native-runtime.md)); never advertise Nginx
+  without a packaged, started and stopped real engine.
