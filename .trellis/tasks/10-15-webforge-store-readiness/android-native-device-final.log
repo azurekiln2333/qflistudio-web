@@ -1,0 +1,14 @@
+Error 1 retrieving device properties for OPD2413:
+adb.exe: device 'adb-d361e7a0-gqqQSM' not found
+
+00:00 +0: loading D:/MyNewProjects/qfli_web/integration_test/nginx_runtime_test.dart
+Running Gradle task 'assembleDebug'...
+Warning: SDK processing. This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
+Running Gradle task 'assembleDebug'...                             27.6s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+Installing build\app\outputs\flutter-apk\app-debug.apk...        2,244ms
+00:00 +0: native Nginx runtime smoke passes end to end
+[NGINX_SMOKE] executable=/data/app/~~JYnhj8ThlZiZenkLQLf0pg==/com.azurekiln.qfli.webforge-hwNz38kxZ6Kk77wRnd-Bjw==/lib/arm64/libnginx_exec.so
+[NGINX_SMOKE] PASS HTML CSS 404 proxy WebSocket SSE diagnostics log port-conflict stop restart auto
+00:01 +1: (tearDownAll)
+00:01 +1: All tests passed!

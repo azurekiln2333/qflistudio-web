@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:path/path.dart' as p;
-import 'package:qfli_studio_core/content/asset_content_repository.dart';
 import 'package:qfli_studio_core/content/local_content_adapter.dart';
 import 'package:qfli_studio_core/editor/editor_controller.dart';
 import 'package:qfli_studio_core/editor/editor_page.dart';
@@ -56,7 +55,7 @@ void main() {
       StudioProfile.current = null;
     });
 
-    final repository = AssetContentRepository();
+    final repository = webProfile.contentRepositoryFactory!();
     final tutorial = (await LocalContentAdapter.loadTutorial(
       repository: repository,
       language: 'web',
@@ -90,15 +89,22 @@ void main() {
         );
         await tester.tap(
           find.descendant(
-            of: find.byType(NavigationBar),
+            of: find.byWidgetPredicate(
+              (widget) => widget is NavigationBar || widget is NavigationRail,
+            ),
             matching: find.text(examplePage ? l10n.examples : l10n.tutorial),
           ),
         );
         final title = examplePage ? example.title : lesson.title;
-        await _waitFor(tester, () => find.text(title).evaluate().isNotEmpty);
+        final contentRow = find.widgetWithText(ListTile, title);
+        await _waitFor(tester, () => contentRow.evaluate().isNotEmpty);
         expect(find.byType(CodeSnippet), findsNothing);
         await tester.pumpAndSettle();
-        await tester.tap(find.text(title).first);
+        await tester.tap(contentRow.first);
+        await _waitFor(
+          tester,
+          () => find.byType(CodeSnippet).evaluate().isNotEmpty,
+        );
         await tester.pumpAndSettle();
         final type = examplePage ? example.type : lesson.type;
         final code = examplePage ? example.code : lesson.code;
@@ -109,6 +115,53 @@ void main() {
         expect(projects.projects.any((p) => p.id == opened.id), isTrue);
         existing ??= opened;
       }
+    }
+
+    // Subject and executable file type are separate: CSS and JavaScript
+    // lessons ship complete HTML documents so the default import must remain
+    // previewable without a custom filename or manual entry-file repair.
+    final catalog = await repository.load();
+    for (final subject in ['html', 'css', 'javascript']) {
+      final source = catalog.examples.lastWhere((e) => e.language == subject);
+      final sample = examples.firstWhere((e) => e.id == source.id);
+      final fileName = CodeImportService.suggestedFileName(sample.type);
+      expect(fileName, endsWith('.html'), reason: subject);
+      await tester.pumpWidget(
+        _app(
+          ExampleDetailPage(
+            example: sample,
+            store: projects,
+            auth: auth,
+            settings: settings,
+          ),
+          sequence++,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await _import(
+        tester,
+        intoProject: true,
+        fileName: fileName,
+        keepDefaultFileName: true,
+      );
+      final imported = await _opened(tester, fileName, sample.code);
+      final preview = await WebRuntime.start(imported.path);
+      final client = HttpClient();
+      try {
+        final response = await (await client.getUrl(
+          Uri.parse(preview.url),
+        )).close();
+        expect(response.statusCode, HttpStatus.ok, reason: subject);
+        expect(response.headers.contentType?.mimeType, 'text/html');
+        expect(
+          await utf8.decoder.bind(response).join(),
+          contains('webforge-check'),
+        );
+      } finally {
+        client.close(force: true);
+        await preview.stop();
+      }
+      debugPrint('CONTENT_IMPORT default HTML preview verified: $subject');
     }
 
     // This detail is loaded from the same packaged catalog as the HomePage.
@@ -194,6 +247,7 @@ Future<void> _import(
   required bool intoProject,
   required String fileName,
   Project? target,
+  bool keepDefaultFileName = false,
 }) async {
   final l10n = StudioLocalizations.of(tester.element(find.byType(CodeSnippet)));
   final command = find.byTooltip(
@@ -211,10 +265,16 @@ Future<void> _import(
     await tester.tap(find.text(target.name).last);
     await tester.pumpAndSettle();
   }
-  await tester.enterText(
-    find.byKey(const ValueKey('import-file-name')),
-    fileName,
-  );
+  final nameField = find.byKey(const ValueKey('import-file-name'));
+  if (keepDefaultFileName) {
+    final editable = find.descendant(
+      of: nameField,
+      matching: find.byType(EditableText),
+    );
+    expect(tester.widget<EditableText>(editable).controller.text, fileName);
+  } else {
+    await tester.enterText(nameField, fileName);
+  }
   FocusManager.instance.primaryFocus?.unfocus();
   await tester.pumpAndSettle();
   final confirm = find.byKey(const ValueKey('import-code-confirm'));

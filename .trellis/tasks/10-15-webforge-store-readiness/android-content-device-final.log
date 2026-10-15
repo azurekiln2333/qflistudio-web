@@ -1,0 +1,17 @@
+Error 1 retrieving device properties for OPD2413:
+adb.exe: device 'adb-d361e7a0-gqqQSM' not found
+
+00:00 +0: loading D:/MyNewProjects/qfli_web/integration_test/content_import_test.dart
+Running Gradle task 'assembleDebug'...                             16.8s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+Installing build\app\outputs\flutter-apk\app-debug.apk...         257.8s
+00:00 +0: bundled content imports, opens custom files and previews HTML
+CONTENT_IMPORT lesson editor
+CONTENT_IMPORT lesson project
+CONTENT_IMPORT example editor
+CONTENT_IMPORT example project
+CONTENT_IMPORT default HTML preview verified: html
+CONTENT_IMPORT default HTML preview verified: css
+CONTENT_IMPORT default HTML preview verified: javascript
+00:38 +1: (tearDownAll)
+00:38 +1: All tests passed!
