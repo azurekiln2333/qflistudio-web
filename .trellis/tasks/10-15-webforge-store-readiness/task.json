@@ -1,0 +1,29 @@
+{
+  "id": "webforge-store-readiness",
+  "name": "webforge-store-readiness",
+  "title": "WebForge store readiness audit and delivery",
+  "description": "Audit both terminals, offline release surface, five-page home, complete product tutorials and examples, and verify OHOS and Android builds and connected devices.",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "lichengyu",
+  "assignee": "lichengyu",
+  "createdAt": "2026-10-15",
+  "completedAt": null,
+  "branch": "main",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "10-15-webforge-content-curriculum",
+    "10-15-webforge-offline-ui"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}
