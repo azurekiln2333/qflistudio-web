@@ -1,0 +1,131 @@
+00:00 +0: loading D:/MyNewProjects/qfli_studio_core/test/offline_editor_gates_test.dart
+00:00 +0: D:/MyNewProjects/qfli_studio_core/test/offline_editor_gates_test.dart: (setUpAll)
+00:00 +0: D:/MyNewProjects/qfli_studio_core/test/offline_editor_gates_test.dart: editor popup offline-only hides Git and cloud pull
+00:00 +1: D:/MyNewProjects/qfli_studio_core/test/offline_editor_gates_test.dart: editor popup networked keeps Git
+00:00 +2: D:/MyNewProjects/qfli_studio_core/test/offline_editor_gates_test.dart: profile settings route offline-only hides the AI assistant section
+00:01 +3: D:/MyNewProjects/qfli_studio_core/test/offline_editor_gates_test.dart: profile settings route networked keeps the AI assistant section
+00:01 +4: D:/MyNewProjects/qfli_studio_core/test/offline_editor_gates_test.dart: (tearDownAll)
+00:01 +4: loading D:/MyNewProjects/qfli_studio_core/test/offline_background_and_shortcuts_test.dart
+00:01 +4: D:/MyNewProjects/qfli_studio_core/test/offline_background_and_shortcuts_test.dart: offline restored account keeps local activity without remote events
+00:01 +5: D:/MyNewProjects/qfli_studio_core/test/offline_background_and_shortcuts_test.dart: offline policy holds an old pending event until online sync
+00:02 +6: D:/MyNewProjects/qfli_studio_core/test/offline_background_and_shortcuts_test.dart: online activity, task refresh, checkin and calendar remain functional
+00:02 +7: D:/MyNewProjects/qfli_studio_core/test/offline_background_and_shortcuts_test.dart: profile refresh respects offlineOnly=true with restored auth
+00:02 +8: D:/MyNewProjects/qfli_studio_core/test/offline_background_and_shortcuts_test.dart: expanded shortcuts respect offlineOnly=true
+00:02 +9: D:/MyNewProjects/qfli_studio_core/test/offline_background_and_shortcuts_test.dart: profile refresh respects offlineOnly=false with restored auth
+00:03 +10: D:/MyNewProjects/qfli_studio_core/test/offline_background_and_shortcuts_test.dart: expanded shortcuts respect offlineOnly=false
+00:03 +11: D:/MyNewProjects/qfli_studio_core/test/offline_background_and_shortcuts_test.dart: sandbox describes the host toolchain without naming a language
+00:03 +12: loading D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart
+00:03 +12: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: (setUpAll)
+00:03 +12: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: real file imports project template determines the destination without changing its entry
+00:03 +13: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: real file imports failed registry writes do not leave a successfully registered project
+00:03 +14: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: real file imports closing a controller during a pending read cannot add or notify a tab
+00:03 +15: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: real file imports customized existing-project import preserves the original entry
+00:03 +16: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: real file imports new projects use a custom entry and remove generated default code
+00:04 +17: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: real file imports default entry imports remain compatible and web companion files survive
+00:04 +18: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: real file imports editor import writes the chosen filename without an unrelated main
+00:04 +19: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: real file imports an unknown type still writes the actual source into a new project
+00:04 +20: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: real file imports invalid basenames cannot create a project or escape its directory
+00:04 +21: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: real file imports non-Java imports preserve valid exact filenames and code
+00:04 +22: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: real file imports conflicts preserve files and explicit replacement changes only the target
+00:04 +23: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: real file imports failed replacement backup preserves the target and removes staging
+00:04 +24: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: real file imports missing, cloud, directory targets and blocked I/O cannot report success
+00:04 +25: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: saved examples default storage persists user edits and loads them once over bundled defaults
+00:04 +26: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: saved examples a disposed example store does not notify after a pending load
+00:04 +27: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: tutorial catalog hides code and detail offers both imports
+00:05 +28: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: example catalog hides code and detail offers both imports
+00:05 +29: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: HomePage lesson imports to editor and opens custom file
+00:07 +30: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: HomePage lesson imports to new project and opens custom file
+00:09 +31: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: HomePage example imports to editor and opens custom file
+00:10 +32: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: HomePage example imports to new project and opens custom file
+00:12 +33: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: existing-project import activates the new file over a restored session
+00:13 +34: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: replacement rejection keeps the file and confirmation imports and opens it
+00:15 +35: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: invalid filename keeps the dialog open without creating a project
+00:15 +36: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: editor import cancellation has no file or navigation
+00:16 +37: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: project import cancellation has no file or navigation
+00:16 +38: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: real I/O failure remains an error and does not open an editor
+00:16 +39: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: unreadable saved examples retain the bundled catalog
+00:17 +40: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: failed editor registration removes its imported files
+00:18 +41: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: editable examples retain save and reset controls
+00:18 +42: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: HomePage save survives detail reopening and a newly created HomePage
+00:19 +43: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: save I/O failure preserves the saved value and allows another attempt
+00:19 +44: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: lesson catalog, detail and dialog fit 320px with 2x text
+00:20 +45: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: example catalog, detail and dialog fit 320px with 2x text
+00:20 +46: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: lesson catalog, detail and dialog fit 1280px with 2x text
+00:20 +47: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: example catalog, detail and dialog fit 1280px with 2x text
+00:20 +48: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: long read-only code is kept in a bounded scroll surface
+00:20 +49: D:/MyNewProjects/qfli_studio_core/test/content_code_import_test.dart: (tearDownAll)
+00:20 +49: loading D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart
+00:21 +49: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: empty prompt begins at the top of the terminal scrollback
+00:22 +50: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: success preserves stdout and returns the next prompt silently
+00:22 +51: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: preparation and running hide the prompt until streams drain
+00:22 +52: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: nonzero exit 7 preserves diagnostics and its integer
+00:22 +53: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: nonzero exit 127 preserves diagnostics and its integer
+00:22 +54: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: long output and the prompt scroll together in a short pane
+00:23 +55: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: stream output and exit status stay with their source session
+00:23 +56: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: session tabs support keyboard selection and accessible close
+00:23 +57: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: the stop action cancels an attached run and restores input
+00:23 +58: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: Enter executes a command and history stays with its session
+00:24 +59: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: Return keeps the input focused so the keyboard stays up
+00:24 +60: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: a hardware Return key submits the command
+00:24 +61: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: a quiet successful command still bounds the transcript
+00:26 +62: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: portable command errors keep cwd and stay quiet on success
+00:26 +63: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: ls lists real files in the session directory
+00:26 +64: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: clear empties the transcript but keeps the session and cwd
+00:26 +65: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: tapping the canvas focuses the input
+00:26 +66: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: tapping the canvas while focused keeps the input focused
+00:26 +67: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: long output scrolls back while a stream still runs
+00:26 +68: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: session switches retain each scroll offset
+00:27 +69: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: interruptActive forwards to the active session backend
+00:27 +70: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: the Stop control cancels a running local command
+00:27 +71: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: partial output stays on its own line across commands
+00:27 +72: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: double click on old output does not focus or jump to bottom
+00:27 +73: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: scrolling to the prompt can still focus the input
+00:28 +74: loading D:/MyNewProjects/qfli_studio_core/test/terminal_manager_delegate_test.dart
+00:28 +74: D:/MyNewProjects/qfli_studio_core/test/terminal_manager_delegate_test.dart: app terminal sessions receive the profile delegate
+00:30 +75: loading D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart
+00:31 +75: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: sandbox root by entry point editor entry starts in the project and can cd back to app data
+00:31 +76: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: sandbox root by entry point app entry starts at the app data directory
+00:31 +77: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: sandbox cannot escape the root cd .. above the root is rejected and cwd is kept
+00:31 +78: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: sandbox file commands and options ls -a / cat / mkdir -p / touch / rm work on real files
+00:31 +79: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: sandbox file commands and options cp and mv operate within the sandbox
+00:31 +80: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: delegate and unsupported commands a delegate handles java/javac and its output is streamed
+00:31 +81: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: delegate and unsupported commands delegate exit status is recorded and nonzero is visible
+00:31 +82: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: delegate and unsupported commands unknown system command without a delegate reports honestly
+00:31 +83: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: delegate and unsupported commands an unclaimed command with a delegate still reports honestly
+00:31 +84: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: compound shell syntax is refused by construct, not by name a pipeline names the pipeline, not the first token
+00:31 +85: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: compound shell syntax is refused by construct, not by name output redirection names redirection
+00:31 +86: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: compound shell syntax is refused by construct, not by name input redirection names redirection
+00:31 +87: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: compound shell syntax is refused by construct, not by name chaining names chaining
+00:31 +88: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: compound shell syntax is refused by construct, not by name semicolon chaining names chaining
+00:31 +89: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: compound shell syntax is refused by construct, not by name command substitution names command substitution
+00:31 +90: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: compound shell syntax is refused by construct, not by name a glob names wildcard expansion
+00:31 +91: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: compound shell syntax is refused by construct, not by name a quoted operator is a literal operand, not syntax
+00:31 +92: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: compound shell syntax is refused by construct, not by name a plain unknown command keeps the generic honest message
+00:31 +93: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: compound shell syntax is refused by construct, not by name an accepted delegate still gets first refusal for a compound line
+00:31 +94: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: terminal cwd contract the delegate sees the cwd the user cd-ed into
+00:31 +95: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: terminal cwd contract the delegate sees the cwd after cd back above the start directory
+00:31 +96: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: terminal cwd contract desktop fallback is offered a compound line before the refusal
+00:31 +97: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: desktop fallback forwards the real shell output delegateToProcessShell mirrors stdout/stderr and the exit status
+00:31 +98: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: desktop fallback forwards the real shell output the fallback is used through execute() for an unknown command
+00:31 +99: D:/MyNewProjects/qfli_studio_core/test/sandbox_terminal_test.dart: desktop fallback forwards the real shell output a cancelled fallback does not publish a program exit status
+00:31 +100: loading D:/MyNewProjects/qfli_studio_core/test/editor_terminal_touch_test.dart
+00:31 +100: D:/MyNewProjects/qfli_studio_core/test/editor_terminal_touch_test.dart: touching the editor collapses the terminal, keeping the height preference for the next expand
+00:33 +101: D:/MyNewProjects/qfli_studio_core/test/editor_terminal_touch_test.dart: touching the terminal expands it and focuses the prompt
+00:34 +102: D:/MyNewProjects/qfli_studio_core/test/editor_terminal_touch_test.dart: a keyboard-driven shrink keeps a focused prompt expanded, mounted and focused
+00:34 +103: D:/MyNewProjects/qfli_studio_core/test/editor_terminal_touch_test.dart: the editor still takes focus when the terminal is open
+00:35 +104: D:/MyNewProjects/qfli_studio_core/test/editor_terminal_touch_test.dart: touching the tab bar does not collapse the terminal
+00:35 +105: D:/MyNewProjects/qfli_studio_core/test/editor_terminal_touch_test.dart: tapping a header button keeps the terminal focus, not the editor
+00:35 +106: D:/MyNewProjects/qfli_studio_core/test/editor_terminal_touch_test.dart: switching tabs keeps the caret in the terminal prompt
+00:36 +107: D:/MyNewProjects/qfli_studio_core/test/editor_terminal_touch_test.dart: header "close" after editing keeps focus off the editor
+00:36 +108: D:/MyNewProjects/qfli_studio_core/test/editor_terminal_touch_test.dart: header "new" after editing keeps focus off the editor
+00:37 +109: D:/MyNewProjects/qfli_studio_core/test/editor_terminal_touch_test.dart: the header "more" button never changes prompt focus
+00:37 +110: loading D:/MyNewProjects/qfli_studio_core/test/retained_editor_test.dart
+00:37 +110: D:/MyNewProjects/qfli_studio_core/test/retained_editor_test.dart: (setUpAll)
+00:37 +110: D:/MyNewProjects/qfli_studio_core/test/retained_editor_test.dart: live editor survives Home, tools, content and restore
+00:42 +111: D:/MyNewProjects/qfli_studio_core/test/retained_editor_test.dart: same-project imports finish and open new files without replacing dirty tabs
+00:45 +112: D:/MyNewProjects/qfli_studio_core/test/retained_editor_test.dart: multiple projects switch via selector; explicit close confirms and disposes only one
+00:48 +113: D:/MyNewProjects/qfli_studio_core/test/retained_editor_test.dart: editor dialogs and child routes consume Back before the editor hides
+00:49 +114: D:/MyNewProjects/qfli_studio_core/test/retained_editor_test.dart: terminal sessions retain drafts, controllers and output and cannot focus while hidden
+00:50 +115: D:/MyNewProjects/qfli_studio_core/test/retained_editor_test.dart: opening without a host retains standalone EditorPage navigation
+00:50 +116: D:/MyNewProjects/qfli_studio_core/test/retained_editor_test.dart: (tearDownAll)
+00:50 +116: All tests passed!

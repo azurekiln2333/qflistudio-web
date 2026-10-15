@@ -1,0 +1,55 @@
+00:00 +0: loading D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart
+00:00 +0: D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart: WebDevServer current-file preview index -> main2 -> index over real HTTP without config rewrite
+00:00 +1: D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart: WebDevServer current-file preview src-derived root and explicit root resolve the selected file
+00:00 +2: D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart: WebDevServer current-file preview nested, space, CJK, hash and percent names resolve and serve
+00:00 +3: D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart: WebDevServer current-file preview missing, directory, outside-root and hidden targets fail
+00:00 +4: D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart: WebDevServer current-file preview resolved assets succeed and stop releases the listener
+00:02 +5: D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart: Core LocalWebServer current-file preview resolves and serves a selected file over real HTTP
+00:02 +6: D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart: NginxSession current-file preview explicit root public URL and engine header serve the selected file
+00:02 +7: D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart: URL-selection and failure-cleanup tap reads the default URL, long press resolves the file
+00:04 +8: D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart: URL-selection and failure-cleanup a session failing to resolve is stopped
+00:05 +9: loading D:/MyNewProjects/qfli_web/test/web_app_test.dart
+00:06 +9: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 档位收窄 新建项目只放行「空项目」和 Web
+00:06 +10: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 档位收窄 默认模板是 Web
+00:06 +11: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 档位收窄 语言筛选芯片只剩 Web
+00:06 +12: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 档位收窄 WebForge has a dedicated preview and tools screen
+00:06 +13: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 档位收窄 产品名使用 QFLIWebForge
+00:06 +14: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 入口文件识别 优先命中 index.html
+00:06 +15: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 入口文件识别 index.html 在 src/ 下也能找到
+00:06 +16: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 入口文件识别 入口表覆盖了模板自带的入口文件
+00:06 +17: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 运行按钮 起本地服务器并返回可访问的 URL
+00:07 +18: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 运行按钮 页面里被注入了调试桥，console.log 能回传
+00:07 +19: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 运行按钮 模板的 src 资源按路径取得到
+00:08 +20: loading D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart
+00:08 +20: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: src template serves HTML and its relative CSS and JS
+00:09 +21: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: SPA fallback only handles browser navigation
+00:09 +22: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: custom imported HTML entry serves the page, assets and SPA routes
+00:09 +23: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: an explicit Web root takes precedence over an imported entry
+00:09 +24: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: private project files and symlinks outside root are not served
+00:09 +25: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: proxy forwards method, query, body, response status and headers
+00:09 +26: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: proxy preserves redirects and WebSocket messages
+00:09 +27: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: file changes notify the live reload stream
+00:09 +28: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: failed requests and malformed debug events are reported
+00:09 +29: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: browser errors reach debug stream and are bounded
+00:09 +30: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: invalid root and proxy settings fail before binding
+00:09 +31: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: engine settings select WebForge and reject unknown engines
+00:09 +32: loading D:/MyNewProjects/qfli_web/test/nginx_session_test.dart
+00:09 +32: D:/MyNewProjects/qfli_web/test/nginx_session_test.dart: automatic selection starts the discovered native Nginx
+00:10 +33: D:/MyNewProjects/qfli_web/test/nginx_session_test.dart: real Nginx serves a custom imported HTML entry and relative assets
+00:11 +34: D:/MyNewProjects/qfli_web/test/nginx_session_test.dart: real Nginx serves the project, diagnostics and request logs
+00:14 +35: D:/MyNewProjects/qfli_web/test/nginx_session_test.dart: real Nginx proxies HTTP and WebSocket without altering redirects
+00:14 +36: D:/MyNewProjects/qfli_web/test/nginx_session_test.dart: nested HTTPS proxy takes priority over its HTTP parent
+00:19 +37: D:/MyNewProjects/qfli_web/test/nginx_session_test.dart: real Nginx streams live reload and rejects occupied ports
+00:20 +38: loading D:/MyNewProjects/qfli_web/test/nginx_host_test.dart
+00:20 +38: D:/MyNewProjects/qfli_web/test/nginx_host_test.dart: checks the native version and config before releasing a completed worker
+00:20 +39: D:/MyNewProjects/qfli_web/test/nginx_host_test.dart: configuration failure includes bounded native diagnostics
+00:20 +40: D:/MyNewProjects/qfli_web/test/nginx_host_test.dart: stop waits for completed native cleanup before releasing the token
+00:20 +41: D:/MyNewProjects/qfli_web/test/nginx_host_test.dart: a poll channel failure can still stop and reclaim the native session
+00:20 +42: D:/MyNewProjects/qfli_web/test/nginx_host_test.dart: native startup errors and invalid tokens propagate
+00:20 +43: loading D:/MyNewProjects/qfli_web/test/web_tools_navigation_test.dart
+00:21 +43: D:/MyNewProjects/qfli_web/test/web_tools_navigation_test.dart: Functions navigation opens the working Web tools
+00:22 +44: D:/MyNewProjects/qfli_web/test/web_tools_navigation_test.dart: project server settings are saved through the UI
+00:23 +45: loading D:/MyNewProjects/qfli_web/test/web_tools_page_test.dart
+00:23 +45: D:/MyNewProjects/qfli_web/test/web_tools_page_test.dart: HTTP tool sends the selected method, headers and body
+00:25 +46: D:/MyNewProjects/qfli_web/test/web_tools_page_test.dart: codec tools perform JSON, URL and Base64 conversions
+00:25 +47: All tests passed!

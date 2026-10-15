@@ -20,10 +20,21 @@
   "subtasks": [],
   "children": [
     "10-15-webforge-content-curriculum",
-    "10-15-webforge-offline-ui"
+    "10-15-webforge-offline-ui",
+    "10-15-webforge-terminal-integrity",
+    "10-15-webforge-nginx-integration",
+    "10-15-webforge-media-selfcontained"
   ],
   "parent": null,
   "relatedFiles": [],
-  "notes": "",
-  "meta": {}
+  "notes": "All five implementation children completed and verified. Final product82, shared116+About4, browser301/301 with1820 assertions, Android native/content device passes, final APK and fresh unsigned OHOS HAP audited. Parent remains in_progress solely for Android distribution signing and signed current OHOS device verification; see results.md.",
+  "meta": {
+    "releaseReady": false,
+    "coreRevision": "8b33443",
+    "remainingGates": [
+      "Android distribution signing",
+      "WebForge OHOS signature and current-package device verification"
+    ],
+    "verificationReport": ".trellis/tasks/10-15-webforge-store-readiness/results.md"
+  }
 }

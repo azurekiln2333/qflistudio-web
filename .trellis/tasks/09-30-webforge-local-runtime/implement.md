@@ -16,12 +16,21 @@
   skipped native platforms separately from successful source-level checks.
   Linux WSL access could not pass permission review (service HTTP 503); no Apple
   build environment exists. Neither platform has a native runtime pass.
-- [ ] Verify Android arm64-v8a/armeabi-v7a application execution on devices.
-- [ ] Resolve HarmonyOS application execution and verify the complete native
-  smoke target. The original packaged file was mode 100644; both paths now use
-  executableBinaryPaths, with signed HAP packaging verified. HDC connection was
-  lost before the updated package could be checked in the app.
-- [ ] Finish task after required device checks; preserve all unrelated work.
+- [x] Verify Android arm64-v8a application execution on a physical device
+  (2026-10-15, OPD2413): full native HTTP/proxy/WebSocket/SSE/log/lifecycle smoke
+  passes. Evidence: `../10-15-webforge-store-readiness/android-native-device-final.log`.
+- [ ] Verify armeabi-v7a application execution on a 32-bit device; no such device
+  is available in this workspace. Packaged ABI/ELF checks are build evidence only.
+- [x] Resolve HarmonyOS application execution. The standalone
+  `libnginx_exec.so` + `executableBinaryPaths` form was rejected at install by
+  `bm install` (`ERR_INSTALL_CHECK_BIN_FILE_FAILED`), so OHOS moved to the
+  in-process embedded engine delivered as a NAPI shared library. The signed HAP
+  installs on the real phone and the in-app smoke printed `[NGINX_SMOKE] PASS`
+  (see task `10-11-ohos-nginx-embedded`). The access-log regression found during
+  that smoke was fixed in
+  `vendor/nginx/patches/embedded-time-cache.patch`.
+- [ ] Finish task after the remaining Android 32-bit device check; preserve all
+  unrelated work.
 
 ## Verification / Commit Gate
 

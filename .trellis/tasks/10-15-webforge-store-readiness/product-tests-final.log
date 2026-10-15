@@ -1,0 +1,94 @@
+00:00 +0: loading D:/MyNewProjects/qfli_web/test/content/webforge_content_test.dart
+00:00 +0: D:/MyNewProjects/qfli_web/test/content/webforge_content_test.dart: (setUpAll)
+00:00 +0: D:/MyNewProjects/qfli_web/test/content/webforge_content_test.dart: shipped assets parse with the core catalog parser
+00:00 +1: D:/MyNewProjects/qfli_web/test/content/webforge_content_test.dart: shipped assets ship at least 100 tutorials and 100 examples
+00:00 +2: D:/MyNewProjects/qfli_web/test/content/webforge_content_test.dart: shipped assets cover html, css and javascript
+00:00 +3: D:/MyNewProjects/qfli_web/test/content/webforge_content_test.dart: shipped assets pass the core release validator for web types
+00:00 +4: D:/MyNewProjects/qfli_web/test/content/webforge_content_test.dart: shipped assets all subjects import as complete previewable HTML documents
+00:00 +5: D:/MyNewProjects/qfli_web/test/content/webforge_content_test.dart: quality: no placeholders tutorial titles are distinct
+00:00 +6: D:/MyNewProjects/qfli_web/test/content/webforge_content_test.dart: quality: no placeholders every lesson explain and output is distinct
+00:00 +7: D:/MyNewProjects/qfli_web/test/content/webforge_content_test.dart: quality: no placeholders example bodies are distinct after number normalisation
+00:00 +8: D:/MyNewProjects/qfli_web/test/content/webforge_content_test.dart: quality: no placeholders every lesson is substantive
+00:00 +9: D:/MyNewProjects/qfli_web/test/content/webforge_content_test.dart: referential integrity ids are unique across tutorials and examples
+00:00 +10: D:/MyNewProjects/qfli_web/test/content/webforge_content_test.dart: referential integrity every example links to an existing lesson
+00:00 +11: D:/MyNewProjects/qfli_web/test/content/webforge_content_test.dart: referential integrity every runnable lesson matches its complete example document
+00:00 +12: D:/MyNewProjects/qfli_web/test/content/webforge_content_test.dart: referential integrity example expected output is never empty
+00:00 +13: D:/MyNewProjects/qfli_web/test/content/webforge_content_test.dart: repository loads from the product assets via a bundle
+00:00 +14: D:/MyNewProjects/qfli_web/test/content/webforge_content_test.dart: repository applies the shared ContentFilter semantics
+00:00 +15: D:/MyNewProjects/qfli_web/test/content/webforge_content_test.dart: repository reports an explicit error for a missing asset
+00:00 +16: D:/MyNewProjects/qfli_web/test/content/webforge_content_test.dart: (tearDownAll)
+00:00 +16: loading D:/MyNewProjects/qfli_web/test/nginx_host_test.dart
+00:00 +16: D:/MyNewProjects/qfli_web/test/nginx_host_test.dart: checks the native version and config before releasing a completed worker
+00:00 +17: D:/MyNewProjects/qfli_web/test/nginx_host_test.dart: configuration failure includes bounded native diagnostics
+00:00 +18: D:/MyNewProjects/qfli_web/test/nginx_host_test.dart: stop waits for completed native cleanup before releasing the token
+00:00 +19: D:/MyNewProjects/qfli_web/test/nginx_host_test.dart: a poll channel failure can still stop and reclaim the native session
+00:00 +20: D:/MyNewProjects/qfli_web/test/nginx_host_test.dart: native startup errors and invalid tokens propagate
+00:00 +21: D:/MyNewProjects/qfli_web/test/nginx_host_test.dart: an absent embedded channel signals WebRuntime.auto to fall back
+00:00 +22: D:/MyNewProjects/qfli_web/test/nginx_host_test.dart: a malformed embedded version never selects the native engine
+00:00 +23: loading D:/MyNewProjects/qfli_web/test/nginx_session_test.dart
+00:01 +23: D:/MyNewProjects/qfli_web/test/nginx_session_test.dart: automatic selection starts the discovered native Nginx
+00:02 +24: D:/MyNewProjects/qfli_web/test/nginx_session_test.dart: real Nginx serves a custom imported HTML entry and relative assets
+00:02 +25: D:/MyNewProjects/qfli_web/test/nginx_session_test.dart: real Nginx serves the project, diagnostics and request logs
+00:05 +26: D:/MyNewProjects/qfli_web/test/nginx_session_test.dart: real Nginx proxies HTTP and WebSocket without altering redirects
+00:06 +27: D:/MyNewProjects/qfli_web/test/nginx_session_test.dart: nested HTTPS proxy takes priority over its HTTP parent
+00:10 +28: D:/MyNewProjects/qfli_web/test/nginx_session_test.dart: real Nginx streams live reload and rejects occupied ports
+00:11 +29: loading D:/MyNewProjects/qfli_web/test/web_app_test.dart
+00:12 +29: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 档位收窄 新建项目只放行「空项目」和 Web
+00:12 +30: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 档位收窄 默认模板是 Web
+00:12 +31: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 档位收窄 语言筛选芯片只剩 Web
+00:12 +32: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 档位收窄 WebForge has a dedicated preview and tools screen
+00:12 +33: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 档位收窄 offline gating is on for both offline signals
+00:12 +34: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 档位收窄 产品名使用 QFLIWebForge
+00:12 +35: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 入口文件识别 优先命中 index.html
+00:12 +36: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 入口文件识别 index.html 在 src/ 下也能找到
+00:12 +37: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 入口文件识别 入口表覆盖了模板自带的入口文件
+00:12 +38: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 运行按钮 起本地服务器并返回可访问的 URL
+00:12 +39: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 运行按钮 页面里被注入了调试桥，console.log 能回传
+00:13 +40: D:/MyNewProjects/qfli_web/test/web_app_test.dart: 运行按钮 模板的 src 资源按路径取得到
+00:14 +41: loading D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart
+00:14 +41: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: src template serves HTML and its relative CSS and JS
+00:14 +42: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: SPA fallback only handles browser navigation
+00:14 +43: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: custom imported HTML entry serves the page, assets and SPA routes
+00:14 +44: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: an explicit Web root takes precedence over an imported entry
+00:14 +45: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: private project files and symlinks outside root are not served
+00:14 +46: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: proxy forwards method, query, body, response status and headers
+00:14 +47: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: proxy preserves redirects and WebSocket messages
+00:14 +48: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: file changes notify the live reload stream
+00:15 +49: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: failed requests and malformed debug events are reported
+00:15 +50: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: browser errors reach debug stream and are bounded
+00:15 +51: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: invalid root and proxy settings fail before binding
+00:15 +52: D:/MyNewProjects/qfli_web/test/web_dev_server_test.dart: engine settings select WebForge and reject unknown engines
+00:15 +53: loading D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart
+00:15 +53: D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart: WebDevServer current-file preview index -> main2 -> index over real HTTP without config rewrite
+00:15 +54: D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart: WebDevServer current-file preview src-derived root and explicit root resolve the selected file
+00:15 +55: D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart: WebDevServer current-file preview nested, space, CJK, hash and percent names resolve and serve
+00:15 +56: D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart: WebDevServer current-file preview missing, directory, outside-root and hidden targets fail
+00:15 +57: D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart: WebDevServer current-file preview resolved assets succeed and stop releases the listener
+00:17 +58: D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart: Core LocalWebServer current-file preview resolves and serves a selected file over real HTTP
+00:17 +59: D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart: NginxSession current-file preview explicit root public URL and engine header serve the selected file
+00:18 +60: D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart: URL-selection and failure-cleanup tap reads the default URL, long press resolves the file
+00:20 +61: D:/MyNewProjects/qfli_web/test/web_preview_current_file_test.dart: URL-selection and failure-cleanup a session failing to resolve is stopped
+00:20 +62: loading D:/MyNewProjects/qfli_web/test/web_terminal_release_test.dart
+00:21 +62: D:/MyNewProjects/qfli_web/test/web_terminal_release_test.dart: WebForge profile terminal contract the Web profile is offline-only with no host toolchain
+00:21 +63: D:/MyNewProjects/qfli_web/test/web_terminal_release_test.dart: Editor TerminalPane (offline Web profile) built-in commands run against the real sandbox
+00:21 +64: D:/MyNewProjects/qfli_web/test/web_terminal_release_test.dart: Editor TerminalPane (offline Web profile) an unknown command reports honestly instead of silently
+00:22 +65: D:/MyNewProjects/qfli_web/test/web_terminal_release_test.dart: Editor TerminalPane (offline Web profile) a nonzero exit keeps its integer; success stays silent
+00:22 +66: D:/MyNewProjects/qfli_web/test/web_terminal_release_test.dart: Editor TerminalPane (offline Web profile) the Stop control cancels a running command
+00:22 +67: D:/MyNewProjects/qfli_web/test/web_terminal_release_test.dart: Editor TerminalPane (offline Web profile) interruptActive is a safe no-op with nothing running
+00:22 +68: D:/MyNewProjects/qfli_web/test/web_terminal_release_test.dart: Editor TerminalPane (offline Web profile) console error output is returned to the transcript
+00:22 +69: D:/MyNewProjects/qfli_web/test/web_terminal_release_test.dart: Editor TerminalPane (offline Web profile) offline gating hides the online terminal and blocks showOnline
+00:22 +70: D:/MyNewProjects/qfli_web/test/web_terminal_release_test.dart: Standalone Terminax (offline Web profile) opens a local session and runs a built-in
+00:22 +71: D:/MyNewProjects/qfli_web/test/web_terminal_release_test.dart: TerminalSession exit contract exit and quit request a session close without executing
+00:23 +72: loading D:/MyNewProjects/qfli_web/test/web_tools_navigation_test.dart
+00:23 +72: D:/MyNewProjects/qfli_web/test/web_tools_navigation_test.dart: tools tab is one integrated offline surface
+00:24 +73: D:/MyNewProjects/qfli_web/test/web_tools_navigation_test.dart: local server settings stay offline (no API proxy editor)
+00:24 +74: D:/MyNewProjects/qfli_web/test/web_tools_navigation_test.dart: pre-existing proxy rules are preserved when saving offline
+00:25 +75: D:/MyNewProjects/qfli_web/test/web_tools_navigation_test.dart: all five pages are reachable in order
+00:25 +76: D:/MyNewProjects/qfli_web/test/web_tools_navigation_test.dart: integrated tools grid survives narrow large-text viewport
+00:25 +77: D:/MyNewProjects/qfli_web/test/web_tools_navigation_test.dart: all five pages survive narrow large-text viewport
+00:25 +78: loading D:/MyNewProjects/qfli_web/test/web_tools_page_test.dart
+00:26 +78: D:/MyNewProjects/qfli_web/test/web_tools_page_test.dart: HTTP tool sends the selected method, headers and body
+00:27 +79: D:/MyNewProjects/qfli_web/test/web_tools_page_test.dart: codec tools perform JSON, URL and Base64 conversions
+00:27 +80: D:/MyNewProjects/qfli_web/test/web_tools_page_test.dart: offline product HTTP tool is not reachable when offlineOnly
+00:27 +81: D:/MyNewProjects/qfli_web/test/web_tools_page_test.dart: offline product offline codec tab still works
+00:27 +82: All tests passed!

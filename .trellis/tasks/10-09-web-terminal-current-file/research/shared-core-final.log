@@ -1,0 +1,65 @@
+00:00 +0: loading D:/MyNewProjects/qfli_studio_core/test/editor_run_test.dart
+00:00 +0: D:/MyNewProjects/qfli_studio_core/test/editor_run_test.dart: tap, long press, tap run Main, Main2, Main exactly once
+00:01 +1: D:/MyNewProjects/qfli_studio_core/test/editor_run_test.dart: both gestures save edited sources before invoking the runner
+00:02 +2: D:/MyNewProjects/qfli_studio_core/test/editor_run_test.dart: deleted active file is rejected before save can recreate it
+00:02 +3: D:/MyNewProjects/qfli_studio_core/test/editor_run_test.dart: unsupported active file is rejected without saving edits
+00:03 +4: D:/MyNewProjects/qfli_studio_core/test/editor_run_test.dart: a file outside the project is rejected without saving
+00:03 +5: D:/MyNewProjects/qfli_studio_core/test/editor_run_test.dart: long press with no open file does not run the default entry
+00:03 +6: D:/MyNewProjects/qfli_studio_core/test/editor_run_test.dart: an empty extension list delegates to the profile runner
+00:03 +7: D:/MyNewProjects/qfli_studio_core/test/editor_run_test.dart: the default profile reaches the existing runner diagnostic
+00:04 +8: D:/MyNewProjects/qfli_studio_core/test/editor_run_test.dart: a save failure prevents launching even when Main exists
+00:04 +9: D:/MyNewProjects/qfli_studio_core/test/editor_run_test.dart: Run retains keyboard activation and disabled button semantics
+00:05 +10: D:/MyNewProjects/qfli_studio_core/test/editor_run_test.dart: terminal collapses on a small downward drag and reopens
+00:06 +11: D:/MyNewProjects/qfli_studio_core/test/editor_run_test.dart: many small upward steps reopen a collapsed terminal
+00:07 +12: D:/MyNewProjects/qfli_studio_core/test/editor_run_test.dart: terminal handles the short-viewport compact band
+00:08 +13: loading D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart
+00:08 +13: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: empty prompt begins at the top of the terminal scrollback
+00:09 +14: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: success preserves stdout and returns the next prompt silently
+00:09 +15: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: preparation and running hide the prompt until streams drain
+00:09 +16: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: nonzero exit 7 preserves diagnostics and its integer
+00:09 +17: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: nonzero exit 127 preserves diagnostics and its integer
+00:09 +18: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: long output and the prompt scroll together in a short pane
+00:10 +19: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: stream output and exit status stay with their source session
+00:10 +20: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: session tabs support keyboard selection and accessible close
+00:10 +21: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: the stop action cancels an attached run and restores input
+00:10 +22: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: Enter executes a command and history stays with its session
+00:10 +23: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: a quiet successful command still bounds the transcript
+00:12 +24: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: local command failures show the nonzero status
+00:13 +25: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: ls lists real files in the session directory
+00:13 +26: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: clear empties the transcript but keeps the session and cwd
+00:13 +27: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: tapping the canvas focuses the input
+00:13 +28: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: long output scrolls back while a stream still runs
+00:13 +29: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: session switches retain each scroll offset
+00:13 +30: D:/MyNewProjects/qfli_studio_core/test/terminal_pane_test.dart: interruptActive forwards to the active session backend
+00:14 +31: loading D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart
+00:14 +31: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: CommandParser.classify treats plain and quoted commands as simple
+00:14 +32: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: CommandParser.classify detects unquoted shell operators as compound
+00:14 +33: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: CommandParser.classify keeps an unquoted Windows path as a simple command
+00:14 +34: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: CommandParser.tokenize keeps quoted spaces together and reports quoting
+00:14 +35: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: CommandParser.tokenize handles unicode, backslashes, and double dash
+00:14 +36: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: CommandParser.tokenize reports unterminated quotes instead of guessing
+00:14 +37: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: portable filesystem commands (real filesystem) ls lists real files and hides dotfiles
+00:14 +38: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: portable filesystem commands (real filesystem) ls -l and combined -la show long form
+00:14 +39: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: portable filesystem commands (real filesystem) dir behaves like ls
+00:14 +40: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: portable filesystem commands (real filesystem) pwd reports the session directory
+00:14 +41: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: portable filesystem commands (real filesystem) cd changes cwd and persists for later commands
+00:14 +42: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: portable filesystem commands (real filesystem) cd with a quoted path containing spaces works
+00:14 +43: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: portable filesystem commands (real filesystem) cd failure keeps the previous cwd and errors
+00:14 +44: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: portable filesystem commands (real filesystem) cat prints real file content including a spaced name
+00:14 +45: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: portable filesystem commands (real filesystem) cat preserves multi-line content
+00:14 +46: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: portable filesystem commands (real filesystem) cat on a directory errors
+00:14 +47: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: portable filesystem commands (real filesystem) echo joins arguments
+00:14 +48: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: portable filesystem commands (real filesystem) mkdir -p creates nested directories
+00:14 +49: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: portable filesystem commands (real filesystem) touch creates a file, keeps -- operands, refuses options
+00:14 +50: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: portable filesystem commands (real filesystem) touch does not invent missing parent directories
+00:14 +51: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: portable filesystem commands (real filesystem) rm removes a file, refuses a directory without -r, honours -f
+00:14 +52: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: portable filesystem commands (real filesystem) sequential builtins each complete and clear busy
+00:14 +53: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: portable filesystem commands (real filesystem) unsupported ordinary options produce explicit errors
+00:14 +54: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: portable filesystem commands (real filesystem) clear is a control event and touches nothing else
+00:14 +55: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: portable filesystem commands (real filesystem) compound syntax is not run as a builtin
+00:15 +56: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: external execution and cancellation runs a real external command and reports its exit status
+00:15 +57: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: external execution and cancellation a failing external command surfaces a nonzero status
+00:15 +58: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: external execution and cancellation interrupt after stdout-ready stops the command quickly
+00:16 +59: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: external execution and cancellation interrupt immediately after dispatch still cancels the command
+00:16 +60: D:/MyNewProjects/qfli_studio_core/test/shell_command_test.dart: mobile built-ins without external spawn portable commands work even when no shell can be spawned
+00:16 +61: All tests passed!

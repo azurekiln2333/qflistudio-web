@@ -20,7 +20,7 @@
    shortcut gap routed to the core owner (findings §6.1).
 7. [x] Spec update: `Quality Guidelines` and the `index.md` Quality Check gained
    the shared-terminal verification pattern.
-8. [ ] Commit own files only (controller-granted window).
+8. [x] Controller committed the owned release suite and task records in c19bcfe.
 
 ## Validation
 

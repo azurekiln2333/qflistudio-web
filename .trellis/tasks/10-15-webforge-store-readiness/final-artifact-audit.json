@@ -1,0 +1,78 @@
+{
+  "android": {
+    "path": "D:\\MyNewProjects\\qfli_web\\build\\app\\outputs\\flutter-apk\\app-release.apk",
+    "bytes": 32398853,
+    "sha256": "dcfe75af1adf828eade6e6b972b0fd1daaf71a24efa4472b7125d1c1458da58b",
+    "sourceAssetHashes": {
+      "assets/content/tutorials.json": "9841d2093c69b471bc1b928537ca0f083bf88b1c0730aaca21761c063f000616",
+      "assets/content/examples.json": "784332d5217f9f644d69dca8596dfe96e26e67ce7413a8f1fff65d9113e2fa13",
+      "vendor/nginx/LICENSE": "08845fe39e06b51dad7685c28140ab49577a86e947523e16b536a46caf89ad5c",
+      "vendor/nginx/android-glob/LICENSE": "5bc2d38d50f282548a27f7dd8b3ac8f3ac696ba501aaacd2bba821b15b018dac"
+    },
+    "nativeLibraries": {
+      "lib/arm64-v8a/libnginx_exec.so": {
+        "machine": 183,
+        "loadAlignments": [
+          16384,
+          16384,
+          16384,
+          16384
+        ]
+      },
+      "lib/armeabi-v7a/libnginx_exec.so": {
+        "machine": 40,
+        "loadAlignments": [
+          16384,
+          16384,
+          16384,
+          16384
+        ]
+      },
+      "lib/x86_64/libnginx_exec.so": {
+        "machine": 62,
+        "loadAlignments": [
+          16384,
+          16384,
+          16384,
+          16384
+        ]
+      }
+    }
+  },
+  "ohos": {
+    "path": "D:\\MyNewProjects\\qfli_web\\ohos\\entry\\build\\default\\outputs\\default\\entry-default-unsigned.hap",
+    "bytes": 42377031,
+    "sha256": "328e5f29fb089a7927a393a6ef5260d49928f43b924c5fb8480895b1c10630be",
+    "sourceAssetHashes": {
+      "assets/content/tutorials.json": "9841d2093c69b471bc1b928537ca0f083bf88b1c0730aaca21761c063f000616",
+      "assets/content/examples.json": "784332d5217f9f644d69dca8596dfe96e26e67ce7413a8f1fff65d9113e2fa13",
+      "vendor/nginx/LICENSE": "08845fe39e06b51dad7685c28140ab49577a86e947523e16b536a46caf89ad5c",
+      "vendor/nginx/android-glob/LICENSE": "5bc2d38d50f282548a27f7dd8b3ac8f3ac696ba501aaacd2bba821b15b018dac"
+    },
+    "nativeLibraries": {
+      "libs/arm64-v8a/libqfli_nginx_napi.so": {
+        "machine": 183,
+        "loadAlignments": [
+          4096,
+          4096,
+          4096,
+          4096
+        ]
+      },
+      "libs/x86_64/libqfli_nginx_napi.so": {
+        "machine": 62,
+        "loadAlignments": [
+          4096,
+          4096,
+          4096,
+          4096
+        ]
+      }
+    },
+    "bundleName": "com.azurekiln.qfli.webforge",
+    "vendor": "QFLI",
+    "buildMode": "release",
+    "versionName": "1.0.0",
+    "versionCode": 1
+  }
+}

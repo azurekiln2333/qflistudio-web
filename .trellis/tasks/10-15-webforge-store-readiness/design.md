@@ -11,9 +11,11 @@ All three pi cwd values resolve to `D:/MyNewProjects/qfli_web`.
 - `wD:p7`: content assets/repository/generator/tests, pubspec.yaml, own child task.
 - Main (`wD:p1`): platform/native review, builds/device runs, integration records.
 
-Workers stage explicit owned paths and commit verified batches. Main serializes
-platform builds. Content wiring in main.dart is coordinated between UI/content
-workers. Shared-core findings are recorded before any coordinated shared write.
+Workers hand off explicit owned paths; the main coordinator stages and commits
+verified batches, and serializes all Flutter/Dart/platform commands. Content
+wiring in main.dart is coordinated between UI/content workers. Shared-core
+findings are recorded before any coordinated shared write. Only the main
+coordinator announces device ownership or release.
 
 ## Compatibility and rollback
 Retain five-page core shell and preview session capabilities. Preserve initial

@@ -21,6 +21,6 @@
   "children": [],
   "parent": null,
   "relatedFiles": [],
-  "notes": "",
+  "notes": "2026-10-15: Android ARM64 native smoke including SSE passed on OPD2413; final release archive audits cover all packaged ABIs. ARMv7 application execution remains unverified because no 32-bit device is available. Current OHOS signing limitation is recorded in the 10-15 store-readiness task; historical 10-12 device success is kept separate.",
   "meta": {}
 }

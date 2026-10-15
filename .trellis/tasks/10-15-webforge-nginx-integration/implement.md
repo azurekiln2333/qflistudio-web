@@ -15,9 +15,13 @@
    - `expect(tester.takeException(), isNull)`
 3. [x] Record the change and the pending device result in
        `research/device-verification.md`.
-4. [ ] Hand off to the controller for serial: `dart format` check,
+4. [x] Hand off to the controller for serial: `dart format` check,
        `flutter analyze --no-pub tool integration_test`, then a real device
        `flutter test integration_test/nginx_runtime_test.dart -d <device>`.
+
+Controller result: Android ARM64 physical-device test passes 1/1 including SSE;
+the full product analyze is clean. Delivery commit: 7363a0b. Exact log:
+`../10-15-webforge-store-readiness/android-native-device-final.log`.
 
 ## Validation
 
