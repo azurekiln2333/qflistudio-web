@@ -1,0 +1,41 @@
+{
+  "workspace": "D:\\MyNewProjects\\qfli_web",
+  "beforeBytes": 42418132034,
+  "targets": [
+    {
+      "path": "build/native/platform-audit",
+      "bytes": 35100978991,
+      "files": 29356,
+      "links": 86
+    },
+    {
+      "path": "build/native/validation",
+      "bytes": 2245184766,
+      "files": 29,
+      "links": 0
+    }
+  ],
+  "preservedBuildPaths": [
+    "build/app",
+    "build/native/nginx",
+    ".dart_tool",
+    "android/.gradle",
+    "ohos",
+    "node_modules"
+  ],
+  "originalDiffSha256": "938041f486acadcd3ac0373dbf1e9ed347e4fb37126da20301ceaf98b7bab2a3",
+  "archive": {
+    "path": ".trellis\\.runtime\\storage-cleanup-2026-10-16\\historical-audit-source-and-evidence.zip",
+    "bytes": 39823443,
+    "sha256": "85f12ea1465f37702140ebe90481988c9a1c0c26b1d38c1f7f05a37a4a20be89",
+    "files": 7355,
+    "patches": 48
+  },
+  "state": "cleaned",
+  "afterBytes": 5113496919,
+  "removedGeneratedBytes": 37346163757,
+  "netFreedBytes": 37304635115,
+  "originalDiffUnchanged": true,
+  "finalAfterBuildBytes": 5114089159,
+  "finalNetFreedBytes": 37304042875
+}

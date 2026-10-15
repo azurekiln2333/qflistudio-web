@@ -1,0 +1,111 @@
+{
+  "passed": 21,
+  "total": 21,
+  "checks": [
+    {
+      "path": "vendor/nginx/nginx-1.31.6.tar.gz",
+      "match": true,
+      "sha256": "974ed5298a5e398e008704ed5db284e655fc270c596493dbccada452448fc9f1"
+    },
+    {
+      "path": "vendor/nginx/LICENSE",
+      "match": true,
+      "sha256": "08845fe39e06b51dad7685c28140ab49577a86e947523e16b536a46caf89ad5c"
+    },
+    {
+      "path": "vendor/nginx/patches/Android-crossfile.patch32",
+      "match": true,
+      "sha256": "488122846cada6cb3614267f27f7ed9caacf5655820b15885d062524092bfceb"
+    },
+    {
+      "path": "vendor/nginx/patches/Android-crossfile.patch64",
+      "match": true,
+      "sha256": "127c330aa600bd9fe0cee950634c82b169f04e37e1d0a430d8467e15f664f805"
+    },
+    {
+      "path": "vendor/nginx/patches/cross-compile-nginx.patch",
+      "match": true,
+      "sha256": "1e09e3cda33e26724e1942e8a704235c41a22e466188ca14a2fa415a1a8db194"
+    },
+    {
+      "path": "vendor/nginx/patches/src-core-ngx_file.c.patch",
+      "match": true,
+      "sha256": "6583d0cde8fa4346beee2725da381f7437540ab0c5f7bbd2b1f1accb2e92cb2f"
+    },
+    {
+      "path": "vendor/nginx/patches/src-event-modules-ngx_epoll_module.c.patch",
+      "match": true,
+      "sha256": "9eb24ab0d48d36a0721c1ab0242927db2dfc2d6d861c49a4f9fbf4f347dce808"
+    },
+    {
+      "path": "vendor/nginx/patches/src-os-unix-ngx_setaffinity.h.patch",
+      "match": true,
+      "sha256": "b13881ef245df7a56f061dfa5d1077308e0209635525f32b763d72cd4f20b822"
+    },
+    {
+      "path": "vendor/nginx/patches/android-socklen.patch",
+      "match": true,
+      "sha256": "ab1f420f2ef59ae6047afaa591dee2a8c89e2098bc1aef0fd889a21f929bcd3d"
+    },
+    {
+      "path": "vendor/nginx/patches/android-stat-blocks.patch",
+      "match": true,
+      "sha256": "04db7892cdeac08395a1b1166af6632b995bf70e9fd27e39f88102730cd63597"
+    },
+    {
+      "path": "vendor/nginx/patches/android-stat-size.patch",
+      "match": true,
+      "sha256": "324f2f6ffce6ceaa332aae57ac02840eebe5b8c91437570de1dffdfc5d0db20d"
+    },
+    {
+      "path": "vendor/nginx/android-glob/glob.c",
+      "match": true,
+      "sha256": "d9c04df55f97bdc5335c3b76224b47a2b20ccef27c73103208f8074320aba014"
+    },
+    {
+      "path": "vendor/nginx/android-glob/glob.h",
+      "match": true,
+      "sha256": "ff4512c530aea288693f5be17e98c77faf7f449ea439df46164ad34aab197122"
+    },
+    {
+      "path": "vendor/nginx/android-glob/LICENSE",
+      "match": true,
+      "sha256": "5bc2d38d50f282548a27f7dd8b3ac8f3ac696ba501aaacd2bba821b15b018dac"
+    },
+    {
+      "path": "vendor/nginx/ohos_socket_compat.h",
+      "match": true,
+      "sha256": "76d5068f547a55f833a197e5efcf5ba3b7681af147f4c8a154c8f645d8a1f46b"
+    },
+    {
+      "path": "assets/runtime/nginx/windows/nginx.exe",
+      "match": true,
+      "sha256": "2429269c8ea20ce6c5040bb4eb5fd78a28003dfa272f66d146338320353c5f62"
+    },
+    {
+      "path": "android/app/src/main/jniLibs/arm64-v8a/libnginx_exec.so",
+      "match": true,
+      "sha256": "b8e840fe510e4261093ba513ea82f77a4833f0cb3a123c826664c2cc2e7c91d0"
+    },
+    {
+      "path": "android/app/src/main/jniLibs/armeabi-v7a/libnginx_exec.so",
+      "match": true,
+      "sha256": "2f73be390d983a935cd64286d37fa0dfae0c97465cd6fd6ce5c1812d5512b00b"
+    },
+    {
+      "path": "android/app/src/main/jniLibs/x86_64/libnginx_exec.so",
+      "match": true,
+      "sha256": "db34bda237954610ef5f5b39b753bac2bbc81017dd3517c8fe14cd88127002a2"
+    },
+    {
+      "path": "vendor/nginx/patches/embedded.patch",
+      "match": true,
+      "sha256": "1db62a62addb28fa0efe63a7b47e00bf00ebea3ff45501fb516f8c7a81f6f406"
+    },
+    {
+      "path": "vendor/nginx/patches/embedded-time-cache.patch",
+      "match": true,
+      "sha256": "7fe8d00500e336ca96175d40b81c170b50ab8d6e5b3ee69c7919e02b1f0b8381"
+    }
+  ]
+}

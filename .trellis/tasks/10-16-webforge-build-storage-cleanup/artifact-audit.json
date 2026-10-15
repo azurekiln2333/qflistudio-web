@@ -1,0 +1,49 @@
+{
+  "android": {
+    "path": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 32413285,
+    "sha256": "b3f975377fb1207100eccff258b25b07742fd55943325b568778046cb831f4e9",
+    "fresh": true,
+    "zipIntegrity": true,
+    "sourceAssets": {
+      "assets/content/tutorials.json": true,
+      "assets/content/examples.json": true,
+      "vendor/nginx/LICENSE": true,
+      "vendor/nginx/android-glob/LICENSE": true
+    },
+    "nativeEntries": [
+      "lib/arm64-v8a/libnginx_exec.so",
+      "lib/armeabi-v7a/libnginx_exec.so",
+      "lib/x86_64/libnginx_exec.so"
+    ],
+    "build": {
+      "platform": "android",
+      "exitCode": 0,
+      "seconds": 137.33
+    },
+    "packaging": "apk release"
+  },
+  "ohos": {
+    "path": "ohos/entry/build/default/outputs/default/entry-default-unsigned.hap",
+    "bytes": 42389141,
+    "sha256": "41470b9b6c090d1dc40d6c254096af501287889c75dca668826713af807012ce",
+    "fresh": true,
+    "zipIntegrity": true,
+    "sourceAssets": {
+      "assets/content/tutorials.json": true,
+      "assets/content/examples.json": true,
+      "vendor/nginx/LICENSE": true,
+      "vendor/nginx/android-glob/LICENSE": true
+    },
+    "nativeEntries": [
+      "libs/arm64-v8a/libqfli_nginx_napi.so",
+      "libs/x86_64/libqfli_nginx_napi.so"
+    ],
+    "build": {
+      "platform": "ohos",
+      "exitCode": 1,
+      "seconds": 85.95
+    },
+    "packaging": "unsigned HAP release; Flutter wrapper exits 1 at missing signing"
+  }
+}

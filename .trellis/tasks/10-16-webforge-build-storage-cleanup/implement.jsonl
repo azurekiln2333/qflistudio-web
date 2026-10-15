@@ -1,0 +1,2 @@
+{"file":".trellis/spec/backend/release-verification.md","reason":"Serialize pub-enabled builds and distinguish unsigned OHOS packaging from signing."}
+{"file":".trellis/spec/backend/directory-structure.md","reason":"Keep retained native inputs and shared core outside cleanup scope."}

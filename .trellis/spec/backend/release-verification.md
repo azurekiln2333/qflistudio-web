@@ -74,3 +74,21 @@ test, then editing the generated registry to silence the missing plugin error.
 
 Correct: `flutter build apk --release` regenerates the mode-specific registry,
 and a clean APK build verifies the resulting dependency selection.
+
+## 8. Storage cleanup while preserving incremental builds
+
+- Keep `build/app`, `.dart_tool`, `android/.gradle`, OHOS build/dependency
+  directories and `build/native/nginx` when the user still needs fast Android
+  and OHOS builds. A blanket `flutter clean` discards useful incremental work.
+- Historical `build/native/platform-audit` exports and `build/native/validation`
+  emulator data are independent of normal WebForge builds. Before removing
+  such exports, archive their patches, source deltas, scripts and small test
+  evidence; keep the original `.trellis/tasks` records and unrelated dirty work.
+- Validate exact absolute targets inside this workspace, require no tracked
+  files in them, and inspect links. Remove reparse points themselves without
+  following SDK, global Pub Cache or sibling-workspace targets. Windows long
+  paths and WSL symlinks require the same boundary check.
+- After cleanup, run `flutter build apk --release` and then
+  `flutter build hap --release`. Verify fresh output archives and preserve the
+  signing distinction in section 4; unsigned OHOS packaging is not a signed
+  release or a device pass. Record archive hashes and measured bytes freed.
