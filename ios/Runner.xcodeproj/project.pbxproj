@@ -236,10 +236,10 @@
 			files = ();
 			inputPaths = ();
 			name = "Build Embedded Nginx";
-			outputPaths = ("$(BUILT_PRODUCTS_DIR)/qfli-nginx/libqfli_nginx.a",);
+			outputPaths = ("$(BUILT_PRODUCTS_DIR)/qfli-nginx/libqfli_nginx.a", "$(BUILT_PRODUCTS_DIR)/qfli-web-syntax/libqfli_web_syntax.a",);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "bash \"$SRCROOT/../scripts/bundle_nginx_ios.sh\"";
+			shellScript = "bash \"$SRCROOT/../scripts/bundle_nginx_ios.sh\"\nbash \"$SRCROOT/../scripts/bundle_web_syntax_apple.sh\"\n";
 		};
 		3B06AD1E1E4923F5004D2608 /* Thin Binary */ = {
 			isa = PBXShellScriptBuildPhase;

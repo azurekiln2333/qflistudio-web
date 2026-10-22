@@ -15,6 +15,9 @@ dependencies:
 
   cupertino_icons: ^1.0.8
   path: ^1.9.1
+  html: ^0.15.6
+  csslib: ^1.0.2
+  ffi: ^2.1.4
 
 dependency_overrides:
   re_editor:
@@ -36,3 +39,4 @@ flutter:
     - assets/content/examples.json
     - vendor/nginx/LICENSE
     - vendor/nginx/android-glob/LICENSE
+    - vendor/quickjs/LICENSE

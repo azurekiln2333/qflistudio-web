@@ -52,6 +52,42 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 # Application build; see runner/CMakeLists.txt.
 add_subdirectory("runner")
 
+# QuickJS uses GCC/Clang extensions and must not inherit the MSVC toolchain.
+# Build its pinned C sources separately, then ship the DLL beside the runner.
+find_program(QFLI_SYNTAX_PYTHON NAMES python3 python)
+find_program(QFLI_SYNTAX_CC NAMES clang gcc)
+if(NOT QFLI_SYNTAX_PYTHON OR NOT QFLI_SYNTAX_CC)
+  message(FATAL_ERROR "Offline JavaScript diagnostics require Python and GCC/Clang (QFLI_SYNTAX_CC)")
+endif()
+set(QFLI_SYNTAX_WINDOWS_SYSROOT "" CACHE PATH "Optional MinGW sysroot for a standalone Clang compiler")
+set(QFLI_SYNTAX_LINK_CC "" CACHE FILEPATH "Optional MinGW GCC link driver for standalone Clang")
+set(QFLI_SYNTAX_EXTRA_ARGS)
+if(QFLI_SYNTAX_WINDOWS_SYSROOT)
+  list(APPEND QFLI_SYNTAX_EXTRA_ARGS --sdk "${QFLI_SYNTAX_WINDOWS_SYSROOT}")
+endif()
+if(QFLI_SYNTAX_LINK_CC)
+  list(APPEND QFLI_SYNTAX_EXTRA_ARGS --link-cc "${QFLI_SYNTAX_LINK_CC}")
+endif()
+set(QFLI_SYNTAX_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/..")
+set(QFLI_SYNTAX_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/web_syntax")
+file(GLOB QFLI_SYNTAX_INPUTS CONFIGURE_DEPENDS
+  "${QFLI_SYNTAX_ROOT}/native/web_syntax/*.c"
+  "${QFLI_SYNTAX_ROOT}/native/web_syntax/*.h"
+  "${QFLI_SYNTAX_ROOT}/vendor/quickjs/*.c"
+  "${QFLI_SYNTAX_ROOT}/vendor/quickjs/*.h")
+add_custom_command(
+  OUTPUT "${QFLI_SYNTAX_OUTPUT}/qfli_web_syntax.dll"
+  COMMAND "${QFLI_SYNTAX_PYTHON}" "${QFLI_SYNTAX_ROOT}/scripts/build_web_syntax.py"
+    --platform windows --cc "${QFLI_SYNTAX_CC}" ${QFLI_SYNTAX_EXTRA_ARGS}
+    --output "${QFLI_SYNTAX_OUTPUT}"
+  DEPENDS ${QFLI_SYNTAX_INPUTS}
+    "${QFLI_SYNTAX_ROOT}/scripts/build_web_syntax.py"
+    "${QFLI_SYNTAX_ROOT}/vendor/quickjs/SOURCE.json"
+  VERBATIM)
+add_custom_target(web_syntax_runtime ALL
+  DEPENDS "${QFLI_SYNTAX_OUTPUT}/qfli_web_syntax.dll")
+add_dependencies(${BINARY_NAME} web_syntax_runtime)
+
 
 # Generated plugin build rules, which manage building the plugins and adding
 # them to the application.
@@ -71,6 +107,9 @@ endif()
 
 set(INSTALL_BUNDLE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/data")
 set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}")
+
+install(FILES "${QFLI_SYNTAX_OUTPUT}/qfli_web_syntax.dll"
+  DESTINATION "${INSTALL_BUNDLE_LIB_DIR}" COMPONENT Runtime)
 
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/runtime/nginx/windows/nginx.exe"
   "${CMAKE_CURRENT_SOURCE_DIR}/../vendor/nginx/LICENSE"

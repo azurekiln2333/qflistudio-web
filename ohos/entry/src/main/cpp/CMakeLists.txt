@@ -4,6 +4,11 @@ project(qfli_nginx_napi C CXX)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
+# Compile-only JavaScript diagnostics are loaded through dart:ffi. This target
+# is a shared library, not an executable, and is packaged for each selected ABI.
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../../../../native/web_syntax"
+  "${CMAKE_CURRENT_BINARY_DIR}/web_syntax")
+
 # The embedded engine is produced per ABI by
 #   scripts/build_nginx_embedded.sh ohos <out> <sdk-native-root> <abi>
 # and retained as a plain static archive (no executableBinaryPaths). Selecting

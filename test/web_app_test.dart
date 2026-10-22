@@ -58,6 +58,7 @@ void main() {
     test('WebForge has a dedicated preview and tools screen', () {
       expect(webProfile.runner, isNull);
       expect(webProfile.webPreviewFactory, isNotNull);
+      expect(webProfile.codeAnalyzer, isNotNull);
       expect(webProfile.toolsPageBuilder, isNotNull);
       // 工具 tab 直接用产品整合体，内核不再渲染单独入口卡片。
       expect(webProfile.toolsTabBuilder, isNotNull);

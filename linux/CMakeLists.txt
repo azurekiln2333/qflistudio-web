@@ -60,6 +60,10 @@ add_subdirectory("runner")
 # Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)
 
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../native/web_syntax"
+  "${CMAKE_CURRENT_BINARY_DIR}/web_syntax")
+add_dependencies(${BINARY_NAME} qfli_web_syntax)
+
 # Only the install-generated bundle's copy of the executable will launch
 # correctly, since the resources must in the right relative locations. To avoid
 # people trying to run the unbundled copy, put it in a subdirectory instead of
@@ -90,6 +94,9 @@ install(CODE "
 
 set(INSTALL_BUNDLE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/data")
 set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+
+install(TARGETS qfli_web_syntax
+  LIBRARY DESTINATION "${INSTALL_BUNDLE_LIB_DIR}" COMPONENT Runtime)
 
 find_program(NGINX_BASH bash)
 if(NOT NGINX_BASH)

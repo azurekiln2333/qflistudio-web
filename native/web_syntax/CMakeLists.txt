@@ -1,0 +1,51 @@
+cmake_minimum_required(VERSION 3.16)
+project(qfli_web_syntax C)
+
+option(QFLI_WEB_SYNTAX_STATIC "Link parser in the application process (Apple)" OFF)
+if(QFLI_WEB_SYNTAX_STATIC)
+  set(QFLI_WEB_SYNTAX_KIND STATIC)
+else()
+  set(QFLI_WEB_SYNTAX_KIND SHARED)
+endif()
+if(MSVC)
+  message(FATAL_ERROR "QuickJS requires GCC/Clang. Build with scripts/build_web_syntax.py and bundle its Windows DLL.")
+endif()
+set(QFLI_QUICKJS "${CMAKE_CURRENT_LIST_DIR}/../../vendor/quickjs")
+file(STRINGS "${QFLI_QUICKJS}/HASHES.sha256" QFLI_QUICKJS_HASHES)
+foreach(QFLI_HASH_LINE IN LISTS QFLI_QUICKJS_HASHES)
+  if(NOT QFLI_HASH_LINE MATCHES "^([a-f0-9]+)  (.+)$")
+    message(FATAL_ERROR "Invalid retained QuickJS source hash line")
+  endif()
+  set(QFLI_EXPECTED_HASH "${CMAKE_MATCH_1}")
+  set(QFLI_HASH_PATH "${QFLI_QUICKJS}/${CMAKE_MATCH_2}")
+  string(LENGTH "${QFLI_EXPECTED_HASH}" QFLI_HASH_LENGTH)
+  if(NOT QFLI_HASH_LENGTH EQUAL 64 OR NOT EXISTS "${QFLI_HASH_PATH}")
+    message(FATAL_ERROR "Missing or invalid retained QuickJS build input: ${QFLI_HASH_PATH}")
+  endif()
+  file(SHA256 "${QFLI_HASH_PATH}" QFLI_ACTUAL_HASH)
+  if(NOT QFLI_ACTUAL_HASH STREQUAL QFLI_EXPECTED_HASH)
+    message(FATAL_ERROR "Retained QuickJS source hash mismatch: ${QFLI_HASH_PATH}")
+  endif()
+endforeach()
+add_library(qfli_web_syntax ${QFLI_WEB_SYNTAX_KIND}
+  qfli_web_syntax.c
+  "${QFLI_QUICKJS}/quickjs.c"
+  "${QFLI_QUICKJS}/cutils.c"
+  "${QFLI_QUICKJS}/libregexp.c"
+  "${QFLI_QUICKJS}/libunicode.c"
+  "${QFLI_QUICKJS}/dtoa.c")
+set_target_properties(qfli_web_syntax PROPERTIES
+  C_STANDARD 11 C_STANDARD_REQUIRED YES POSITION_INDEPENDENT_CODE YES
+  C_VISIBILITY_PRESET hidden)
+target_include_directories(qfli_web_syntax PUBLIC "${CMAKE_CURRENT_LIST_DIR}" PRIVATE "${QFLI_QUICKJS}")
+target_compile_definitions(qfli_web_syntax PRIVATE _GNU_SOURCE CONFIG_VERSION="2026-06-04")
+target_compile_options(qfli_web_syntax PRIVATE -fno-strict-aliasing -fwrapv)
+if(UNIX OR ANDROID OR OHOS)
+  target_link_libraries(qfli_web_syntax PRIVATE m)
+endif()
+if(UNIX AND NOT APPLE AND NOT ANDROID)
+  target_link_libraries(qfli_web_syntax PRIVATE pthread dl)
+endif()
+if(ANDROID OR OHOS)
+  target_link_options(qfli_web_syntax PRIVATE "-Wl,-z,max-page-size=16384")
+endif()

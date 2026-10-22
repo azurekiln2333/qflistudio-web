@@ -13,6 +13,7 @@ import 'package:qfli_studio_core/store/settings_store.dart';
 import 'content/webforge_content_repository.dart';
 import 'pages/web_tools_overview.dart';
 import 'pages/web_tools_page.dart';
+import 'services/web_code_analyzer.dart';
 import 'services/web_runtime.dart';
 
 /// 本 App 的产品名。窗口标题、任务切换器和应用内顶栏都读它。
@@ -32,6 +33,7 @@ const StudioProfile webProfile = StudioProfile(
   runtimeStatus: 'available',
   supportedFileExtensions: ['.html', '.css', '.js'],
   webPreviewFactory: WebRuntime.start,
+  codeAnalyzer: WebCodeAnalyzer(),
   toolsPageBuilder: _buildWebTools,
   toolsTabBuilder: _buildWebToolsTab,
   // 教程/示例读 WebForge 自己的离线课程，而不是共享聚合内容。

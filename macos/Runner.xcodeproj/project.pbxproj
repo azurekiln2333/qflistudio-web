@@ -302,7 +302,7 @@
 			outputPaths = ();
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "bash \"$PROJECT_DIR/../scripts/bundle_nginx_macos.sh\"\n";
+			shellScript = "bash \"$PROJECT_DIR/../scripts/bundle_nginx_macos.sh\"\nbash \"$PROJECT_DIR/../scripts/bundle_web_syntax_apple.sh\"\n";
 		};
 		3399D490228B24CF009A79C7 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
