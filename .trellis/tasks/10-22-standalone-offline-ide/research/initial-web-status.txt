@@ -1,0 +1,65 @@
+ M .trellis/spec/frontend/index.md
+ M .trellis/tasks/10-02-native-runtime-platform-audit/design.md
+ M .trellis/tasks/10-02-native-runtime-platform-audit/implement.md
+ M .trellis/tasks/10-02-native-runtime-platform-audit/research/platform-matrix.md
+ M .trellis/tasks/10-02-native-runtime-platform-audit/research/verification-2026-10-02.md
+ M lib/main.dart
+ M ohos/entry/src/main/ets/entryability/EntryAbility.ets
+ M ohos/entry/src/main/ets/pages/Index.ets
+ M pubspec.lock
+ M pubspec.yaml
+ M test/web_tools_navigation_test.dart
+?? .gitattributes
+?? .opencode/
+?? .trellis/tasks/09-30-webforge-local-runtime/check.jsonl
+?? .trellis/tasks/09-30-webforge-local-runtime/implement.jsonl
+?? .trellis/tasks/10-01-content-code-import/check.jsonl
+?? .trellis/tasks/10-01-content-code-import/implement.jsonl
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/c-android-audit.dart
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/c-android-editor-evidence.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/c-android-verification-2026-10-02.md
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/dart-native-contract.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/dart-native-desktop.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/go-delivery-validation.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/go-profile-delivery.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/java-android-apk-audit.ps1
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/java-android-delivery.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/java-android-elf-audit.ps1
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/java-arm64-commit-plan.json
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/java-arm64-evidence.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/java-arm64-verification-2026-10-02.md
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/lua-android-validation.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/lua-stdin-delivery.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/mysql-desktop-delivery.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/mysql-macos-commit-plan.json
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/mysql-macos-delivery.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/mysql-macos-verification-2026-10-02.md
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/nginx-embedded-commit-plan.json
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/nginx-embedded-verification-2026-10-02.md
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/python-docs-routing.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/python-lifecycle.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/python-linux-lifecycle.py
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/python-linux-lifecycle.sh
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/python-native-runner-test.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/python-windows-reader.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/rust-android-verification-2026-10-02.md
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/rust-commit-plan.json
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/sqlite-commit-dispatch.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/sqlite-default-runner.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/sqlite-final-tests.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/sqlite-frontend-contract.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/sqlite-native-platforms.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/sqlite-platform-dispatch.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/sqlite-script-compatibility.patch
+?? .trellis/tasks/10-02-native-runtime-platform-audit/research/sqlite-ui-script-delta.patch
+?? .trellis/tasks/10-09-web-terminal-current-file/research/README-core-patch.md
+?? .trellis/tasks/10-09-web-terminal-current-file/research/core-baseline/
+?? .trellis/tasks/10-09-web-terminal-current-file/research/core-web-preview-file.patch
+?? .trellis/tasks/10-09-web-terminal-current-file/research/proposed/
+?? .trellis/tasks/10-09-web-terminal-current-file/research/web-baseline/
+?? .trellis/tasks/10-09-web-terminal-current-file/research/web-implementation-results.md
+?? .trellis/tasks/10-22-standalone-offline-ide/
+?? AGENTS.md
+?? LICENSE
+?? ohos/entry/src/main/ets/pages/AgreementReader.ets
+?? test/startup_test.dart

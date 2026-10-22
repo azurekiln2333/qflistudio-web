@@ -1,0 +1,21 @@
+ M lib/content/local_content_adapter.dart
+ M lib/editor/file_explorer.dart
+ M lib/editor/project_history.dart
+ M lib/models/tutorial.dart
+ M lib/pages/local_content_pages.dart
+ M lib/services/example_code_store.dart
+ M lib/services/studio_profile.dart
+ M lib/services/tutorial_service.dart
+ M lib/widgets/project_card.dart
+ M test/local_content_lazy_catalog_test.dart
+ M tool/verify_java_content.dart
+?? .trellis/tasks/10-22-offline-content-explorer/
+?? .trellis/tasks/10-22-offline-editor-analysis/
+?? lib/content/java_catalog_audit.dart
+?? lib/services/code_analysis.dart
+?? lib/widgets/language_badge.dart
+?? test/file_explorer_state_test.dart
+?? test/local_content_filters_test.dart
+?? test/project_history_concurrency_test.dart
+?? tool/java_content/java_topics_io_time.dart
+?? tool/java_content/java_topics_language.dart
