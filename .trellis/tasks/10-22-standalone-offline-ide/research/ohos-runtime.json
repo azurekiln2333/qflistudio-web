@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "os": "ohos",
+  "profile": "web",
+  "syntaxLibrary": "libqfli_web_syntax.so",
+  "nginxLibrary": "libqfli_nginx_napi.so",
+  "quickjs": "QuickJS 2026-06-04 (compile-only, no module resolution)",
+  "nginx": "1.31.6",
+  "passed": 15,
+  "failed": 0,
+  "cases": {
+    "ohos-profile": true,
+    "quickjs-library": true,
+    "js-unsaved-clean": true,
+    "js-crlf-emoji": true,
+    "js-eof": true,
+    "html-embedded-js": true,
+    "css-supported": true,
+    "css-real-error": true,
+    "css-unavailable": true,
+    "js-no-execution": true,
+    "js-no-import-read": true,
+    "sources-unchanged": true,
+    "native-preview": true,
+    "sources-after-preview": true,
+    "fixture-cleanup": true
+  },
+  "evidence": {
+    "entry": "tool/web_ohos_acceptance.dart",
+    "entrySha256": "510ebda01624a64b25eebe16a1027e7d34d69abf983a2fc9bd0f35846242d13a",
+    "hap": "build/artifacts/web-native-acceptance-x64.hap",
+    "hapSha256": "fd9fb56ad444fb76067009a9580f740c26675b871d6c4613e903c1495094a01b",
+    "coreCommit": "daddce27eed1f9389efed0360a0ca954af422da8",
+    "signingMode": "unsigned-emulator",
+    "signatureVerified": false,
+    "osFullName": "OpenHarmony-7.0.0.105",
+    "sdkApiVersion": 26,
+    "architecture": "x86_64",
+    "deviceModel": "emulator"
+  },
+  "caseDetails": [
+    {
+      "id": "ohos-profile",
+      "pass": true,
+      "analyzer": "WebCodeAnalyzer",
+      "offline": true
+    },
+    {
+      "id": "quickjs-library",
+      "pass": true,
+      "version": "QuickJS 2026-06-04 (compile-only, no module resolution)"
+    },
+    {
+      "id": "js-unsaved-clean",
+      "pass": true,
+      "differentSavedSource": true,
+      "diagnostics": 0
+    },
+    {
+      "id": "js-crlf-emoji",
+      "pass": true,
+      "backend": "QuickJS 2026-06-04",
+      "startUtf16": 39,
+      "endUtf16": 40,
+      "expectedStartUtf16": 39,
+      "expectedEndUtf16": 40
+    },
+    {
+      "id": "js-eof",
+      "pass": true,
+      "backend": "QuickJS 2026-06-04",
+      "startUtf16": 11,
+      "endUtf16": 11,
+      "expectedStartUtf16": 11,
+      "expectedEndUtf16": 11
+    },
+    {
+      "id": "html-embedded-js",
+      "pass": true,
+      "backend": "QuickJS 2026-06-04",
+      "startUtf16": 91,
+      "endUtf16": 92,
+      "expectedStartUtf16": 91,
+      "expectedEndUtf16": 92
+    },
+    {
+      "id": "css-supported",
+      "pass": true,
+      "backend": "csslib",
+      "diagnostics": 0
+    },
+    {
+      "id": "css-real-error",
+      "pass": true,
+      "backend": "csslib",
+      "diagnostics": 1
+    },
+    {
+      "id": "css-unavailable",
+      "pass": true,
+      "backend": "csslib",
+      "available": false,
+      "falseDiagnostics": 0
+    },
+    {
+      "id": "js-no-execution",
+      "pass": true,
+      "compiledOnly": true,
+      "sentinelExists": false
+    },
+    {
+      "id": "js-no-import-read",
+      "pass": true,
+      "missingDependencyResolved": false,
+      "diagnostics": 0
+    },
+    {
+      "id": "sources-unchanged",
+      "pass": true,
+      "unchangedFiles": 4
+    },
+    {
+      "id": "native-preview",
+      "pass": true,
+      "engine": "Nginx 1.31.6",
+      "htmlStatus": 200,
+      "cssStatus": 200,
+      "missingStatus": 404,
+      "requestLog": true,
+      "postStopConnectionRefused": true
+    },
+    {
+      "id": "sources-after-preview",
+      "pass": true,
+      "unchangedFiles": 4
+    },
+    {
+      "id": "fixture-cleanup",
+      "pass": true,
+      "ownedFixtureRemoved": true
+    }
+  ]
+}

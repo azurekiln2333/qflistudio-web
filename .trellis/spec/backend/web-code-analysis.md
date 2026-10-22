@@ -151,6 +151,7 @@ JavaScript support. Runtime availability still reports missing delivery honestly
 flutter test --no-pub --concurrency=1 test/web_code_analyzer_test.dart
 flutter analyze --no-pub lib/services/web_code_analyzer.dart lib/services/web_javascript_syntax.dart lib/services/web_javascript_syntax_native.dart lib/services/web_javascript_syntax_stub.dart test/web_code_analyzer_test.dart
 python native/web_syntax/test_native.py build/native/web_syntax/windows/qfli_web_syntax.dll
+flutter build hap --release --target tool/web_ohos_acceptance.dart --target-platform ohos-x64
 ```
 
 Assert actual HTML/CSS errors, clean supported input, modern CSS capability
@@ -170,9 +171,21 @@ SDK23 OHOS arm64/x86_64 and NDK28 Android arm64/x86_64 cross-builds passed;
 SDK23 standalone CMake build and mutated-source rejection passed. See the active
 task's `research/web-analysis-backend.md` for hashes and command evidence.
 
-These do not prove signed installation or OHOS/Android device execution. Apple
-compilation/runtime and Linux execution remain unverified on this host. Missing
-platform evidence stays open; host results never substitute for those gates.
+The separate frozen `tool/web_ohos_acceptance.dart` entry actually passed all 15
+cases on the x86_64 OpenHarmony 7.0.0.105/API26 emulator: production-profile FFI
+loading, QuickJS 2026-06-04, exact CRLF/emoji/EOF/embedded ranges, unsaved-over-disk,
+CSS availability, compile-only/no import reads, unchanged sources and actual
+Nginx 1.31.6 HTTP/log/stop behavior. See `research/ohos-runtime.json` and
+`research/web-ohos-runtime-acceptance.md` in the active task. It used ordinary
+unsigned emulator installation and records signature verification false.
+
+An alternate-entry build overwrites the normal HAP output. Preserve its hash,
+then explicitly rebuild `--target lib/main.dart --target-platform
+ohos-arm64,ohos-x64` and re-audit before calling the result the normal product.
+The acceptance entry proves adapters and preview lifecycle; editor gestures,
+workspace persistence, arm64 execution and physical-device signing need their
+own evidence. Android device execution, Apple compilation/runtime and Linux
+execution remain unverified on this host. Missing platform evidence stays open.
 
 ## 7. Wrong vs Correct
 
