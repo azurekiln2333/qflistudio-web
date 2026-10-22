@@ -14,6 +14,7 @@
     "abilities": [
       {
         "name": "TestAbility",
+        "launchType": "singleton",
         "srcEntry": "./ets/testability/TestAbility.ets",
         "description": "$string:TestAbility_desc",
         "icon": "$media:icon",

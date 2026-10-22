@@ -16,6 +16,8 @@
 | [Native Nginx Runtime](./native-runtime.md) | Multi-platform engine build/packaging and platform limits | Implemented |
 | [Web Runtime](./web-runtime.md) | Preview, project settings, proxies, diagnostics, lifecycle contracts | Implemented |
 | [Release Verification](./release-verification.md) | Build modes, native test failures, signing and device evidence | Implemented |
+| [Web Code Analysis](./web-code-analysis.md) | Unsaved source parsers, native delivery and availability | Implemented |
+| [Catalog Verification](./catalog-verification.md) | Exhaustive semantic checks and exact OHOS packaged content | Implemented |
 
 ## Pre-Development Checklist
 
@@ -25,6 +27,8 @@
   [Native Nginx Runtime](./native-runtime.md).
 - Any runtime change → read [Error Handling](./error-handling.md) and
   [Quality Guidelines](./quality-guidelines.md).
+- Editor syntax backends → read [Web Code Analysis](./web-code-analysis.md).
+- Curriculum or OHOS catalog verification → read [Catalog Verification](./catalog-verification.md).
 
 ## Quality Check
 

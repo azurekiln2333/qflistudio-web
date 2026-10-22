@@ -39,6 +39,22 @@ flutter build hap --release
 - Resolve HDC local paths to real absolute Windows paths before file transfer.
   Use the direct ADB endpoint when an mDNS serial contains spaces. Never restart
   shared device services or install over a sibling app to fix connectivity.
+- The installed official `hap-sign-tool.jar` can print `verify-app failed` and
+  return exit code zero. Require an explicit `verify-app success` marker,
+  exported certificate/profile, and successful `verify-profile`; also validate
+  current profile validity and the exact product bundle. A cryptographically
+  valid old HAP still fails current-source catalog byte/hash checks.
+- The test-only ArkWeb harness and its source/catalog staging use the separate
+  [Catalog Verification](./catalog-verification.md) contract. Full Hvigor ArkTS
+  and ArkUI compilation is required; a standalone SDK type check with weaker
+  nullability options does not prove the application's compilation contract.
+- The installed Flutter OHOS builder defaults to arm64. Build release with
+  `--target-platform ohos-arm64,ohos-x64` when verifying the x86_64 emulator;
+  native CMake ABI filters alone do not add x86_64 `libapp.so`/`libflutter.so`.
+  Inspect actual ELF runtime members for both ABIs before installation.
+- This local x86_64 emulator accepts an ordinary unsigned `hdc install -r`.
+  Use only the explicit, identity-checked catalog-driver emulator mode above.
+  Report unsigned emulator acceptance separately from physical-device signing.
 
 ## 4. Validation and error matrix
 
