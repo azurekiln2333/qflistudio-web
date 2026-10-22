@@ -186,7 +186,10 @@ function containsAll(haystack, needles) {
 }
 
 export function owns(id) {
-  return id.startsWith('js-example-');
+  // This module owns exactly the original authored cases. Future IDs must
+  // supply their own oracle instead of passing through this generic prefix.
+  const match = /^js-example-(\d{3})$/.exec(id);
+  return match !== null && Number(match[1]) >= 1 && Number(match[1]) <= 101;
 }
 
 export async function assertJs(page, ctx) {

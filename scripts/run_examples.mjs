@@ -16,21 +16,53 @@
 // distinct.
 //
 // Usage: node scripts/run_examples.mjs [--report <path>] [--limit N]
+//        [--filter <regex>] [--ohos-cdp <local HDC URL>] [--viewport WIDTHxHEIGHT]
+// OHOS reuses the native test target and verifies its packaged source bytes.
+// --viewport is host-only; OHOS uses the real native viewport.
+// A JSON sibling records all assertions and exact catalog/source hashes.
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
 import { createHash } from 'node:crypto';
+import { OHOS_BOOTSTRAP_URL, validateCdpEndpoint, validateDeviceCatalog } from './catalog_device_contract.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, '..');
 
 const args = process.argv.slice(2);
+const options = new Map();
+for (let i = 0; i < args.length; i += 2) {
+  const name = args[i];
+  if (!['--report', '--limit', '--filter', '--ohos-cdp', '--viewport'].includes(name) ||
+      options.has(name) || !args[i + 1] || args[i + 1].startsWith('--')) {
+    throw new Error(`Unknown, repeated or missing-value option: ${name}`);
+  }
+  options.set(name, args[i + 1]);
+}
 const reportIdx = args.indexOf('--report');
 const reportPath = reportIdx >= 0 ? args[reportIdx + 1] : null;
 const limitIdx = args.indexOf('--limit');
 const limit = limitIdx >= 0 ? Number(args[limitIdx + 1]) : Infinity;
+const cdpIdx = args.indexOf('--ohos-cdp');
+const cdpEndpoint = cdpIdx >= 0 ? validateCdpEndpoint(args[cdpIdx + 1]) : null;
+const filterIdx = args.indexOf('--filter');
+const filter = filterIdx >= 0 ? new RegExp(args[filterIdx + 1]) : null;
+const viewportOption = options.get('--viewport');
+if (viewportOption && (!/^\d+x\d+$/.test(viewportOption) || cdpEndpoint)) {
+  throw new Error('--viewport requires WIDTHxHEIGHT and is host-only');
+}
+const viewport = viewportOption
+  ? Object.fromEntries(viewportOption.split('x').map((value, index) => [index ? 'height' : 'width', Number(value)]))
+  : { width: 1280, height: 720 };
+if (Object.values(viewport).some((value) => !Number.isSafeInteger(value) || value < 100 || value > 10000)) {
+  throw new Error('Viewport dimensions must be integers from 100 to 10000');
+}
+if ((reportIdx >= 0 && (!reportPath || reportPath.startsWith('--'))) ||
+    (limitIdx >= 0 && (!Number.isSafeInteger(limit) || limit < 1))) {
+  throw new Error('Expected --report <path> and --limit <positive integer>');
+}
 
 let chromium;
 try {
@@ -45,6 +77,19 @@ try {
 // Assertion oracles. The JS oracle is required. The markup oracle is required
 // for HTML/CSS to be considered covered; a missing module is a hard failure.
 const js = await import('./js_example_assertions.mjs').catch(() => null);
+const expansionNames = ['html', 'css', 'js'];
+const expansions = await Promise.all(expansionNames.map(async (subject) => {
+  try {
+    return await import(`./${subject}_expansion_assertions.mjs`);
+  } catch {
+    // A missing module cannot claim coverage: its entries fail below.
+    return null;
+  }
+}));
+const covers = (module, id) => module &&
+  (Array.isArray(module.COVERED_IDS)
+    ? module.COVERED_IDS.includes(id)
+    : module.COVERED_IDS instanceof Set && module.COVERED_IDS.has(id));
 let markup = null;
 let markupError = null;
 try {
@@ -53,15 +98,15 @@ try {
   markupError = String(e).split('\n')[0];
 }
 
-const examplesDoc = JSON.parse(
-  readFileSync(resolve(repo, 'assets/content/examples.json'), 'utf8'),
-);
-const tutorialsDoc = JSON.parse(
-  readFileSync(resolve(repo, 'assets/content/tutorials.json'), 'utf8'),
-);
+const examplesSource = readFileSync(resolve(repo, 'assets/content/examples.json'), 'utf8');
+const tutorialsSource = readFileSync(resolve(repo, 'assets/content/tutorials.json'), 'utf8');
+const examplesDoc = JSON.parse(examplesSource);
+const tutorialsDoc = JSON.parse(tutorialsSource);
 
 let examples = examplesDoc.entries;
+if (filter) examples = examples.filter((example) => filter.test(example.id));
 if (Number.isFinite(limit)) examples = examples.slice(0, limit);
+if (examples.length === 0) throw new Error('No examples selected; refusing an empty pass');
 
 const sha = (s) => createHash('sha256').update(s, 'utf8').digest('hex').slice(0, 16);
 
@@ -90,6 +135,17 @@ const exampleByLesson = new Map();
 for (const e of examplesDoc.entries) exampleByLesson.set(e.sourceLessonId, e);
 
 const mappingIssues = [];
+const requireUnique = (values, label) => {
+  const seen = new Set();
+  for (const value of values) {
+    if (!value || seen.has(value)) mappingIssues.push(`${label} duplicate/empty: ${value}`);
+    seen.add(value);
+  }
+};
+requireUnique(tutorialsDoc.entries.map((entry) => entry.id), 'tutorial ID');
+requireUnique(tutorialsDoc.entries.flatMap((entry) => entry.lessons.map((lesson) => lesson.id)), 'lesson ID');
+requireUnique(examplesDoc.entries.map((entry) => entry.id), 'example ID');
+requireUnique(examplesDoc.entries.map((entry) => entry.sourceLessonId), 'example lesson mapping');
 const distinctLessonBodies = new Map();
 for (const [lessonId, code] of lessonCode) {
   const ex = exampleByLesson.get(lessonId);
@@ -98,7 +154,11 @@ for (const [lessonId, code] of lessonCode) {
     continue;
   }
   const h = sha(code);
-  if (!distinctLessonBodies.has(h)) distinctLessonBodies.set(h, lessonId);
+  if (distinctLessonBodies.has(h)) {
+    mappingIssues.push(`${lessonId} duplicates ${distinctLessonBodies.get(h)}`);
+  } else {
+    distinctLessonBodies.set(h, lessonId);
+  }
   if (normaliseDoc(code) !== normaliseDoc(ex.code)) {
     mappingIssues.push(`${lessonId} body !== ${ex.id} body`);
   }
@@ -115,12 +175,38 @@ for (const e of examplesDoc.entries) {
 // Runner
 // ---------------------------------------------------------------------------
 const results = [];
-const browser = await chromium.launch();
+const browser = cdpEndpoint
+  ? await chromium.connectOverCDP(cdpEndpoint)
+  : await chromium.launch();
+const browserVersion = browser.version();
+const startedAt = new Date().toISOString();
+let deviceEvidence = null;
+let nativePage = null;
+let nativeContext = null;
 
 let currentHtml = '';
 let consoleCount = 0;
 const consoleLines = [];
-const server = createServer((req, res) => {
+let server = null;
+let hostOrigin = null;
+try {
+if (cdpEndpoint) {
+  // ArkWeb supplies one existing native target. It does not need to support
+  // Chromium's Browser.createBrowserContext or Target.createTarget commands.
+  const candidates = browser.contexts().flatMap((context) => context.pages()).filter((page) => {
+    try {
+      const url = new URL(page.url());
+      return url.hostname === '127.0.0.1' && Number(url.port) >= 19999 && Number(url.port) <= 65535;
+    } catch { return false; }
+  });
+  if (candidates.length !== 1) throw new Error(`Expected exactly one test-only native ArkWeb target, got ${candidates.length}`);
+  nativePage = candidates[0];
+  nativeContext = nativePage.context();
+  await nativePage.goto(OHOS_BOOTSTRAP_URL, { waitUntil: 'domcontentloaded', timeout: 15000 });
+  const bootstrap = await nativePage.evaluate(() => window.__QFLI_OHOS_CATALOG__);
+  deviceEvidence = validateDeviceCatalog(bootstrap, examplesSource, tutorialsSource);
+} else {
+server = createServer((req, res) => {
   const path = (req.url || '/').split('?')[0];
   if (path === '/' || path === '/index.html') {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
@@ -131,17 +217,33 @@ const server = createServer((req, res) => {
   res.end('not found');
 });
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
-const origin = `http://127.0.0.1:${server.address().port}/`;
-const serverOrigin = new URL(origin).origin;
+hostOrigin = `http://127.0.0.1:${server.address().port}/`;
+}
 
 for (const ex of examples) {
-  // Each example runs in its own browser context (fresh localStorage, cookies,
-  // storage) so lessons cannot leak state into one another.
-  const context = await browser.newContext();
+  // Host cases get independent contexts. Native cases have unique origins in
+  // a fresh incognito renderer; cookies (which ignore port) are cleared too.
+  const context = nativeContext || await browser.newContext({ viewport });
+  if (nativeContext) {
+    await nativePage.goto(OHOS_BOOTSTRAP_URL, { waitUntil: 'domcontentloaded', timeout: 15000 });
+    await context.clearCookies();
+    await nativePage.evaluate(() => { window.name = ''; });
+    const session = await context.newCDPSession(nativePage);
+    try {
+      await session.send('Storage.clearDataForOrigin', {
+        origin: deviceEvidence.cases.get(ex.id).origin,
+        storageTypes: 'all',
+      });
+    } finally {
+      await session.detach();
+    }
+  }
   await context
     .grantPermissions(['clipboard-read', 'clipboard-write'])
     .catch(() => {});
-  const page = await context.newPage();
+  const page = nativePage || await context.newPage();
+  const origin = deviceEvidence ? deviceEvidence.cases.get(ex.id).url : hostOrigin;
+  const serverOrigin = new URL(origin).origin;
   // Fail fast on missing selectors instead of waiting the 30s Playwright default.
   page.setDefaultTimeout(3000);
   const errors = [];
@@ -154,18 +256,18 @@ for (const ex of examples) {
   consoleCount = 0;
   consoleLines.length = 0;
 
-  page.on('console', (m) => {
+  const onConsole = (m) => {
     consoleLines.push(`${m.type()}: ${m.text()}`);
     consoleCount++;
-  });
-  page.on('pageerror', (e) => errors.push(String(e).split('\n')[0]));
-  page.on('response', (r) => {
+  };
+  const onPageError = (e) => errors.push(String(e).split('\n')[0]);
+  const onResponse = (r) => {
     const url = r.url();
     const proto = url.split(':', 1)[0];
     if (proto === 'data' || proto === 'blob' || proto === 'about') return;
     if (r.status() >= 400) resourceErrors.push(`HTTP ${r.status()} ${url}`);
-  });
-  page.on('requestfailed', (r) => {
+  };
+  const onRequestFailed = (r) => {
     const url = r.url();
     const proto = url.split(':', 1)[0];
     if (proto === 'data' || proto === 'blob' || proto === 'about') return;
@@ -177,7 +279,11 @@ for (const ex of examples) {
     }
     if (!sameOrigin) return; // external aborts are recorded by the offline guard
     resourceErrors.push(`FAILED ${url} (${r.failure()?.errorText || 'error'})`);
-  });
+  };
+  page.on('console', onConsole);
+  page.on('pageerror', onPageError);
+  page.on('response', onResponse);
+  page.on('requestfailed', onRequestFailed);
 
   // Offline guard: every non-loopback request is blocked and recorded. No
   // exemptions, including images. Same-origin is decided by URL origin, not a
@@ -236,10 +342,26 @@ for (const ex of examples) {
     });
 
     const isJs = ex.id.startsWith('js-example-');
+    const owners = expansions.filter((module) => covers(module, ex.id));
+    const baselineOwns = isJs ? js?.owns(ex.id) : covers(markup, ex.id);
+    checks.push({
+      name: 'exactly one semantic oracle',
+      ok: owners.length + (baselineOwns ? 1 : 0) === 1,
+      detail: `owners=${owners.length + (baselineOwns ? 1 : 0)}`,
+    });
 
     // Generic interaction drive is JS-only. The markup oracle drives each
     // HTML/CSS example itself; driving both would double-trigger handlers.
-    if (isJs) {
+    if (owners.length === 1) {
+      const before = checks.length;
+      const addCheck = (name, ok, detail = '') => checks.push({ name, ok: ok === true, detail });
+      const handled = await owners[0].assertExpansionExample(page, ex, addCheck);
+      checks.push({
+        name: 'expansion semantic coverage',
+        ok: handled === true && checks.length > before,
+        detail: `handled=${handled}, assertions=${checks.length - before}`,
+      });
+    } else if (isJs) {
       const hasHandler = /addEventListener|on(click|input|change|submit|load|keydown|mousemove|hashchange|scroll)\s*=/.test(
         ex.code,
       );
@@ -321,13 +443,28 @@ for (const ex of examples) {
     failed,
     errors,
     checks: checks.length,
+    assertions: checks,
+    codeSha256: createHash('sha256').update(ex.code, 'utf8').digest('hex'),
+    console: [...consoleLines],
+    blockedRequests: blocked,
+    resourceErrors,
   });
-  await page.close();
-  await context.close();
+  page.off('console', onConsole);
+  page.off('pageerror', onPageError);
+  page.off('response', onResponse);
+  page.off('requestfailed', onRequestFailed);
+  await page.unrouteAll({ behavior: 'wait' });
+  if (!nativePage) {
+    await page.close();
+    await context.close();
+  }
 }
-
-await browser.close();
-await new Promise((r) => server.close(r));
+} finally {
+  // For connectOverCDP this disconnects the transport; never close the native
+  // page/context or terminate another app's renderer.
+  await browser.close();
+  if (server) await new Promise((r) => server.close(r));
+}
 
 // ---------------------------------------------------------------------------
 // Interaction driver (generic stimulus; oracle modules add their own)
@@ -423,10 +560,15 @@ const failed = results.length - passed;
 const totalChecks = results.reduce((s, r) => s + r.checks, 0);
 
 let md = '# Example & tutorial execution report\n\n';
-md += `Runner: Playwright Chromium. Examples: ${results.length}. `;
+md += `Runner: ${deviceEvidence ? 'OHOS ArkWeb via local CDP' : 'Playwright Chromium (host)'}. Examples: ${results.length}. `;
 md += `Assertions: ${totalChecks}. Passed: ${passed}. Failed: ${failed}.\n\n`;
 md += `Tutorial lessons: ${lessonCode.size}. Distinct lesson bodies: ${distinctLessonBodies.size}. `;
 md += `Lesson/example mapping issues: ${mappingIssues.length}.\n\n`;
+md += `Browser: ${browserVersion}. Started: ${startedAt}. `;
+md += `Complete catalog: ${results.length === examplesDoc.entries.length ? 'yes' : 'NO (partial run)'}.\n\n`;
+if (deviceEvidence) md += `Packaged native session: ${deviceEvidence.runId}. Catalog byte lengths and SHA256 verified. ` +
+  `Environment: ${JSON.stringify(deviceEvidence.environment)}.\n\n`;
+else md += `Host viewport: ${viewport.width} × ${viewport.height}.\n\n`;
 if (!markup) md += `Markup oracle: NOT LOADED (${markupError || 'missing'}).\n\n`;
 if (mappingIssues.length) {
   md += 'Mapping issues:\n';
@@ -447,15 +589,39 @@ for (const r of results) {
 }
 
 console.log(md);
-// Always persist the full report to the canonical artifact path so the final
-// resource/assertion state is recorded, plus any explicit --report target.
+// An explicit destination owns the current run. Keep dated historical task
+// evidence immutable when verifying a newer source/catalog revision.
 const reportTargets = new Set([
-  resolve(repo, '.trellis/tasks/10-15-webforge-content-curriculum/research/example-execution-report.md'),
+  resolve(repo, reportPath || 'build/content/example-execution-report.md'),
 ]);
-if (reportPath) reportTargets.add(resolve(repo, reportPath));
 for (const target of reportTargets) {
   mkdirSync(dirname(target), { recursive: true });
   writeFileSync(target, md, 'utf8');
+  const jsonTarget = /\.md$/i.test(target) ? target.replace(/\.md$/i, '.json') : `${target}.json`;
+  writeFileSync(jsonTarget, JSON.stringify({
+    schemaVersion: 1,
+    runtime: deviceEvidence ? 'ohos-arkweb' : 'host-chromium',
+    device: deviceEvidence ? { runId: deviceEvidence.runId, manifest: deviceEvidence.manifest,
+      environment: deviceEvidence.environment } : null,
+    viewport: deviceEvidence ? null : viewport,
+    host: { platform: process.platform, architecture: process.arch, node: process.version },
+    browserVersion,
+    startedAt,
+    completedAt: new Date().toISOString(),
+    catalog: {
+      examplesSha256: createHash('sha256').update(examplesSource).digest('hex'),
+      tutorialsSha256: createHash('sha256').update(tutorialsSource).digest('hex'),
+      totalExamples: examplesDoc.entries.length,
+      totalLessons: lessonCode.size,
+      executedExamples: results.length,
+      complete: results.length === examplesDoc.entries.length,
+    },
+    passed,
+    failed,
+    totalChecks,
+    mappingIssues,
+    results,
+  }, null, 2) + '\n', 'utf8');
 }
 
 process.exit(failed === 0 && mappingIssues.length === 0 ? 0 : 1);

@@ -60,6 +60,82 @@ const isVisible = (page, sel) =>
 // examples use up to 0.4s transitions, so 450ms covers the longest here.
 const settle = (page, ms = 450) => page.waitForTimeout(ms);
 
+// --- viewport helpers ------------------------------------------------------
+//
+// Responsive lessons only prove themselves at more than one width. Two facts
+// make that harder than calling `page.viewportSize()`:
+//
+//   * `viewportSize()` is null whenever the page comes from a real browser
+//     context instead of a Playwright-created one (the ArkWeb/CDP path the
+//     native runner uses), so the width has to come from the document;
+//   * `setViewportSize()` throws in exactly that mode, because the window is
+//     owned by the host browser.
+//
+// So widths are read from `window.innerWidth` when necessary, and resizing is
+// attempted rather than assumed. When a case cannot resize, it asserts the
+// branch that the real width implies instead of silently asserting desktop.
+
+/** Rendered width in CSS pixels, whether or not Playwright owns the viewport. */
+async function viewportWidth(page) {
+  const size = page.viewportSize();
+  if (size && size.width > 0) return size.width;
+  const inner = await page.evaluate(() => window.innerWidth).catch(() => 0);
+  return inner || 0;
+}
+
+/**
+ * Run `fn` with the page resized to `width` x `height`, then restore the
+ * previous viewport. Returns null when the page cannot be resized.
+ */
+async function atViewport(page, width, height, fn) {
+  const original = page.viewportSize();
+  try {
+    await page.setViewportSize({ width, height });
+  } catch {
+    return null;
+  }
+  try {
+    // Media queries re-evaluate synchronously, but a short settle keeps grid
+    // track resolution and layout reads deterministic across engines.
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    return await fn();
+  } finally {
+    if (original) await page.setViewportSize(original).catch(() => {});
+  }
+}
+
+/**
+ * Number of grid tracks that actually carry content.
+ *
+ * `repeat(auto-fit, ...)` keeps every track it computed and collapses the ones
+ * without items to `0px`, so counting all space-separated lengths overcounts.
+ * Only positive tracks are real columns.
+ */
+async function gridColumns(page, sel) {
+  return page.locator(sel).first().evaluate((el) => {
+    const value = getComputedStyle(el).gridTemplateColumns;
+    if (!value || value === 'none') return 0;
+    return value
+      .split(' ')
+      .map((t) => t.trim())
+      .filter((t) => t && parseFloat(t) > 0).length;
+  });
+}
+
+/** Vertical offsets of every match, one per element (rows/stack detection). */
+async function tops(page, sel) {
+  return page.locator(sel).evaluateAll((els) =>
+    els.map((el) => Math.round(el.getBoundingClientRect().top)),
+  );
+}
+
+/** Horizontal offsets of every match. */
+async function lefts(page, sel) {
+  return page.locator(sel).evaluateAll((els) =>
+    els.map((el) => Math.round(el.getBoundingClientRect().left)),
+  );
+}
+
 // --- real resource outcomes (not just attribute presence) -------------------
 //
 // The curriculum is being offline-ified to data:/blob: sources; a syntactically
@@ -1279,8 +1355,10 @@ CSS_CASES.set('css-example-002', async (page, addCheck) => {
     await computed(page, '.box p', 'color'),
   );
   const width = parseFloat(await computed(page, '.box', 'width'));
-  const viewport = page.viewportSize().width;
-  // `width: 50%` of the viewport (minus a scrollbar); assert approximate half.
+  // `width: 50%` of the containing block. Read the real rendered width, which
+  // is `window.innerWidth` when Playwright does not own the viewport (native).
+  const viewport = await viewportWidth(page);
+  // Assert approximate half (a classic scrollbar eats a few px).
   addCheck(
     'box width is about half the viewport',
     Math.abs(width - viewport / 2) <= 24,
@@ -1370,11 +1448,49 @@ CSS_CASES.set('css-example-010', async (page, addCheck) => {
 });
 
 CSS_CASES.set('css-example-011', async (page, addCheck) => {
-  const cols = (await computed(page, '.grid', 'grid-template-columns')).split(' ').length;
-  addCheck('three columns at 1280px', cols === 3, `cols=${cols}`);
   addCheck('gap 8px', (await computed(page, '.grid', 'gap')) === '8px');
   addCheck('three cells', (await count(page, '.cell')) === 3);
   addCheck('cell background #e8f0fe', sameColor(await computed(page, '.cell', 'background-color'), '#e8f0fe'));
+
+  // The lesson's whole point is the 1 -> 2 -> 3 column ladder at 600px and
+  // 900px. Assert both sides of each breakpoint, not just the desktop state.
+  const ladder = [
+    [599, 1],
+    [600, 2],
+    [899, 2],
+    [900, 3],
+  ];
+  const observed = [];
+  for (const [width, expected] of ladder) {
+    const cols = await atViewport(page, width, 720, () => gridColumns(page, '.grid'));
+    if (cols === null) continue;
+    observed.push(width);
+    addCheck(`${width}px viewport renders ${expected} column(s)`, cols === expected, `cols=${cols}`);
+  }
+
+  if (observed.length === 0) {
+    // Cannot resize (native/CDP page): assert the branch this width implies.
+    const width = await viewportWidth(page);
+    const expected = width >= 900 ? 3 : width >= 600 ? 2 : 1;
+    const cols = await gridColumns(page, '.grid');
+    addCheck(`at the real ${width}px width the grid shows ${expected} column(s)`, cols === expected, `cols=${cols}`);
+  }
+
+  // Equal 1fr tracks: every cell is the same width, and the cells fill the
+  // rows implied by the column count (3 cells / 2 columns = 2 rows).
+  const cols = await gridColumns(page, '.grid');
+  const cellCount = await count(page, '.cell');
+  const widths = await page
+    .locator('.cell')
+    .evaluateAll((els) => els.map((el) => +el.getBoundingClientRect().width.toFixed(2)));
+  addCheck('columns are equal width (1fr each)', Math.max(...widths) - Math.min(...widths) <= 1, widths.join('/'));
+  const rowTops = new Set(await tops(page, '.cell'));
+  const expectedRows = Math.ceil(cellCount / Math.max(1, cols));
+  addCheck(
+    `${cols} column(s) lay the ${cellCount} cells out over ${expectedRows} row(s)`,
+    rowTops.size === expectedRows,
+    `${rowTops.size} row(s)`,
+  );
 });
 
 CSS_CASES.set('css-example-012', async (page, addCheck) => {
@@ -1413,13 +1529,52 @@ CSS_CASES.set('css-example-014', async (page, addCheck) => {
 
 CSS_CASES.set('css-example-015', async (page, addCheck) => {
   addCheck('wall is grid', (await computed(page, '.wall', 'display')) === 'grid');
-  addCheck(
-    'auto-fit minmax columns resolve',
-    (await computed(page, '.wall', 'grid-template-columns')) !== 'none',
-  );
   addCheck('card border radius 12px', (await computed(page, '.card', 'border-radius')) === '12px');
-  addCheck('card has box shadow', (await computed(page, '.card', 'box-shadow')) !== 'none');
+  addCheck('card shadow is the authored 1px/3px pair', (await computed(page, '.card', 'box-shadow')) === 'rgba(0, 0, 0, 0.08) 0px 1px 3px 0px', await computed(page, '.card', 'box-shadow'));
   addCheck('three cards', (await count(page, '.card')) === 3);
+
+  // `repeat(auto-fit, minmax(160px, 1fr))`: auto-fit collapses the tracks that
+  // have no items to 0px, so the number of *positive* tracks is the real column
+  // count, and it must follow the available width instead of a fixed count.
+  const layout = async () => ({
+    cols: await gridColumns(page, '.wall'),
+    widths: await page
+      .locator('.card')
+      .evaluateAll((els) => els.map((el) => +el.getBoundingClientRect().width.toFixed(2))),
+    rows: new Set(await tops(page, '.card')).size,
+    overflow: await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  });
+
+  const wide = await atViewport(page, 1280, 720, layout);
+  const narrow = await atViewport(page, 412, 720, layout);
+
+  if (wide && narrow) {
+    addCheck('wide viewport fits the three cards in three tracks', wide.cols === 3, `cols=${wide.cols}`);
+    addCheck('wide viewport puts them on a single row', wide.rows === 1, `${wide.rows} row(s)`);
+    addCheck('narrow viewport drops to two tracks', narrow.cols === 2, `cols=${narrow.cols}`);
+    addCheck('narrow viewport wraps the third card onto a second row', narrow.rows === 2, `${narrow.rows} row(s)`);
+    addCheck('cards stay at least 160px wide when narrow', Math.min(...narrow.widths) >= 160, narrow.widths.join('/'));
+    addCheck('auto-fit never overflows the page', wide.overflow <= 0 && narrow.overflow <= 0, `${wide.overflow}/${narrow.overflow}`);
+  } else {
+    // Cannot resize: assert the auto-fit invariant at the real width instead of
+    // guessing a column count. `repeat(auto-fit, minmax(160px, 1fr))` fits
+    // floor((available + gap) / (160 + gap)) tracks, capped by the item count,
+    // and auto-fit collapses every unused track.
+    const real = await layout();
+    const available = await page.locator('.wall').first().evaluate((el) => el.clientWidth);
+    const fit = Math.min(3, Math.max(1, Math.floor((available + 12) / (160 + 12))));
+    addCheck(`auto-fit fits ${fit} track(s) in ${available}px at the real width`, real.cols === fit, `cols=${real.cols} available=${available}`);
+    addCheck('cards are at least 160px wide', Math.min(...real.widths) >= 160, real.widths.join('/'));
+    addCheck('auto-fit never overflows the page', real.overflow <= 0, String(real.overflow));
+  }
+
+  // The minmax() floor is real: each card is >= 160px and all share one width.
+  const widths = await page
+    .locator('.card')
+    .evaluateAll((els) => els.map((el) => +el.getBoundingClientRect().width.toFixed(2)));
+  addCheck('all cards share the 1fr width', Math.max(...widths) - Math.min(...widths) <= 1, widths.join('/'));
 });
 
 CSS_CASES.set('css-example-016', async (page, addCheck) => {
@@ -1465,10 +1620,13 @@ CSS_CASES.set('css-example-020', async (page, addCheck) => {
 });
 
 CSS_CASES.set('css-example-021', async (page, addCheck) => {
-  const filter = await computed(page, '.photo', 'filter');
-  addCheck('photo grayscale+contrast filter', filter.includes('grayscale') && filter.includes('contrast'), filter);
-  const backdrop = await computed(page, '.glass', 'backdrop-filter');
-  addCheck('glass backdrop blur', backdrop.includes('blur'), backdrop);
+  // Exact authored values: grayscale(1) fully desaturates, contrast(1.2)
+  // steepens it, blur(6px) is the glass. A substring check for "grayscale"
+  // would also pass for grayscale(0.1), which looks nothing like the lesson.
+  addCheck('photo filter is grayscale(1) contrast(1.2)', (await computed(page, '.photo', 'filter')) === 'grayscale(1) contrast(1.2)', await computed(page, '.photo', 'filter'));
+  addCheck('photo keeps its 120px width', (await computed(page, '.photo', 'width')) === '120px');
+  addCheck('glass backdrop-filter is blur(6px)', (await computed(page, '.glass', 'backdrop-filter')) === 'blur(6px)', await computed(page, '.glass', 'backdrop-filter'));
+  addCheck('glass is 40% white so the blur shows through', (await computed(page, '.glass', 'background-color')) === 'rgba(255, 255, 255, 0.4)', await computed(page, '.glass', 'background-color'));
   // The photo is now an inline SVG; it must really decode (a corrupt data URI
   // would still satisfy a src-attribute check).
   const imgs = await imageOutcomes(page);
@@ -1533,22 +1691,29 @@ CSS_CASES.set('css-example-028', async (page, addCheck) => {
 });
 
 CSS_CASES.set('css-example-029', async (page, addCheck) => {
+  // Screen state: everything is on screen and no print rule applies yet.
   addCheck('nav visible on screen', await isVisible(page, 'nav'));
   addCheck('button visible on screen', await isVisible(page, 'button'));
-  // break-inside only applies inside @media print, so assert the print media
-  // rule exists (and mentions break-inside), not the screen computed value.
-  const printRule = await page.evaluate(() => {
-    for (const ss of document.styleSheets) {
-      for (const r of ss.cssRules || []) {
-        if (r.media && String(r.media.mediaText).includes('print')) {
-          return r.cssRules ? [...r.cssRules].map((x) => x.cssText).join(' ') : 'print';
-        }
-      }
-    }
-    return '';
-  });
-  addCheck('print media rule declared', printRule.includes('print') || printRule.length > 0, printRule);
-  addCheck('print rule avoids breaks inside cards', printRule.includes('break-inside') || printRule.includes('avoid'), printRule);
+  addCheck('cards keep default break-inside on screen', (await computed(page, '.card', 'break-inside')) === 'auto', await computed(page, '.card', 'break-inside'));
+
+  // Switch the page to the print media type and assert the print branch for
+  // real, instead of only checking that a @media print rule was parsed.
+  await page.emulateMedia({ media: 'print' });
+  try {
+    await settle(page, 150);
+    addCheck('nav is removed when printing', !(await isVisible(page, 'nav')));
+    addCheck('button is removed when printing', !(await isVisible(page, 'button')));
+    addCheck('nav display is none under print', (await computed(page, 'nav', 'display')) === 'none', await computed(page, 'nav', 'display'));
+    addCheck('button display is none under print', (await computed(page, 'button', 'display')) === 'none');
+    addCheck('body prints on white paper', sameColor(await computed(page, 'body', 'background-color'), '#ffffff'), await computed(page, 'body', 'background-color'));
+    addCheck('body prints in black ink', sameColor(await computed(page, 'body', 'color'), '#000000'));
+    addCheck('cards avoid breaking across pages', (await computed(page, '.card', 'break-inside')) === 'avoid', await computed(page, '.card', 'break-inside'));
+    addCheck('the article heading still prints', (await isVisible(page, 'h1')) && (await text(page, 'h1')) === '可打印文章');
+  } finally {
+    await page.emulateMedia({ media: 'screen' });
+    await settle(page, 150);
+  }
+  addCheck('screen media restores the nav', await isVisible(page, 'nav'));
 });
 
 CSS_CASES.set('css-example-030', async (page, addCheck) => {
@@ -1598,16 +1763,59 @@ CSS_CASES.set('css-example-034', async (page, addCheck) => {
 CSS_CASES.set('css-example-035', async (page, addCheck) => {
   addCheck('btn blue', sameColor(await computed(page, '.btn', 'background-color'), '#1a73e8'));
   addCheck('btn pointer', (await computed(page, '.btn', 'cursor')) === 'pointer');
+  addCheck('btn radius 6px', (await computed(page, '.btn', 'border-radius')) === '6px');
+  addCheck('btn padding 10px 20px', (await computed(page, '.btn', 'padding-top')) === '10px' && (await computed(page, '.btn', 'padding-left')) === '20px');
+
+  // Disabled state: the authored opacity is exactly .5 (not merely "< 1",
+  // which would also accept a barely-visible .99).
+  addCheck('disabled opacity is exactly 0.5', (await computed(page, '.btn[disabled]', 'opacity')) === '0.5', await computed(page, '.btn[disabled]', 'opacity'));
+  addCheck('disabled cursor is not-allowed', (await computed(page, '.btn[disabled]', 'cursor')) === 'not-allowed');
+
+  // Keyboard focus ring first: 3px solid #8ab4f8 from :focus-visible. Tab must
+  // be the first interaction in this case — after a mouse click the sequential
+  // focus starting point sits on the button, so Tab would move past it and
+  // :focus-visible would never engage.
+  await page.keyboard.press('Tab');
+  await settle(page, 150);
+  addCheck('Tab focuses the first button', (await page.evaluate(() => document.activeElement.className)) === 'btn');
+  addCheck('focus ring is 3px solid #8ab4f8', (await computed(page, '.btn', 'outline-width')) === '3px' && (await computed(page, '.btn', 'outline-style')) === 'solid' && sameColor(await computed(page, '.btn', 'outline-color'), '#8ab4f8'), await computed(page, '.btn', 'outline-color'));
+
+  // Hover: the darker shade from the lesson, not just "some other colour".
   await page.hover('.btn:not([disabled])');
-  addCheck('hover darkens', sameColor(await computed(page, '.btn:not([disabled])', 'background-color'), '#1557b0'));
-  const disabledOpacity = parseFloat(await computed(page, '.btn[disabled]', 'opacity'));
-  addCheck('disabled is translucent', disabledOpacity < 1, `${disabledOpacity}`);
+  await settle(page, 120);
+  addCheck('hover darkens to #1557b0', sameColor(await computed(page, '.btn:not([disabled])', 'background-color'), '#1557b0'), await computed(page, '.btn:not([disabled])', 'background-color'));
+
+  // :active needs a held pointer, so press the real button and read it while
+  // the mouse is still down; :active then matches and the 1px sink applies.
+  const btn = await page.locator('.btn:not([disabled])').boundingBox();
+  await page.mouse.move(btn.x + btn.width / 2, btn.y + btn.height / 2);
+  await page.mouse.down();
+  await settle(page, 120);
+  const pressed = await page.locator('.btn:not([disabled])').evaluate((el) => ({
+    active: el.matches(':active'),
+    transform: getComputedStyle(el).transform,
+  }));
+  await page.mouse.up();
+  addCheck('pressed button matches :active', pressed.active);
+  addCheck('pressed button sinks by 1px', pressed.transform === 'matrix(1, 0, 0, 1, 0, 1)', pressed.transform);
+  addCheck('released button returns to rest', (await computed(page, '.btn:not([disabled])', 'transform')) === 'none');
 });
 
 CSS_CASES.set('css-example-036', async (page, addCheck) => {
-  addCheck('card box-shadow present', (await computed(page, '.card', 'box-shadow')) !== 'none');
+  // The lesson teaches a *two-layer* shadow; assert both layers with their
+  // exact offsets/blur, not merely that some shadow exists.
+  const shadow = await computed(page, '.card', 'box-shadow');
+  addCheck('card shadow has two layers', (shadow.match(/rgba?\(/g) || []).length === 2, shadow);
+  addCheck('card shadow layer 1 is 0 1px 2px', shadow.includes('0px 1px 2px'), shadow);
+  addCheck('card shadow layer 2 is 0 4px 12px', shadow.includes('0px 4px 12px'), shadow);
+  addCheck('both layers are 8% black', (shadow.match(/rgba\(0, 0, 0, 0.08\)/g) || []).length === 2, shadow);
   addCheck('card radius 8px', (await computed(page, '.card', 'border-radius')) === '8px');
-  addCheck('h1 text-shadow present', (await computed(page, 'h1', 'text-shadow')) !== 'none');
+
+  // Text shadow: 1px down, 2px blur, 20% black.
+  addCheck('h1 text-shadow is 0 1px 2px 20% black', (await computed(page, 'h1', 'text-shadow')) === 'rgba(0, 0, 0, 0.2) 0px 1px 2px', await computed(page, 'h1', 'text-shadow'));
+  // A shadow with no offset/blur would be a flat halo; require a real offset.
+  const textShadow = await computed(page, 'h1', 'text-shadow');
+  addCheck('text-shadow is offset downward', /\b0px 1px\b/.test(textShadow), textShadow);
 });
 
 CSS_CASES.set('css-example-037', async (page, addCheck) => {
@@ -1639,11 +1847,45 @@ CSS_CASES.set('css-example-040', async (page, addCheck) => {
 });
 
 CSS_CASES.set('css-example-041', async (page, addCheck) => {
-  addCheck('badge relative', (await computed(page, '.badge', 'position')) === 'relative');
-  const borderTop = await computed(page, '.badge', 'position');
-  addCheck('badge has ::after block', borderTop !== null);
-  const content = await page.locator('.badge').evaluate((el) => getComputedStyle(el, '::after').content);
-  addCheck('::after has no text content', content === '""' || content === 'none' || content === 'normal', content);
+  addCheck('badge is the positioning context', (await computed(page, '.badge', 'position')) === 'relative');
+  addCheck('badge background #e8f0fe', sameColor(await computed(page, '.badge', 'background-color'), '#e8f0fe'));
+
+  // The triangle is a ::after box with a red top/right border and transparent
+  // bottom/left borders. Read the pseudo element's own computed style (a
+  // locator cannot address ::after) and assert the geometry that makes it a
+  // corner triangle rather than an empty box.
+  const after = await page
+    .locator('.badge')
+    .first()
+    .evaluate((el) => {
+      const cs = getComputedStyle(el, '::after');
+      const get = (p) => cs.getPropertyValue(p).trim();
+      return {
+        content: get('content'),
+        position: get('position'),
+        top: get('top'),
+        right: get('right'),
+        borderWidth: [get('border-top-width'), get('border-right-width'), get('border-bottom-width'), get('border-left-width')],
+        borderStyle: get('border-top-style'),
+        borderColor: [
+          get('border-top-color'),
+          get('border-right-color'),
+          get('border-bottom-color'),
+          get('border-left-color'),
+        ],
+      };
+    });
+
+  addCheck('::after has empty content (pure shape)', after.content === '""', after.content);
+  addCheck('::after is absolutely positioned', after.position === 'absolute', after.position);
+  addCheck('::after sits at the top-right corner', after.top === '0px' && after.right === '0px', `${after.top}/${after.right}`);
+  addCheck('::after borders are 8px solid on all four sides', after.borderWidth.every((w) => w === '8px') && after.borderStyle === 'solid', `${after.borderWidth.join('/')} ${after.borderStyle}`);
+  addCheck('::after top and right borders are red #ea4335', sameColor(after.borderColor[0], '#ea4335') && sameColor(after.borderColor[1], '#ea4335'), after.borderColor.slice(0, 2).join(' / '));
+  addCheck('::after bottom and left borders are transparent', /rgba\(0, 0, 0, 0\)|transparent/.test(after.borderColor[2]) && /rgba\(0, 0, 0, 0\)|transparent/.test(after.borderColor[3]), after.borderColor.slice(2).join(' / '));
+
+  // The 8px red borders against 8px transparent ones form a 45-degree wedge
+  // whose visible half is the red triangle.
+  addCheck('badge box is 128x37', (await page.locator('.badge').first().boundingBox()).width === 128);
 });
 
 CSS_CASES.set('css-example-042', async (page, addCheck) => {
@@ -1662,13 +1904,42 @@ CSS_CASES.set('css-example-043', async (page, addCheck) => {
 });
 
 CSS_CASES.set('css-example-044', async (page, addCheck) => {
-  // `max-width: 65ch` resolves to a pixel length; assert it constrains the
-  // article to well under the viewport and stays centred.
+  // 65ch resolves to a fixed pixel measure (≈610px at 16px text) that does not
+  // depend on the viewport. At a phone width the article is narrower than that
+  // measure, so "maxWidth < viewport" is only true on desktop. Measure `ch`
+  // independently in the same engine and compare: that proves the authored unit
+  // and magnitude, and holds at any viewport.
+  const ch65 = await page.evaluate(() => {
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;width:65ch;visibility:hidden;left:-9999px';
+    document.body.appendChild(probe);
+    const width = probe.getBoundingClientRect().width;
+    probe.remove();
+    return width;
+  });
   const maxWidth = parseFloat(await computed(page, 'article', 'max-width'));
-  const viewport = page.viewportSize().width;
-  addCheck('article width constrained (65ch)', maxWidth > 0 && maxWidth < viewport, `${maxWidth}`);
-  addCheck('article centred', (await computed(page, 'article', 'margin-left')) === (await computed(page, 'article', 'margin-right')));
-  addCheck('article line-height 1.7', (await computed(page, 'article', 'line-height')) !== 'normal');
+  addCheck('max-width really is 65ch', Math.abs(maxWidth - ch65) < 0.5, `${maxWidth} vs 65ch=${ch65}`);
+  addCheck('65ch is a readable measure (500-700px)', ch65 > 500 && ch65 < 700, String(ch65));
+
+  addCheck('line-height is 1.7 x 16px = 27.2px', (await computed(page, 'article', 'line-height')) === '27.2px', await computed(page, 'article', 'line-height'));
+  addCheck('article padding is 16px', (await computed(page, 'article', 'padding-left')) === '16px');
+
+  // Used width = min(65ch, available content width); that relation is the real
+  // guarantee and it must hold at every viewport.
+  const width = parseFloat(await computed(page, 'article', 'width'));
+  const available = await page.evaluate(() => document.body.clientWidth - 32);
+  addCheck('article width is min(65ch, available width)', Math.abs(width - Math.min(ch65, available)) < 1, `${width} vs min(${ch65}, ${available})`);
+
+  // Centring only means something when the measure is narrower than the page.
+  const marginLeft = parseFloat(await computed(page, 'article', 'margin-left'));
+  const marginRight = parseFloat(await computed(page, 'article', 'margin-right'));
+  if (ch65 < available) {
+    addCheck('article is centred with equal side margins', Math.abs(marginLeft - marginRight) < 1 && marginLeft > 0, `${marginLeft}/${marginRight}`);
+    const box = await page.locator('article').first().boundingBox();
+    addCheck('article is horizontally centred on the page', Math.abs(box.x + box.width / 2 - (await viewportWidth(page)) / 2) <= 8, `${box.x + box.width / 2}`);
+  } else {
+    addCheck('at a narrow width the article fills the available width', width === available, `${width} vs ${available}`);
+  }
 });
 
 CSS_CASES.set('css-example-045', async (page, addCheck) => {
@@ -1720,30 +1991,90 @@ CSS_CASES.set('css-example-049', async (page, addCheck) => {
 });
 
 CSS_CASES.set('css-example-050', async (page, addCheck) => {
+  const knob = () =>
+    page
+      .locator('.slider')
+      .first()
+      .evaluate((el) => getComputedStyle(el, '::before').transform.trim());
+
   addCheck('switch relative', (await computed(page, '.switch', 'position')) === 'relative');
+  addCheck('switch is 48x26', (await computed(page, '.switch', 'width')) === '48px' && (await computed(page, '.switch', 'height')) === '26px');
   addCheck('slider grey initially', sameColor(await computed(page, '.slider', 'background-color'), '#cccccc'));
-  // The checkbox is visually hidden (`.switch input { display: none }`), so a
-  // real click/check is impossible. Set the checked property AND the attribute,
-  // then dispatch change; `:checked` matches the property state.
-  await page.locator('.switch input').evaluate((el) => {
-    el.checked = true;
-    el.setAttribute('checked', '');
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-    el.dispatchEvent(new Event('change', { bubbles: true }));
-  });
+  addCheck('slider is a pill (999px)', (await computed(page, '.slider', 'border-radius')) === '999px');
+  addCheck('knob starts at the left inset', (await knob()) === 'none', await knob());
+
+  // The checkbox is display:none, but it lives inside the <label> — so clicking
+  // the switch really toggles it, exactly like a user would. Clicking the
+  // label (not setting `.checked` in JS) is what proves the CSS wiring.
+  await page.locator('.switch').first().click();
   await settle(page, 400);
-  addCheck('checkbox is checked', await page.locator('.switch input').isChecked());
-  addCheck('checked slider blue', sameColor(await computed(page, '.slider', 'background-color'), '#1a73e8'), await computed(page, '.slider', 'background-color'));
-  const knob = await page.locator('.slider').evaluate((el) => getComputedStyle(el, '::before').transform);
-  addCheck('knob translated on check', knob !== 'none', knob);
+  addCheck('clicking the switch checks the box', await page.locator('.switch input').isChecked());
+  addCheck('checked slider turns blue', sameColor(await computed(page, '.slider', 'background-color'), '#1a73e8'), await computed(page, '.slider', 'background-color'));
+  addCheck('checked knob slides 22px right', (await knob()) === 'matrix(1, 0, 0, 1, 22, 0)', await knob());
+
+  // Toggling back must restore the off state, not just latch on.
+  await page.locator('.switch').first().click();
+  await settle(page, 400);
+  addCheck('second click unchecks the box', !(await page.locator('.switch input').isChecked()));
+  addCheck('slider returns to grey', sameColor(await computed(page, '.slider', 'background-color'), '#cccccc'));
+  addCheck('knob returns to the left inset', (await knob()) === 'none', await knob());
+
+  // The knob really moves: its painted position differs between the two states.
+  const geometry = await page.evaluate(() => ({ w: 48, knob: 20, left: 3, travel: 22 }));
+  addCheck('knob travel keeps the knob inside the track', geometry.left + geometry.knob + geometry.travel + geometry.left === geometry.w, JSON.stringify(geometry));
 });
 
 CSS_CASES.set('css-example-051', async (page, addCheck) => {
-  const cols = await computed(page, '.holy', 'grid-template-columns');
-  addCheck('holy grail three columns at 1280px', cols.split(' ').length === 3, cols);
-  const areas = await computed(page, '.holy', 'grid-template-areas');
-  addCheck('named areas present', areas.includes('head') && areas.includes('left') && areas.includes('right'), areas);
-  addCheck('header spans head', (await computed(page, 'header', 'grid-area')) === 'head' || (await computed(page, 'header', 'grid-row-start')) !== 'auto');
+  // Wide: three columns in 1fr / 3fr / 1fr proportions with named areas.
+  const wide = await atViewport(page, 1280, 720, async () => ({
+    cols: await gridColumns(page, '.holy'),
+    areas: await computed(page, '.holy', 'grid-template-areas'),
+    left: (await page.locator('.left').first().boundingBox()).width,
+    main: (await page.locator('main').first().boundingBox()).width,
+    right: (await page.locator('.right').first().boundingBox()).width,
+    header: (await page.locator('header').first().boundingBox()).width,
+    leftX: (await page.locator('.left').first().boundingBox()).x,
+    mainX: (await page.locator('main').first().boundingBox()).x,
+    rightX: (await page.locator('.right').first().boundingBox()).x,
+    leftY: (await page.locator('.left').first().boundingBox()).y,
+    mainY: (await page.locator('main').first().boundingBox()).y,
+    containerWidth: (await page.locator('.holy').first().boundingBox()).width,
+  }));
+
+  // Narrow: the same document collapses to one column with stacked blocks.
+  const narrow = await atViewport(page, 412, 720, async () => ({
+    cols: await gridColumns(page, '.holy'),
+    areas: await computed(page, '.holy', 'grid-template-areas'),
+    leftX: (await page.locator('.left').first().boundingBox()).x,
+    mainX: (await page.locator('main').first().boundingBox()).x,
+    rightX: (await page.locator('.right').first().boundingBox()).x,
+    leftY: (await page.locator('.left').first().boundingBox()).y,
+    mainY: (await page.locator('main').first().boundingBox()).y,
+    rightY: (await page.locator('.right').first().boundingBox()).y,
+  }));
+
+  if (wide) {
+    addCheck('wide layout has three columns', wide.cols === 3, `cols=${wide.cols}`);
+    addCheck('wide layout declares head/left/main/right/foot areas', ['head', 'left', 'main', 'right', 'foot'].every((a) => wide.areas.includes(a)), wide.areas);
+    addCheck('left and right sidebars are equally wide', Math.abs(wide.left - wide.right) < 1, `${wide.left}/${wide.right}`);
+    addCheck('main column is three times a sidebar (3fr)', Math.abs(wide.main / wide.left - 3) < 0.05, `${(wide.main / wide.left).toFixed(3)}x`);
+    addCheck('header spans the full container width', Math.abs(wide.header - wide.containerWidth) < 1, `${wide.header} vs ${wide.containerWidth}`);
+    addCheck('sidebars flank the main column on one row', wide.leftX < wide.mainX && wide.mainX < wide.rightX && wide.leftY === wide.mainY, `${wide.leftX}/${wide.mainX}/${wide.rightX}`);
+  } else {
+    // Cannot resize: assert the branch the real width implies.
+    const width = await viewportWidth(page);
+    const cols = await gridColumns(page, '.holy');
+    const expected = width > 640 ? 3 : 1;
+    addCheck(`at the real ${width}px width the layout shows ${expected} column(s)`, cols === expected, `cols=${cols}`);
+    addCheck('named areas are declared', (await computed(page, '.holy', 'grid-template-areas')).includes('head'));
+  }
+
+  if (narrow) {
+    addCheck('narrow layout collapses to one column', narrow.cols === 1, `cols=${narrow.cols}`);
+    addCheck('narrow areas stack head/left/main/right/foot', /"head"\s+"left"\s+"main"\s+"right"\s+"foot"/.test(narrow.areas), narrow.areas);
+    addCheck('narrow blocks all start at the same x', narrow.leftX === narrow.mainX && narrow.mainX === narrow.rightX, `${narrow.leftX}/${narrow.mainX}/${narrow.rightX}`);
+    addCheck('narrow blocks stack downward (left, main, right)', narrow.leftY < narrow.mainY && narrow.mainY < narrow.rightY, `${narrow.leftY}/${narrow.mainY}/${narrow.rightY}`);
+  }
 });
 
 CSS_CASES.set('css-example-052', async (page, addCheck) => {
@@ -1844,9 +2175,80 @@ CSS_CASES.set('css-example-063', async (page, addCheck) => {
 });
 
 CSS_CASES.set('css-example-064', async (page, addCheck) => {
-  addCheck('burger hidden on wide', !(await isVisible(page, '.burger')));
-  addCheck('menu flex on wide', (await computed(page, '.menu', 'display')) === 'flex');
-  addCheck('nav-toggle hidden', !(await isVisible(page, '#nav-toggle')));
+  // Wide state: at >=600px the media query hides the burger and lays the menu
+  // out horizontally.
+  const wide = await atViewport(page, 1280, 720, async () => ({
+    burger: await computed(page, '.burger', 'display'),
+    menu: await computed(page, '.menu', 'display'),
+    gap: await computed(page, '.menu', 'gap'),
+    itemsInline: new Set(await tops(page, '.menu li')).size === 1,
+  }));
+  if (wide) {
+    addCheck('wide: burger is hidden', wide.burger === 'none', wide.burger);
+    addCheck('wide: menu is flex', wide.menu === 'flex', wide.menu);
+    addCheck('wide: menu items sit on one row', wide.itemsInline);
+    addCheck('wide: menu gap 16px', wide.gap === '16px');
+  } else {
+    const width = await viewportWidth(page);
+    const menu = await computed(page, '.menu', 'display');
+    const burger = await computed(page, '.burger', 'display');
+    if (width >= 600) {
+      addCheck(`wide (${width}px): burger is hidden`, burger === 'none', burger);
+      addCheck(`wide (${width}px): menu is flex`, menu === 'flex', menu);
+    } else {
+      addCheck(`narrow (${width}px): burger is shown`, burger !== 'none', burger);
+      addCheck(`narrow (${width}px): menu starts collapsed`, menu === 'none', menu);
+    }
+  }
+
+  // Narrow state: the burger appears, the menu is collapsed, and a real click
+  // on the label toggles it — this is the whole lesson, so drive it by clicking
+  // the visible ☰ label exactly like a user (not by setting .checked in JS).
+  const narrow = await atViewport(page, 412, 720, async () => {
+    const before = {
+      burger: await computed(page, '.burger', 'display'),
+      menu: await computed(page, '.menu', 'display'),
+      menuVisible: await isVisible(page, '.menu'),
+    };
+    await page.locator('.burger').first().click();
+    await settle(page, 200);
+    const opened = {
+      menu: await computed(page, '.menu', 'display'),
+      menuVisible: await isVisible(page, '.menu'),
+      checked: await page.locator('#nav-toggle').isChecked(),
+      stacked: new Set(await tops(page, '.menu li')).size === 3,
+      items: await count(page, '.menu li'),
+    };
+    await page.locator('.burger').first().click();
+    await settle(page, 200);
+    const closed = {
+      menu: await computed(page, '.menu', 'display'),
+      checked: await page.locator('#nav-toggle').isChecked(),
+    };
+    return { before, opened, closed };
+  });
+
+  if (narrow) {
+    addCheck('narrow: burger is shown', narrow.before.burger !== 'none', narrow.before.burger);
+    addCheck('narrow: menu starts collapsed', narrow.before.menu === 'none' && narrow.before.menuVisible === false, narrow.before.menu);
+    addCheck('narrow: clicking ☰ checks the toggle', narrow.opened.checked);
+    addCheck('narrow: clicking ☰ reveals the menu', narrow.opened.menu === 'block' && narrow.opened.menuVisible === true, narrow.opened.menu);
+    addCheck('narrow: revealed menu stacks its three items', narrow.opened.stacked && narrow.opened.items === 3, `${narrow.opened.items} items`);
+    addCheck('narrow: clicking ☰ again unchecks the toggle', !narrow.closed.checked);
+    addCheck('narrow: clicking ☰ again hides the menu', narrow.closed.menu === 'none', narrow.closed.menu);
+  } else {
+    // Cannot resize and the real width is wide: the toggle is unreachable here,
+    // so assert the authored toggle rule is present rather than claiming a pass.
+    const rule = await page.evaluate(() => {
+      for (const ss of document.styleSheets) {
+        for (const r of ss.cssRules || []) {
+          if (r.selectorText && r.selectorText.includes('#nav-toggle:checked')) return r.cssText;
+        }
+      }
+      return '';
+    });
+    addCheck('the #nav-toggle:checked rule reveals the menu', rule.includes(':checked') && /display:\s*block/.test(rule), rule);
+  }
 });
 
 CSS_CASES.set('css-example-065', async (page, addCheck) => {
@@ -2166,10 +2568,46 @@ CSS_CASES.set('css-example-089', async (page, addCheck) => {
 });
 
 CSS_CASES.set('css-example-090', async (page, addCheck) => {
-  addCheck('card padding 8px at 1280px', (await computed(page, '.card', 'padding-top')) === '8px' || (await computed(page, '.card', 'padding-top')) === '16px');
+  const state = async () => ({
+    space: await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--space').trim()),
+    title: await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--title').trim()),
+    padding: await computed(page, '.card', 'padding-top'),
+    margin: await computed(page, '.card', 'margin-bottom'),
+    h2: await computed(page, 'h2', 'font-size'),
+  });
+
   addCheck('card background #e8f0fe', sameColor(await computed(page, '.card', 'background-color'), '#e8f0fe'));
-  const h2 = parseFloat(await computed(page, 'h2', 'font-size'));
-  addCheck('h2 font-size is 18 or 24', h2 === 18 || h2 === 24, `${h2}`);
+
+  // Both branches of the 600px breakpoint: the lesson is about custom
+  // properties switching value, so assert the variable AND the declarations
+  // that consume it, on each side of the breakpoint.
+  const narrow = await atViewport(page, 599, 720, state);
+  const wide = await atViewport(page, 600, 720, state);
+
+  if (narrow && wide) {
+    addCheck('narrow: --space is 8px', narrow.space === '8px', narrow.space);
+    addCheck('narrow: --title is 18px', narrow.title === '18px', narrow.title);
+    addCheck('narrow: card padding follows --space (8px)', narrow.padding === '8px', narrow.padding);
+    addCheck('narrow: card margin follows --space (8px)', narrow.margin === '8px', narrow.margin);
+    addCheck('narrow: h2 follows --title (18px)', narrow.h2 === '18px', narrow.h2);
+    addCheck('wide: --space switches to 16px', wide.space === '16px', wide.space);
+    addCheck('wide: --title switches to 24px', wide.title === '24px', wide.title);
+    addCheck('wide: card padding follows --space (16px)', wide.padding === '16px', wide.padding);
+    addCheck('wide: h2 follows --title (24px)', wide.h2 === '24px', wide.h2);
+    addCheck('the breakpoint actually changes the padding', narrow.padding !== wide.padding, `${narrow.padding} -> ${wide.padding}`);
+    addCheck('the breakpoint actually changes the heading size', narrow.h2 !== wide.h2, `${narrow.h2} -> ${wide.h2}`);
+  } else {
+    // Cannot resize: assert the values implied by the real width, and that the
+    // variable is really what drives them.
+    const width = await viewportWidth(page);
+    const real = await state();
+    const expectedSpace = width >= 600 ? '16px' : '8px';
+    const expectedTitle = width >= 600 ? '24px' : '18px';
+    addCheck(`at the real ${width}px width --space is ${expectedSpace}`, real.space === expectedSpace, real.space);
+    addCheck(`at the real ${width}px width --title is ${expectedTitle}`, real.title === expectedTitle, real.title);
+    addCheck('card padding consumes --space', real.padding === real.space, `${real.padding} vs ${real.space}`);
+    addCheck('h2 font-size consumes --title', real.h2 === real.title, `${real.h2} vs ${real.title}`);
+  }
 });
 
 CSS_CASES.set('css-example-091', async (page, addCheck) => {
