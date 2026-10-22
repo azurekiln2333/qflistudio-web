@@ -36,9 +36,13 @@ Reference: `test/web_tools_navigation_test.dart`.
 - Assert persisted effects, not just that a button was tapped — e.g. read
   `.qfli/web.json` back and compare the decoded map
   (`test/web_tools_navigation_test.dart`).
-- Navigation is reached through the shared tools tab, then the `本地服务` or
-  `Web 编解码` card. Assert five destinations and no duplicate `Web 工具` card.
-  Cover narrow layouts and 2x text scaling in both themes.
+- Enter the shared Tools tab and interact directly with the inline `本地服务`,
+  `Web 编解码` and inspection controls; assert five destinations and no extra
+  `Web 工具` feature-hub route. Advance the PageView transition (300 ms), then
+  allow real resource-discovery/isolate work through `tester.runAsync`, observing
+  the public busy indicator before `pumpAndSettle`. Assert actual tool results
+  and cover narrow layouts and 2x text scaling in both themes. See
+  [Offline Web Tools](./offline-web-tools.md) for limits and semantic regressions.
 
 ## Verifying shared-core terminal surfaces
 

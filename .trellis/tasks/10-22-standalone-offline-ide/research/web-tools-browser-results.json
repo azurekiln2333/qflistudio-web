@@ -1,0 +1,45 @@
+{
+  "status": "pass",
+  "checks": 16,
+  "requests": [],
+  "before": {
+    "text": "AB C",
+    "rawScript": "window.preserved = `\n  two  spaces\n</scripture>`;",
+    "programValue": "\n  two  spaces\n</scripture>",
+    "pre": "  first\n    second\n",
+    "textarea": "  keep\n next",
+    "color": "rgb(255, 0, 0)",
+    "width": "123px",
+    "height": "45px",
+    "margin": "7px",
+    "display": "grid",
+    "pseudoContent": "\"a  b\""
+  },
+  "after": {
+    "text": "AB C",
+    "rawScript": "window.preserved = `\n  two  spaces\n</scripture>`;",
+    "programValue": "\n  two  spaces\n</scripture>",
+    "pre": "  first\n    second\n",
+    "textarea": "  keep\n next",
+    "color": "rgb(255, 0, 0)",
+    "width": "123px",
+    "height": "45px",
+    "margin": "7px",
+    "display": "grid",
+    "pseudoContent": "\"a  b\""
+  },
+  "fragments": [
+    {
+      "beforeText": "AB",
+      "afterText": "AB"
+    },
+    {
+      "beforeText": "A B",
+      "afterText": "A B"
+    },
+    {
+      "beforeText": "first bold tail",
+      "afterText": "first bold tail"
+    }
+  ]
+}

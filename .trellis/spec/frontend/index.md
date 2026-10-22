@@ -14,6 +14,7 @@
 | [State Management](./state-management.md) | Store injection, local state, config persistence | Implemented |
 | [Quality Guidelines](./quality-guidelines.md) | Widget-test pattern, forbidden patterns, review checklist | Implemented |
 | [Content Imports](./content-import.md) | MD3 catalogs, custom filenames, editor and project imports | Implemented |
+| [Offline Web Tools](./offline-web-tools.md) | Inline tools, bounded inspection and semantic formatting | Implemented |
 
 ## Pre-Development Checklist
 
@@ -24,6 +25,7 @@
   [State Management](./state-management.md).
 - Offline catalogs and code imports → read
   [Content Imports](./content-import.md).
+- Product Tools and source inspection → read [Offline Web Tools](./offline-web-tools.md).
 
 ## Quality Check
 

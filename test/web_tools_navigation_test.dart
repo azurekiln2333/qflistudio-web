@@ -71,6 +71,18 @@ void main() {
   /// 通过内核底部导航进入工具 tab。
   Future<void> openTools(WidgetTester tester) async {
     await tester.tap(find.byIcon(Icons.apps_outlined).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    // The inline resource panel now performs real asynchronous disk/isolate
+    // work. Let that work advance outside the fake test clock before settling
+    // the route and its loading animation.
+    await tester.runAsync(() async {
+      for (var attempt = 0; attempt < 500; attempt++) {
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+        await tester.pump();
+        if (find.byType(LinearProgressIndicator).evaluate().isEmpty) return;
+      }
+    });
     await tester.pumpAndSettle();
   }
 
