@@ -4,7 +4,7 @@
 
 QFLIWebForge 是手機上的網頁 IDE。
 它在本機預覽 HTML、CSS 和 JavaScript 專案。
-它把 主控台輸出送回編輯器。
+它把主控台輸出送回編輯器。
 
 ## 產品定位
 
@@ -27,7 +27,7 @@ QFLIWebForge 是手機上的網頁 IDE。
 - 支援 HTTP 代理和 WebSocket 代理。
 - 代理目標只允許本機迴環 IP。
 - 支援即時重新整理。
-- 支援 主控台、錯誤和請求診斷。
+- 支援主控台、錯誤和請求診斷。
 - 支援目前檔案預覽。
 - 長按執行按鈕可預覽目前檔案。
 
@@ -223,11 +223,17 @@ flutter run --debug --no-pub -d DEVICE -t tool/nginx_smoke.dart --no-resident
 - 失敗項已修原始碼，原生複驗仍待執行。
 - 2026-10-26 兩套引擎的 CSP 迴歸通過。
 - 該修復以 5bd2e3a 發佈到五個遠端。
-- C843 完整測試為 320 項通過、1 項失敗。
-- 失敗項是資源代理的截止時間迴歸。
-- 格式檢查、靜態分析和 481 對內容檢查通過。
-- 完整交接證明用時 164.471 秒，未逾 180 秒。
-- 自有預覽策略和資源代理仍待提交。
+- 2026-10-26 C895 完整驗證通過。
+- 格式、測試、分析、內容四個階段全部通過。
+- 測試 321 項全部通過，失敗 0 項。
+- 格式檢查處理 11 個檔案，變更 0 處。
+- 靜態分析檢查 4 個目標，無問題。
+- 內容檢查 481 對通過，問題 0。
+- 驗證結束時退出碼 0，活動行程數 0。
+- 子任務用時 99.981 秒，在自身視窗內。
+- C904 認定完整交接證明用時 158.019 秒，未逾 180 秒。
+- 自有預覽策略和資源代理已在本機驗證基礎範圍。
+- ArkWeb 整合仍待完成。
 - 本輪未執行 OHOS 驗證。
 - 全產品驗收尚未完成。
 - 目前工作樹尚未完成端對端複驗。
@@ -239,7 +245,8 @@ flutter run --debug --no-pub -d DEVICE -t tool/nginx_smoke.dart --no-resident
 - 課程驗證見 [.trellis/spec/backend/catalog-verification.md](.trellis/spec/backend/catalog-verification.md)。
 - 平台證據見 [vendor/nginx/VALIDATION.md](vendor/nginx/VALIDATION.md)。
 - 發行檢查見 [.trellis/tasks/10-15-webforge-store-readiness/](.trellis/tasks/10-15-webforge-store-readiness/)。
-- 本輪驗收記錄見 [web-c843-validation-20261026.md](.trellis/tasks/10-22-standalone-offline-ide/research/web-c843-validation-20261026.md)。
+- C843 驗收記錄見 [web-c843-validation-20261026.md](.trellis/tasks/10-22-standalone-offline-ide/research/web-c843-validation-20261026.md)。
+- C895 驗收記錄見 [web-c895-validation-20261026.md](.trellis/tasks/10-22-standalone-offline-ide/research/web-c895-validation-20261026.md)。
 
 ## 授權
 

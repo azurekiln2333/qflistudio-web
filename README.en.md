@@ -232,11 +232,17 @@ Current state of the working tree:
   examples were repaired in source. A native re-run is pending.
 - On 2026-10-26, the production CSP browser regressions passed for both engines.
 - That fix was published as 5bd2e3a to five remotes.
-- On 2026-10-26, the C843 full suite reported 320 passed and 1 failed.
-- The failure is the resource broker deadline regression.
-- Formatting, analysis and the 481-pair content audit passed.
-- The complete handoff proof took 164.471 seconds, within the 180-second limit.
-- The owned-preview policy and broker repairs are still uncommitted.
+- On 2026-10-26, the C895 full validation passed.
+- All four phases passed: format, tests, analysis and content.
+- The test phase passed all 321 tests with 0 failures.
+- Formatting processed 11 files and changed 0.
+- Static analysis checked 4 targets and found no issues.
+- The 481-pair content audit passed with 0 issues.
+- The validation exited 0 and left 0 active processes.
+- The child run took 99.981 seconds, inside its own window.
+- C904 recorded the complete handoff proof at 158.019 seconds, within the 180-second limit.
+- The owned-preview policy and broker primitives are host validated.
+- ArkWeb integration remains open.
 - This host run did not validate OHOS.
 - All-product acceptance remains open.
 - The current tree is not re-verified end to end.
@@ -251,7 +257,8 @@ not certify the current candidate.
 - Curriculum verification: [.trellis/spec/backend/catalog-verification.md](.trellis/spec/backend/catalog-verification.md).
 - Platform evidence: [vendor/nginx/VALIDATION.md](vendor/nginx/VALIDATION.md).
 - Release checks: [.trellis/tasks/10-15-webforge-store-readiness/](.trellis/tasks/10-15-webforge-store-readiness/).
-- This run's acceptance record: [web-c843-validation-20261026.md](.trellis/tasks/10-22-standalone-offline-ide/research/web-c843-validation-20261026.md).
+- The C843 acceptance record: [web-c843-validation-20261026.md](.trellis/tasks/10-22-standalone-offline-ide/research/web-c843-validation-20261026.md).
+- The C895 acceptance record: [web-c895-validation-20261026.md](.trellis/tasks/10-22-standalone-offline-ide/research/web-c895-validation-20261026.md).
 - Current offline IDE work: [.trellis/tasks/10-22-standalone-offline-ide/](.trellis/tasks/10-22-standalone-offline-ide/).
 
 ## License
