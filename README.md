@@ -222,10 +222,14 @@ flutter run --debug --no-pub -d DEVICE -t tool/nginx_smoke.dart --no-resident
 - 同日 ArkWeb 检查为 474 项通过、7 项失败。
 - 失败项已修源码，原生复验仍待运行。
 - 2026-10-26 两套引擎的 CSP 回归通过。
-- 同日全套测试为 316 项通过、4 项失败。
-- 4 项失败均在自有预览策略和资源代理中。
-- 格式、静态分析和 481 对内容检查通过。
-- 本轮最终回报超时，未通过 180 秒时限。
+- 该修复以 5bd2e3a 发布到五个远端。
+- C843 全套测试为 320 项通过、1 项失败。
+- 失败项是资源代理的截止时间回归。
+- 格式检查、静态分析和 481 对内容检查通过。
+- 完整交接证明用时 164.471 秒，未超 180 秒。
+- 自有预览策略和资源代理仍待提交。
+- 本轮未运行 OHOS 验证。
+- 全产品验收尚未完成。
 - 当前工作树尚未完成端到端复验。
 
 ## 深入阅读
@@ -235,6 +239,7 @@ flutter run --debug --no-pub -d DEVICE -t tool/nginx_smoke.dart --no-resident
 - 课程验证见 [.trellis/spec/backend/catalog-verification.md](.trellis/spec/backend/catalog-verification.md)。
 - 平台证据见 [vendor/nginx/VALIDATION.md](vendor/nginx/VALIDATION.md)。
 - 发布检查见 [.trellis/tasks/10-15-webforge-store-readiness/](.trellis/tasks/10-15-webforge-store-readiness/)。
+- 本轮验收记录见 [web-c843-validation-20261026.md](.trellis/tasks/10-22-standalone-offline-ide/research/web-c843-validation-20261026.md)。
 
 ## 许可
 

@@ -231,10 +231,14 @@ Current state of the working tree:
 - The 2026-10-22 native ArkWeb run reported 474 passed and 7 failed. The failing
   examples were repaired in source. A native re-run is pending.
 - On 2026-10-26, the production CSP browser regressions passed for both engines.
-- The full suite reported 316 passed and 4 failed. The failures were in the new
-  owned-preview policy and resource broker.
+- That fix was published as 5bd2e3a to five remotes.
+- On 2026-10-26, the C843 full suite reported 320 passed and 1 failed.
+- The failure is the resource broker deadline regression.
 - Formatting, analysis and the 481-pair content audit passed.
-- Final publication was late, so the run failed its 180-second coordination limit.
+- The complete handoff proof took 164.471 seconds, within the 180-second limit.
+- The owned-preview policy and broker repairs are still uncommitted.
+- This host run did not validate OHOS.
+- All-product acceptance remains open.
 - The current tree is not re-verified end to end.
 
 Treat each row as dated evidence with its recorded scope. A historical pass does
@@ -247,6 +251,7 @@ not certify the current candidate.
 - Curriculum verification: [.trellis/spec/backend/catalog-verification.md](.trellis/spec/backend/catalog-verification.md).
 - Platform evidence: [vendor/nginx/VALIDATION.md](vendor/nginx/VALIDATION.md).
 - Release checks: [.trellis/tasks/10-15-webforge-store-readiness/](.trellis/tasks/10-15-webforge-store-readiness/).
+- This run's acceptance record: [web-c843-validation-20261026.md](.trellis/tasks/10-22-standalone-offline-ide/research/web-c843-validation-20261026.md).
 - Current offline IDE work: [.trellis/tasks/10-22-standalone-offline-ide/](.trellis/tasks/10-22-standalone-offline-ide/).
 
 ## License
