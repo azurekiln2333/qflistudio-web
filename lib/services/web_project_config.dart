@@ -16,6 +16,25 @@ class WebProxyRule {
 }
 
 class WebProjectConfig {
+  /// Applied to every preview response by both serving engines. Local proxy
+  /// routes keep API traffic on the preview origin; authored inline scripts,
+  /// local assets and data/blob resources remain usable offline.
+  static const offlineContentSecurityPolicy =
+      "default-src 'self' data: blob:; "
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; "
+      "style-src 'self' 'unsafe-inline' data: blob:; connect-src 'self' blob:; "
+      "form-action 'self'; base-uri 'self'; object-src 'self' data: blob:";
+
+  /// Local upstreams cannot replace the preview policy or configure browser
+  /// report uploads. CSP fetch restrictions do not constrain report delivery.
+  static const offlineProxyPolicyHeaders = {
+    'content-security-policy',
+    'content-security-policy-report-only',
+    'reporting-endpoints',
+    'report-to',
+    'nel',
+  };
+
   const WebProjectConfig({
     required this.root,
     required this.port,
@@ -31,6 +50,25 @@ class WebProjectConfig {
   final List<WebProxyRule> proxies;
   final WebServerEngine engine;
   final String indexFile;
+
+  /// Enforce the standalone preview's offline boundary even for a configuration
+  /// supplied directly by a caller. Literal loopback IPs avoid DNS resolution
+  /// and keep a saved proxy rule from reaching a LAN or Internet service.
+  void validateOffline() {
+    for (final rule in proxies) {
+      final target = rule.target;
+      if ((target.scheme != 'http' && target.scheme != 'https') ||
+          target.hasQuery ||
+          target.hasFragment ||
+          target.userInfo.isNotEmpty) {
+        throw const FormatException('代理 target 必须是 HTTP(S) 地址');
+      }
+      final address = InternetAddress.tryParse(target.host);
+      if (address == null || !address.isLoopback) {
+        throw const FormatException('离线预览的代理只允许本机回环 IP 地址（127.0.0.1 或 ::1）');
+      }
+    }
+  }
 
   static Future<WebProjectConfig> load(String projectPath) async {
     final file = File(p.join(projectPath, '.qfli', 'web.json'));
@@ -139,7 +177,7 @@ class WebProjectConfig {
       proxies.add(WebProxyRule(prefix: prefix, target: target));
     }
     proxies.sort((a, b) => b.prefix.length.compareTo(a.prefix.length));
-    return WebProjectConfig(
+    final config = WebProjectConfig(
       root: canonicalRoot,
       port: port,
       spaFallback: spaFallback,
@@ -150,5 +188,7 @@ class WebProjectConfig {
           ? p.relative(canonicalEntry, from: canonicalRoot)
           : 'index.html',
     );
+    config.validateOffline();
+    return config;
   }
 }

@@ -69,6 +69,7 @@ class NginxSession implements WebRuntimeSession, WebFilePreviewSession {
     WebProjectConfig? configuration,
   }) async {
     final config = configuration ?? await WebProjectConfig.load(projectPath);
+    config.validateOffline();
     final version = await host.version();
     final prefix = await Directory.systemTemp.createTemp('webforge-nginx-');
     WebDevServer? bridge;
@@ -328,6 +329,7 @@ http {
   proxy_set_header Upgrade \$http_upgrade;
   proxy_set_header Connection \$connection_upgrade;
   proxy_buffering off;
+  ${WebProjectConfig.offlineProxyPolicyHeaders.map((header) => 'proxy_hide_header $header;').join('\n  ')}
   proxy_redirect off;
   proxy_connect_timeout 10s;
   proxy_read_timeout 30s;
@@ -335,6 +337,7 @@ http {
     listen 127.0.0.1:$port;
     add_header X-WebForge-Engine nginx always;
     add_header X-WebForge-Session ${_quote(token)} always;
+    add_header Content-Security-Policy ${_quote(WebProjectConfig.offlineContentSecurityPolicy)} always;
     location = /__webforge/health { empty_gif; access_log off; }
     location = /__webforge/events { proxy_pass http://127.0.0.1:$bridgePort; proxy_read_timeout 1h; }
     location = /__webforge/debug { proxy_pass http://127.0.0.1:$bridgePort; }

@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:html/dom.dart' show DocumentType;
+import 'package:html/parser.dart' as html_parser;
 import 'package:path/path.dart' as p;
 import 'package:qfli_studio_core/services/web_preview_file.dart';
 
@@ -53,6 +55,7 @@ class WebDevServer implements WebRuntimeSession, WebFilePreviewSession {
     int? publicPort,
   }) async {
     final config = configuration ?? await WebProjectConfig.load(projectPath);
+    config.validateOffline();
     final server = await HttpServer.bind(
       InternetAddress.loopbackIPv4,
       config.port,
@@ -62,7 +65,21 @@ class WebDevServer implements WebRuntimeSession, WebFilePreviewSession {
       config,
       HttpClient()
         ..connectionTimeout = const Duration(seconds: 10)
-        ..autoUncompress = false,
+        ..autoUncompress = false
+        ..findProxy = ((_) => 'DIRECT')
+        ..connectionFactory = (uri, proxyHost, proxyPort) {
+          // WebSocket.connect follows HTTP redirects. Check every actual socket
+          // destination, including redirects, before DNS or a connection starts.
+          final address = InternetAddress.tryParse(uri.host);
+          if (proxyHost != null || address == null || !address.isLoopback) {
+            throw const SocketException('离线预览只允许连接本机回环 IP 地址');
+          }
+          // A custom HttpClient factory also owns TLS; HttpClient does not
+          // wrap this socket for HTTPS (including converted WSS handshakes).
+          return uri.scheme == 'https'
+              ? SecureSocket.startConnect(address, uri.port)
+              : Socket.startConnect(address, uri.port);
+        },
       publicPort ?? server.port,
     );
     server.listen((request) => unawaited(instance._handle(request)));
@@ -120,6 +137,10 @@ class WebDevServer implements WebRuntimeSession, WebFilePreviewSession {
 
   Future<void> _handle(HttpRequest request) async {
     final started = DateTime.now();
+    request.response.headers.set(
+      'Content-Security-Policy',
+      WebProjectConfig.offlineContentSecurityPolicy,
+    );
     var status = HttpStatus.internalServerError;
     try {
       if (request.uri.path == '/__webforge/events') {
@@ -222,11 +243,15 @@ class WebDevServer implements WebRuntimeSession, WebFilePreviewSession {
     response.headers.set(HttpHeaders.cacheControlHeader, 'no-store');
     if (request.method == 'GET') {
       if (p.extension(file.path).toLowerCase() case '.html' || '.htm') {
-        final html = await file.readAsString();
-        final head = RegExp('</head>', caseSensitive: false).firstMatch(html);
-        final rendered = head == null
-            ? '$_bridge$html'
-            : html.replaceRange(head.start, head.start, _bridge);
+        final bytes = await file.readAsBytes();
+        final rendered = _injectBridge(utf8.decode(bytes));
+        // UTF-8 decoding consumes the BOM; retain it in the served source.
+        if (bytes.length >= 3 &&
+            bytes[0] == 0xef &&
+            bytes[1] == 0xbb &&
+            bytes[2] == 0xbf) {
+          response.add(bytes.sublist(0, 3));
+        }
         response.add(utf8.encode(rendered));
       } else {
         await response.addStream(file.openRead());
@@ -257,7 +282,10 @@ class WebDevServer implements WebRuntimeSession, WebFilePreviewSession {
     response.statusCode = incoming.statusCode;
     final responseSkipped = _hopHeaders(incoming.headers);
     incoming.headers.forEach((name, values) {
-      if (!responseSkipped.contains(name.toLowerCase())) {
+      if (!responseSkipped.contains(name.toLowerCase()) &&
+          !WebProjectConfig.offlineProxyPolicyHeaders.contains(
+            name.toLowerCase(),
+          )) {
         response.headers.set(name, values);
       }
     });
@@ -499,6 +527,35 @@ class WebDevServer implements WebRuntimeSession, WebFilePreviewSession {
         '.pdf' => 'application/pdf',
         _ => 'application/octet-stream',
       };
+}
+
+String _injectBridge(String html) {
+  final document = html_parser.HtmlParser(
+    html,
+    generateSpans: true,
+    parseMeta: false,
+  ).parse();
+  final doctype = document.nodes.whereType<DocumentType>().firstOrNull;
+  // Install before authored head scripts. HTML5 spans distinguish actual tags
+  // from comments, quoted attributes and raw text without serializing the DOM.
+  // With an implicit head, stay after the doctype to retain document mode and
+  // before any possibly unclosed comment that could swallow the bridge.
+  final boundary =
+      document.head?.sourceSpan?.end.offset ??
+      doctype?.sourceSpan?.end.offset ??
+      0;
+  // The parser normalizes CRLF to LF. Map this one UTF-16 boundary back to the
+  // authored source instead of normalizing or rewriting any of that source.
+  var offset = 0;
+  for (var index = 0; index < boundary; index++) {
+    if (html.codeUnitAt(offset) == 13 &&
+        offset + 1 < html.length &&
+        html.codeUnitAt(offset + 1) == 10) {
+      offset++;
+    }
+    offset++;
+  }
+  return html.replaceRange(offset, offset, _bridge);
 }
 
 const _bridge = r'''<script>

@@ -78,7 +78,8 @@ editor.
 - Preview connects to loopback only.
 - Proxy targets must be literal loopback IP addresses.
 - Every response carries an offline content policy.
-- The policy keeps inline scripts, local resources and data/blob assets working.
+- The policy allows inline scripts, local resources, same-origin object documents
+  and data/blob assets.
 - The policy does not stop a system browser from opening ordinary links.
 - Offline covers the product runtime, not the system browser.
 - The product does not depend on a remote service.
@@ -229,7 +230,11 @@ Current state of the working tree:
   and mobile viewports.
 - The 2026-10-22 native ArkWeb run reported 474 passed and 7 failed. The failing
   examples were repaired in source. A native re-run is pending.
-- The 2026-10-24 content policy repair is source only and has not been run.
+- On 2026-10-26, the production CSP browser regressions passed for both engines.
+- The full suite reported 316 passed and 4 failed. The failures were in the new
+  owned-preview policy and resource broker.
+- Formatting, analysis and the 481-pair content audit passed.
+- Final publication was late, so the run failed its 180-second coordination limit.
 - The current tree is not re-verified end to end.
 
 Treat each row as dated evidence with its recorded scope. A historical pass does

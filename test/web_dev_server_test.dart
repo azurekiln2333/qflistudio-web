@@ -2,11 +2,14 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show debugPrintSynchronously;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+import 'package:qfli_web/services/nginx_session.dart';
 import 'package:qfli_web/services/web_dev_server.dart';
 import 'package:qfli_web/services/web_project_config.dart';
 import 'package:qfli_web/services/web_runtime.dart';
+import 'package:qfli_web/services/web_runtime_session.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -333,6 +336,103 @@ void main() {
     expect(server.debugBuffer, hasLength(1));
   });
 
+  for (final native in [false, true]) {
+    test('real browser bridge captures early head and body events in '
+        '${native ? 'Nginx' : 'WebForge'}', () async {
+      final executable = native ? await WebRuntime.nginxExecutable() : null;
+      if (native && executable == null) {
+        markTestSkipped('No desktop Nginx build for the real browser check');
+        return;
+      }
+      final fixtures = _browserBridgeFixtures();
+      for (final fixture in fixtures) {
+        write(fixture.path, fixture.source);
+      }
+      final WebRuntimeSession server = native
+          ? await NginxSession.start(project.path, executable: executable!)
+          : await WebDevServer.start(project.path);
+      addTearDown(server.stop);
+      expect(server.engineName, native ? startsWith('Nginx ') : 'WebForge');
+      final debug = <String>[];
+      final subscription = server.debugStream.listen(debug.add);
+      addTearDown(subscription.cancel);
+      final process = await Process.start('node', [
+        'scripts/test_web_console_bridge.mjs',
+      ], workingDirectory: Directory.current.path);
+      addTearDown(process.kill);
+      final output = process.stdout.transform(utf8.decoder).join();
+      final errors = process.stderr.transform(utf8.decoder).join();
+      process.stdin.writeln(
+        jsonEncode({
+          'baseUrl': server.url,
+          'cases': [
+            for (final fixture in fixtures)
+              {
+                'path': fixture.path,
+                'done': fixture.done,
+                'expectedPosts': fixture.lines.length,
+              },
+          ],
+        }),
+      );
+      await process.stdin.close();
+      final exitCode = await process.exitCode.timeout(
+        const Duration(seconds: 45),
+        onTimeout: () {
+          process.kill();
+          throw TimeoutException('Production browser bridge check timed out');
+        },
+      );
+      final stdout = await output;
+      expect(exitCode, 0, reason: '${await errors}\n$stdout');
+      final report = jsonDecode(stdout) as Map<String, dynamic>;
+      final observations = report['cases'] as List<dynamic>;
+      // Keep the red/green evidence in the normal test log without dumping
+      // authored HTML or replacing the production stream with harness data.
+      debugPrintSynchronously(
+        'browser bridge ${server.engineName}: '
+        '${jsonEncode({
+          'browserVersion': report['browserVersion'],
+          'externalRequests': report['externalRequests'],
+          'cases': [
+            for (final observation in observations) {'path': observation['path'], 'posts': observation['posts'], 'consoleEvents': observation['consoleEvents'], 'errors': observation['errors'], 'dom': observation['dom']},
+          ],
+          'debugStream': debug,
+        })}',
+      );
+      expect(report['externalRequests'], isEmpty);
+      expect(observations, hasLength(fixtures.length));
+      for (var index = 0; index < fixtures.length; index++) {
+        final fixture = fixtures[index];
+        final observation = observations[index] as Map<String, dynamic>;
+        final reason = '${server.engineName} ${fixture.path}';
+        expect(observation['bridgeCount'], 1, reason: reason);
+        expect(
+          observation['sourceWithoutBridge'],
+          fixture.source,
+          reason: '$reason must retain the authored source exactly',
+        );
+        expect(observation['dom'], fixture.dom, reason: reason);
+        if (native) {
+          expect(observation['engineHeader'], 'nginx', reason: reason);
+        }
+        final posts = observation['posts'] as List<dynamic>;
+        expect(posts, hasLength(fixture.lines.length), reason: reason);
+        for (final post in posts) {
+          expect(post['status'], HttpStatus.noContent, reason: reason);
+          expect(post['origin'], Uri.parse(server.url).origin, reason: reason);
+        }
+        for (final line in fixture.lines) {
+          expect(
+            debug.where((event) => event == line),
+            hasLength(1),
+            reason: '$reason: $line must reach the production debugStream once',
+          );
+        }
+      }
+    }, timeout: const Timeout(Duration(seconds: 60)));
+  }
+
   test('invalid root and proxy settings fail before binding', () async {
     write('index.html', 'ok');
     write('.qfli/web.json', '{"root":"../outside"}');
@@ -354,6 +454,114 @@ void main() {
     write('.qfli/web.json', '{"engine":"unknown"}');
     await expectLater(WebRuntime.start(project.path), throwsFormatException);
   });
+}
+
+typedef _BrowserBridgeFixture = ({
+  String path,
+  String source,
+  String? done,
+  List<String> lines,
+  Map<String, Object?> dom,
+});
+
+List<_BrowserBridgeFixture> _browserBridgeFixtures() {
+  _BrowserBridgeFixture page(
+    String id,
+    String prefix, {
+    String suffix = '',
+    String mode = 'CSS1Compat',
+    String? headNote,
+    bool rawText = false,
+    bool crlf = false,
+  }) {
+    final head =
+        '''<script>
+console.log('$id-head-log'); console.info('$id-head-info');
+Promise.reject(new Error('$id-head-rejection'));
+</script><script>throw new Error('$id-head-error');</script>''';
+    final body =
+        '''<body data-fixture="$id"><p>Authored $id</p><script>
+console.warn('$id-body-warn'); console.error('$id-body-error-log');
+Promise.reject(new Error('$id-body-rejection'));
+</script><script>throw new Error('$id-body-error');</script><script>
+setTimeout(() => { console.log('$id-done'); window.__bridgeFixtureDone = '$id'; }, 0);
+</script></body>''';
+    final source = '$prefix$head$suffix$body';
+    return (
+      path: '$id.html',
+      source: crlf ? source.replaceAll('\n', '\r\n') : source,
+      done: id,
+      lines: [
+        '[web.log] $id-head-log',
+        '[web.info] $id-head-info',
+        '[web.error] Uncaught Error: $id-head-error',
+        '[web.error] Error: $id-head-rejection',
+        '[web.warn] $id-body-warn',
+        '[web.error] $id-body-error-log',
+        '[web.error] Uncaught Error: $id-body-error',
+        '[web.error] Error: $id-body-rejection',
+        '[web.log] $id-done',
+      ],
+      dom: {
+        'compatMode': mode,
+        'fixture': id,
+        'headNote': headNote,
+        'rawStyle': rawText ? 'body::before{content:"</head>"}' : null,
+        'rawScript': rawText ? '{"tag":"</head>"}' : null,
+        'bridgeScripts': 1,
+      },
+    );
+  }
+
+  return [
+    page('early', '<!doctype html><html><head>', suffix: '</head>'),
+    page(
+      'comment',
+      '<!doctype html><!-- fake <head></head> -->'
+          '<html><head data-note="> </head>">',
+      suffix: '</head>',
+      headNote: '> </head>',
+    ),
+    page(
+      'rawtext',
+      '<!doctype html><html><head>'
+          '<style id="raw-style">body::before{content:"</head>"}</style>'
+          '<title>Literal </head></title>'
+          '<script id="raw-script" type="application/json">{"tag":"</head>"}</script>',
+      suffix: '</head>',
+      rawText: true,
+    ),
+    page('implicit', '<!doctype html><html lang="zh-CN">'),
+    page('fragment', '<!-- fake <head></head> -->', mode: 'BackCompat'),
+    page(
+      'crlf',
+      '\ufeff<!doctype html>\n<!-- 🙂 -->\n<HTML>\n<HEAD\n data-note="🙂 >">\n',
+      suffix: '\n</HEAD>\n',
+      headNote: '🙂 >',
+      crlf: true,
+    ),
+    for (final source in [
+      '<!doctype html>\n<!-- only a comment -->',
+      '<!doctype html>\n<!-- unclosed comment',
+      '<!-- no doctype, unclosed comment',
+    ])
+      (
+        path: 'empty-${source.length}.htm',
+        source: source,
+        done: null,
+        lines: const <String>[],
+        dom: {
+          'compatMode': source.startsWith('<!doctype')
+              ? 'CSS1Compat'
+              : 'BackCompat',
+          'fixture': null,
+          'headNote': null,
+          'rawStyle': null,
+          'rawScript': null,
+          'bridgeScripts': 1,
+        },
+      ),
+  ];
 }
 
 Future<({int status, String body, HttpHeaders headers})> request(

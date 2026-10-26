@@ -15,6 +15,7 @@ Future<NginxSession> NginxSession.start(String projectPath, {required String exe
 Future<NginxSession> NginxSession.startWithHost(String projectPath, {required NginxHost host});
 Future<WebProjectConfig> WebProjectConfig.load(String projectPath);
 WebProjectConfig WebProjectConfig.parse(String projectPath, Map<String, dynamic> data);
+void WebProjectConfig.validateOffline();
 Future<void> WebPreviewSession.stop();
 
 // Optional capability; existing WebPreviewSession/factory signatures stay intact.
@@ -81,7 +82,19 @@ preview through `RunnerService.runProject`.
   Nginx passes `indexFile` to its private middleware. UI saves and server startup
   both validate through `WebProjectConfig.parse`.
 - Proxy targets are HTTP(S) URLs without query, fragment, or credentials.
-  Prefix matches have path-segment boundaries; the longest prefix wins.
+  Only literal loopback IPs are accepted (`InternetAddress.tryParse(host)` with
+  `isLoopback`); DNS names, LAN/public IPs, wildcards and IPv4-mapped IPv6 are
+  rejected. Prefix matches have path-segment boundaries; the longest prefix wins.
+  Parsing and both engine startup paths call `validateOffline()` before binding
+  or native host calls, including an explicitly supplied configuration. Rejecting
+  a persisted rule must not rewrite the user's configuration. Hidden proxy UI
+  alone does not enforce this policy, and this policy alone does not isolate an
+  externally opened browser's resources or navigation.
+- The Dart proxy client uses direct connections and checks every actual socket
+  destination, including WebSocket handshake redirects, as a literal loopback
+  IP before DNS/connection. A custom `HttpClient.connectionFactory` owns TLS:
+  use `SecureSocket.startConnect` for HTTPS (including converted WSS) and
+  `Socket.startConnect` for HTTP. Never send plaintext HTTP to an HTTPS target.
 - HTTP proxies preserve methods, query, bodies, status, redirects, and headers.
   Strip hop headers and headers named by `Connection`. Preserve compressed bytes
   with `HttpClient.autoUncompress = false`.
@@ -90,6 +103,49 @@ preview through `RunnerService.runProject`.
   1005, 1006, or 1015 as wire close codes.
 - `POST /__webforge/debug` accepts JSON with `message: String` and optional
   `level: String`. Payloads are limited to 16 KiB; rendered lines to 4000 characters.
+- Inject the browser log bridge before authored head scripts, at the actual
+  HTML5 head opening span. With an implicit head, insert after an actual doctype
+  or at the source start. Preserve document mode, UTF-8 BOM and authored source;
+  map parser-normalized CRLF offsets back to the original UTF-16 boundary. A
+  comment, quoted attribute, script/style/title literal or unclosed trailing
+  comment cannot choose or swallow the insertion point. Console/error/rejection
+  events must reach the production debug stream once from a real browser.
+- Both preview engines attach `WebProjectConfig.offlineContentSecurityPolicy`
+  to every response, including errors and proxied responses. It restricts
+  resources/connect/form/base targets to the preview origin, preserving authored
+  inline JavaScript/styles, local assets and data/blob resources. Middleware
+  proxy responses cannot overwrite it. Both engines strip the shared
+  `offlineProxyPolicyHeaders` set: CSP, CSP-Report-Only, Reporting-Endpoints,
+  Report-To and NEL. Nginx derives its `proxy_hide_header` lines from that set
+  and adds the product policy. CSP report delivery is not constrained by
+  `connect-src`, so hiding only the enforcing CSP is insufficient. Local APIs
+  remain available through validated loopback proxy
+  paths. CSP is not a claim of complete system-browser navigation isolation;
+  ordinary links/new windows still require a controlled preview view.
+- Preserve the shipped local resource schemes explicitly in the more-specific
+  directives: `style-src 'self' 'unsafe-inline' data: blob:`,
+  `connect-src 'self' blob:` and `object-src 'self' data: blob:`. A directive overrides
+  `default-src`; its allowed schemes are not added to the default list. The
+  shipped HTML027 data stylesheet, HTML097 Blob stylesheet, HTML137 Blob HTML
+  object, HTML138 data SVG embed and JS017 Blob JSON fetch must work unchanged
+  through both production engines. Objects may load from the exact preview
+  origin, data or Blob URLs. Other HTTP(S) origins must fail before the network
+  guard. Do not infer Blob permission from `'self'`, or add network/script-data
+  permission to make a local fixture pass. The
+  [October24 compatibility repair](../../tasks/10-22-standalone-offline-ide/research/web-offline-catalog-policy-20261024.md)
+  and its expanded browser regression passed both production engines in the
+  authorized C782 desktop run on2026-10-26. See the
+  [C782 scope record](../../tasks/10-22-standalone-offline-ide/research/web-c782-validation-20261026.md).
+  This does not establish ArkWeb or the full catalog gate.
+- Object policy must allow the exact preview origin as well as data/Blob.
+  An authored `<object type="text/html">` can be checked before its script
+  assigns the Blob URL. C606 failed both engines with an empty blocked URI
+  when `object-src` omitted self. Preserve the original teaching source and
+  verify actual loaded object content. Also require another loopback port's
+  object/embed to produce CSP violations with zero route/sentinel hits.
+  [C606 and the revised candidate](../../tasks/10-22-standalone-offline-ide/research/web-c606-offline-object-repair-20261026.md)
+  record the earlier failures. C782 subsequently passed the unchanged teaching
+  examples and cross-port object/embed negatives for both production engines.
 - `GET /__webforge/events` emits SSE `data: reload`. Set
   `HttpResponse.bufferOutput = false`; `flush()` alone did not stream data in
   the Windows integration test. Debounce native file events by 180 ms.
@@ -104,6 +160,7 @@ preview through `RunnerService.runProject`.
 | Condition | Outcome |
 | --- | --- |
 | Invalid JSON, root, port, SPA flag, or proxy rule | Startup fails with a specific configuration error |
+| Non-loopback or DNS-name proxy target | `FormatException` before bind/native host; persisted bytes unchanged |
 | Invalid engine value | FormatException before binding |
 | Explicit Nginx with missing binary | Startup error |
 | Explicit Nginx with exec permission denied | ProcessException; no substitution |
@@ -123,6 +180,8 @@ preview through `RunnerService.runProject`.
 | Debug event larger than 16 KiB | 413 |
 | Upstream connection / WebSocket failure | 502 |
 | Upstream timeout | 504 |
+| Authored data/Blob stylesheet, local Blob JSON or data/Blob embedded object | Allowed by the explicit local scheme policy; assert actual rendered/output behavior |
+| External object/embed or other forbidden resource | CSP violation before any request reaches the test abort route |
 
 ## 5. Good / Base / Bad Cases
 
@@ -141,9 +200,33 @@ preview through `RunnerService.runProject`.
 - `test/web_dev_server_test.dart`: static assets, traversal/symlinks, SPA rules,
   proxy request/response fidelity, redirects, WebSocket protocol/messages/stop,
   a real SSE file-change event, malformed events, and error diagnostics.
+  Its real-browser bridge cases run both production engines, asserting exact
+  source retention through raw HTTP bytes (Chromium's response-body observation
+  consumes a UTF-8 BOM), document mode and head/body console/error/rejection POSTs
+  consumed from the production `debugStream`.
 - `test/nginx_session_test.dart`: real upstream binary/header, native HTTP and
   WebSocket proxies, overlapping HTTP/HTTPS prefix priority, diagnostics, native
   access logs, SSE streaming, port conflict and post-stop connection failure.
+- `test/web_offline_policy_test.dart`: persisted and directly supplied forbidden
+  targets fail before native host use or occupied-port binding; literal IPv4/IPv6
+  HTTP(S) loopback remains valid; real IPv4/IPv6 forwarding works, with an
+  explicit skip if IPv6 cannot bind. Real WebSocket redirects to a disallowed
+  hostname never reach a local sentinel. Raw HTTPS/WSS sentinels observe a TLS
+  ClientHello rather than a plaintext GET. Both engines strip all upstream
+  reporting headers on 200/302 while preserving unrelated headers/body/Location.
+- `test/web_offline_browser_test.dart`: real browser executes local/inline
+  scripts/styles while external script/style/image/frame/fetch/WebSocket/form
+  attempts produce policy violations before reaching the test's abort route.
+  Run through both production engines; inspect policy on 200/404 responses and
+  absence of proxied report-only policy, with a real report/WebSocket sentinel.
+  Copy exact current catalog source for HTML027/097/137/138 and JS017 into the
+  temporary served project; assert actual colors/font, embedded document/SVG
+  content and Blob fetch output, with no catalog CSP violations. Keep external
+  object/embed negatives and zero escaped requests. An unrestricted catalog
+  runner or synthetic `local.css` success cannot replace production-policy
+  compatibility. The authorized C782 run passed this expanded regression on
+  both production engines. Its full suite still had4 failures in the new owned
+  policy/broker. Final coordination publication exceeded180s. OHOS remains open.
 - Both server suites cover a custom imported HTML entry. The WebForge suite
   also checks SPA navigation and an explicit root pointing to build output.
 - `test/web_preview_current_file_test.dart`: actual default/selected/default HTTP
@@ -154,6 +237,12 @@ preview through `RunnerService.runProject`.
 - `test/web_app_test.dart`: product hook wiring and root/src entry behavior.
 - `test/web_tools_navigation_test.dart`: existing navigation and persisted settings.
 - `test/web_tools_page_test.dart`: actual HTTP transport and visible codec results.
+- `test/web_server_tools_lifecycle_test.dart`: regular and320px/2x inline layouts
+  perform real Start, HTTP200/404 and console POSTs, visible log Clear, subsequent
+  diagnostics, Stop with strict native TCP refusal, restart and widget disposal
+  with endpoint refusal. Preserve configuration bytes and fail framework
+  exceptions; a timeout never substitutes for refusal. Repair10 passed both
+  layouts with the measured5s probe budget.
 - Run `flutter analyze --no-pub` and `flutter test --no-pub`. Native platform
   builds and device checks provide separate evidence; Dart tests do not validate
   Swift, entitlements, Android intents, or HarmonyOS browser behavior.
