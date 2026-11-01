@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "kind": "qfli-ohos-catalog",
+  "files": {
+    "examples": {
+      "path": "ohos_catalog/examples.json",
+      "bytes": 800054,
+      "sha256": "b40f900eaf6caa44abc2d1d9fb26d695f8571f8a7394408b99b4dd11632a57cd"
+    },
+    "tutorials": {
+      "path": "ohos_catalog/tutorials.json",
+      "bytes": 1395900,
+      "sha256": "fe05fd1b3164219bba9b259b1aa3564b2052dd816c857c0e076cfed15d077f89"
+    }
+  },
+  "counts": {
+    "examples": 481,
+    "tutorials": 481,
+    "lessons": 481
+  }
+}
