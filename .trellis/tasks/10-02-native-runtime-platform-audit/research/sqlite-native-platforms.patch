@@ -1,0 +1,1139 @@
+diff --git a/.trellis/spec/backend/index.md b/.trellis/spec/backend/index.md
+index eb29a71..515a1d4 100644
+--- a/.trellis/spec/backend/index.md
++++ b/.trellis/spec/backend/index.md
+@@ -21,10 +21,20 @@ This directory contains guidelines for backend development. Fill in each file wi
+ | [Logging Guidelines](./logging-guidelines.md) | Structured logging, log levels | To fill |
+ | [SQL Query Library](./sql-query-library.md) | Query persistence and filesystem failure behavior | Documented |
+ | [SQLite Workspace](./sql-workspace.md) | Stable grid identity and fixed-offset paging | Documented |
++| [SQLite Native Runtime](./sqlite-native-runtime.md) | Multi-platform C packaging, FFI, queries and real runtime evidence | Implemented |
+ | [Oracle MySQL Workspace](./mysql-workspace.md) | Oracle metadata, primary keys, binary values, and native client | Documented |
+ 
+ ---
+ 
++## Pre-Development Checklist
++
++- Read SQLite Native Runtime for SQLite engine, FFI and packaging changes.
++
++## Quality Check
++
++- Run the native engine and existing SQL tests; see SQLite Native Runtime for
++  platform verification requirements and explicit environment skips.
++
+ ## How to Fill These Guidelines
+ 
+ For each guideline file:
+diff --git a/.trellis/spec/backend/sqlite-native-runtime.md b/.trellis/spec/backend/sqlite-native-runtime.md
+new file mode 100644
+index 0000000..907b61d
+--- /dev/null
++++ b/.trellis/spec/backend/sqlite-native-runtime.md
+@@ -0,0 +1,71 @@
++# SQLite FFI Contract
++
++## 1. Scope / Trigger
++
++This contract applies to `sqlite_ffi.dart`, `invokeSqliteNative`, the local
++Flutter plugin under `native`, and SQLite runner/workspace calls.
++
++## 2. Signatures
++
++```dart
++SqliteFfi.invoke(String method, Map<String, Object?> arguments,
++    {String? libraryPath});
++invokeSqliteNative(String method, Map<String, Object?> arguments,
++    {MethodChannel? channel});
++NativeSqliteDatabase({MethodChannel? channel});
++NativeSqliteEngine({MethodChannel? channel});
++```
++
++## 3. Contracts
++
++- Methods are `query` and `execute`. Both receive `source: String` and
++  `databasePath: String`; query also receives `params: List<String?>`.
++- Default Android/Windows/Linux/iOS/macOS calls execute the actual packaged C
++  library on an isolate. OHOS uses `qfli_sql/native`. An explicitly supplied
++  channel is always used, including on desktop tests.
++- Source and database paths reject embedded NUL; bound values preserve NUL
++  using SQLite's explicit UTF-8 byte length and SQLITE_TRANSIENT ownership.
++- Grid query prepares one statement; non-whitespace trailing SQL is rejected
++  before execution. Parameter count must match. SQL NULL remains Dart null.
++- Grid results contain available/exitCode/error/columns/rows/affectedRows/
++  truncated and preserve the existing decoder shape. Values use native SQLite
++  text conversion. At most 500 complete rows and 1 MiB cell bytes are returned.
++- Every statement is finalized and every database closed before native buffers
++  are freed. Database lock waits are bounded to 3000 ms for structured queries.
++- Script execution reuses `qfli_sql_execute` and `qfli_sql_result_free`; output
++  remains tab-separated lines and retains errors and truncation diagnostics.
++- `QFLI_SQLITE_LIBRARY` is a desktop test/development override, not a fallback
++  engine. Missing native symbols/library fail and never report successful SQL.
++
++## 4. Validation & Error Matrix
++
++| Condition | Outcome |
++| --- | --- |
++| Invalid SQL / parameter count | available true, exitCode 1, SQLite/binding error |
++| Second grid statement | Rejected before either statement executes |
++| Missing native library | Platform error converted to unavailable by the caller |
++| Row/cell limit | truncated true; no partial row |
++| Explicit test channel | Use that channel and existing response validation |
++| Source/path NUL | Invocation fails before native parsing |
++
++## 5. Good / Base / Bad Cases
++
++Good: a script creates rows and the grid reads/updates the same on-disk database.
++Base: a single SELECT returns the engine's columns and nullable strings.
++Bad: loading a desktop host DLL on Android, treating a mock as engine evidence,
++or labeling SQLite as MySQL.
++
++## 6. Tests Required
++
++`test/sqlite_ffi_test.dart` requires a built native library and runs real SQL.
++`integration_test/sql_native_test.dart` exercises the Android application bridge.
++Retain the existing injected-channel tests for query and runner response errors.
++Platform build skips and runtime evidence belong in SQLITE_PLATFORMS.md.
++
++## 7. Wrong vs Correct
++
++Wrong: append bound text to SQL, silently choose a cloud evaluator, or copy a C
++library into writable app data and assume it can be loaded everywhere.
++
++Correct: bind UTF-8 bytes with native parameter APIs, package the upstream C
++library through the platform build, and close native resources in finally.
+diff --git a/android/app/build.gradle.kts b/android/app/build.gradle.kts
+index b0b94cd..07c407b 100644
+--- a/android/app/build.gradle.kts
++++ b/android/app/build.gradle.kts
+@@ -8,7 +8,7 @@ plugins {
+ android {
+     namespace = "com.azurekiln.qfli.sqlab"
+     compileSdk = flutter.compileSdkVersion
+-    ndkVersion = flutter.ndkVersion
++    ndkVersion = "27.0.12077973"
+ 
+     compileOptions {
+         sourceCompatibility = JavaVersion.VERSION_17
+diff --git a/lib/sql_database.dart b/lib/sql_database.dart
+index 3ff2569..5129a57 100644
+--- a/lib/sql_database.dart
++++ b/lib/sql_database.dart
+@@ -160,9 +160,9 @@ abstract interface class SqlScriptDatabase {
+ 
+ /// Structured, parameterized queries for the local SQLite database workspace.
+ class NativeSqliteDatabase implements SqlDatabase {
+-  const NativeSqliteDatabase({this.channel = sqlNativeChannel});
++  const NativeSqliteDatabase({this.channel});
+ 
+-  final MethodChannel channel;
++  final MethodChannel? channel;
+ 
+   @override
+   Future<SqlQueryResult> query({
+@@ -174,11 +174,11 @@ class NativeSqliteDatabase implements SqlDatabase {
+       if (databasePath != ':memory:') {
+         await Directory(p.dirname(databasePath)).create(recursive: true);
+       }
+-      final raw = await channel.invokeMethod<Object?>('query', {
++      final raw = await invokeSqliteNative('query', {
+         'source': source,
+         'databasePath': databasePath,
+         'params': parameters,
+-      });
++      }, channel: channel);
+       return SqlQueryResult.fromNative(raw);
+     } on FormatException {
+       return _failure('SQLite 返回了无效的查询结果。');
+diff --git a/lib/sql_native_channel.dart b/lib/sql_native_channel.dart
+index 212b309..7a8c7b8 100644
+--- a/lib/sql_native_channel.dart
++++ b/lib/sql_native_channel.dart
+@@ -1,4 +1,24 @@
+ import 'package:flutter/services.dart';
+ 
++import 'sqlite_ffi.dart';
++
+ const MethodChannel sqlNativeChannel = MethodChannel('qfli_sql/native');
+ const MethodChannel mysqlNativeChannel = MethodChannel('qfli_sql/mysql');
++
++Future<Object?> invokeSqliteNative(
++  String method,
++  Map<String, Object?> arguments, {
++  MethodChannel? channel,
++}) async {
++  if (channel != null || !SqliteFfi.supported) {
++    return (channel ?? sqlNativeChannel).invokeMethod<Object?>(
++      method,
++      arguments,
++    );
++  }
++  try {
++    return await SqliteFfi.invoke(method, arguments);
++  } on Object catch (error) {
++    throw PlatformException(code: 'sqlite_native', message: error.toString());
++  }
++}
+diff --git a/lib/sql_runner.dart b/lib/sql_runner.dart
+index 7d64a32..8681d25 100644
+--- a/lib/sql_runner.dart
++++ b/lib/sql_runner.dart
+@@ -191,20 +191,20 @@ class UnavailableSqliteEngine implements SqliteEngine {
+   }
+ }
+ 
+-/// Calls the bundled HarmonyOS SQLite library through its method channel.
++/// Executes the bundled SQLite C engine through FFI or the OHOS channel.
+ class NativeSqliteEngine implements SqliteEngine {
+-  const NativeSqliteEngine({this.channel = sqlNativeChannel});
++  const NativeSqliteEngine({this.channel});
+ 
+-  final MethodChannel channel;
++  final MethodChannel? channel;
+ 
+   @override
+   Future<SqliteExecutionResult> execute(SqliteRequest request) async {
+     try {
+       await Directory(p.dirname(request.databasePath)).create(recursive: true);
+-      final raw = await channel.invokeMethod<Object?>('execute', {
++      final raw = await invokeSqliteNative('execute', {
+         'source': request.source,
+         'databasePath': request.databasePath,
+-      });
++      }, channel: channel);
+       if (raw is! Map ||
+           raw['available'] is! bool ||
+           raw['exitCode'] is! num ||
+diff --git a/lib/sqlite_ffi.dart b/lib/sqlite_ffi.dart
+new file mode 100644
+index 0000000..78d436a
+--- /dev/null
++++ b/lib/sqlite_ffi.dart
+@@ -0,0 +1,369 @@
++import 'dart:convert';
++import 'dart:ffi';
++import 'dart:io';
++import 'dart:isolate';
++
++import 'package:ffi/ffi.dart';
++import 'package:path/path.dart' as p;
++
++final class _ScriptResult extends Struct {
++  @Int32()
++  external int available;
++  @Int32()
++  external int exitCode;
++  @Int32()
++  external int truncated;
++  external Pointer<Utf8> output;
++  external Pointer<Utf8> error;
++}
++
++/// Invokes the retained SQLite C engine on a worker isolate.
++class SqliteFfi {
++  static bool get supported =>
++      Platform.isAndroid ||
++      Platform.isIOS ||
++      Platform.isWindows ||
++      Platform.isLinux ||
++      Platform.isMacOS;
++
++  static Future<Map<String, Object?>> invoke(
++    String method,
++    Map<String, Object?> arguments, {
++    String? libraryPath,
++  }) => Isolate.run(() {
++    final bindings = _Bindings(_openLibrary(libraryPath));
++    final source = arguments['source'] as String;
++    final databasePath = arguments['databasePath'] as String;
++    if (source.contains('\x00') || databasePath.contains('\x00')) {
++      throw const FormatException(
++        'SQL source and database path cannot contain NUL.',
++      );
++    }
++    return using((arena) {
++      final sql = source.toNativeUtf8(allocator: arena);
++      final path = databasePath.toNativeUtf8(allocator: arena);
++      if (method == 'execute') {
++        final result = arena<_ScriptResult>();
++        try {
++          if (bindings.execute(sql, path, 1024 * 1024, result) == 0) {
++            throw StateError('SQLite script invocation failed.');
++          }
++          return <String, Object?>{
++            'available': result.ref.available != 0,
++            'exitCode': result.ref.exitCode,
++            'output': _text(result.ref.output),
++            'error': _text(result.ref.error),
++            'truncated': result.ref.truncated != 0,
++          };
++        } finally {
++          bindings.freeResult(result);
++        }
++      }
++      if (method != 'query') throw ArgumentError.value(method, 'method');
++      return bindings.query(
++        arena,
++        path,
++        sql,
++        (arguments['params'] as List?)?.cast<String?>() ?? const [],
++      );
++    });
++  });
++
++  static String _text(Pointer<Utf8> value, {int? length}) =>
++      value == nullptr ? '' : value.toDartString(length: length);
++}
++
++DynamicLibrary _openLibrary(String? explicitPath) {
++  final configured =
++      explicitPath ?? Platform.environment['QFLI_SQLITE_LIBRARY'];
++  if (configured != null) return DynamicLibrary.open(configured);
++  if (Platform.isIOS || Platform.isMacOS) return DynamicLibrary.process();
++  final name = Platform.isWindows ? 'qfli_sqlite.dll' : 'libqfli_sqlite.so';
++  if (Platform.isAndroid) return DynamicLibrary.open(name);
++  final app = p.dirname(Platform.resolvedExecutable);
++  for (final path in [
++    p.join(app, name),
++    p.join(app, 'lib', name),
++    p.join(
++      Directory.current.path,
++      'native',
++      'build',
++      Platform.operatingSystem,
++      name,
++    ),
++  ]) {
++    if (File(path).existsSync()) return DynamicLibrary.open(path);
++  }
++  throw StateError('The bundled SQLite C library was not found.');
++}
++
++class _Bindings {
++  _Bindings(DynamicLibrary library)
++    : execute = library
++          .lookupFunction<
++            Int32 Function(
++              Pointer<Utf8>,
++              Pointer<Utf8>,
++              Size,
++              Pointer<_ScriptResult>,
++            ),
++            int Function(
++              Pointer<Utf8>,
++              Pointer<Utf8>,
++              int,
++              Pointer<_ScriptResult>,
++            )
++          >('qfli_sql_execute'),
++      freeResult = library
++          .lookupFunction<
++            Void Function(Pointer<_ScriptResult>),
++            void Function(Pointer<_ScriptResult>)
++          >('qfli_sql_result_free'),
++      open = library
++          .lookupFunction<
++            Int32 Function(
++              Pointer<Utf8>,
++              Pointer<Pointer<Void>>,
++              Int32,
++              Pointer<Utf8>,
++            ),
++            int Function(
++              Pointer<Utf8>,
++              Pointer<Pointer<Void>>,
++              int,
++              Pointer<Utf8>,
++            )
++          >('sqlite3_open_v2'),
++      close = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>),
++            int Function(Pointer<Void>)
++          >('sqlite3_close'),
++      busyTimeout = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>, Int32),
++            int Function(Pointer<Void>, int)
++          >('sqlite3_busy_timeout'),
++      prepare = library
++          .lookupFunction<
++            Int32 Function(
++              Pointer<Void>,
++              Pointer<Utf8>,
++              Int32,
++              Pointer<Pointer<Void>>,
++              Pointer<Pointer<Utf8>>,
++            ),
++            int Function(
++              Pointer<Void>,
++              Pointer<Utf8>,
++              int,
++              Pointer<Pointer<Void>>,
++              Pointer<Pointer<Utf8>>,
++            )
++          >('sqlite3_prepare_v2'),
++      step = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>),
++            int Function(Pointer<Void>)
++          >('sqlite3_step'),
++      finalize = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>),
++            int Function(Pointer<Void>)
++          >('sqlite3_finalize'),
++      parameterCount = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>),
++            int Function(Pointer<Void>)
++          >('sqlite3_bind_parameter_count'),
++      bindNull = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>, Int32),
++            int Function(Pointer<Void>, int)
++          >('sqlite3_bind_null'),
++      bindText = library
++          .lookupFunction<
++            Int32 Function(
++              Pointer<Void>,
++              Int32,
++              Pointer<Utf8>,
++              Int32,
++              Pointer<Void>,
++            ),
++            int Function(Pointer<Void>, int, Pointer<Utf8>, int, Pointer<Void>)
++          >('sqlite3_bind_text'),
++      columnCount = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>),
++            int Function(Pointer<Void>)
++          >('sqlite3_column_count'),
++      columnName = library
++          .lookupFunction<
++            Pointer<Utf8> Function(Pointer<Void>, Int32),
++            Pointer<Utf8> Function(Pointer<Void>, int)
++          >('sqlite3_column_name'),
++      columnType = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>, Int32),
++            int Function(Pointer<Void>, int)
++          >('sqlite3_column_type'),
++      columnText = library
++          .lookupFunction<
++            Pointer<Utf8> Function(Pointer<Void>, Int32),
++            Pointer<Utf8> Function(Pointer<Void>, int)
++          >('sqlite3_column_text'),
++      columnBytes = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>, Int32),
++            int Function(Pointer<Void>, int)
++          >('sqlite3_column_bytes'),
++      changes = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>),
++            int Function(Pointer<Void>)
++          >('sqlite3_changes'),
++      errorMessage = library
++          .lookupFunction<
++            Pointer<Utf8> Function(Pointer<Void>),
++            Pointer<Utf8> Function(Pointer<Void>)
++          >('sqlite3_errmsg');
++
++  final int Function(Pointer<Utf8>, Pointer<Utf8>, int, Pointer<_ScriptResult>)
++  execute;
++  final void Function(Pointer<_ScriptResult>) freeResult;
++  final int Function(Pointer<Utf8>, Pointer<Pointer<Void>>, int, Pointer<Utf8>)
++  open;
++  final int Function(Pointer<Void>) close,
++      step,
++      finalize,
++      parameterCount,
++      columnCount,
++      changes;
++  final int Function(Pointer<Void>, int) busyTimeout,
++      bindNull,
++      columnType,
++      columnBytes;
++  final int Function(
++    Pointer<Void>,
++    Pointer<Utf8>,
++    int,
++    Pointer<Pointer<Void>>,
++    Pointer<Pointer<Utf8>>,
++  )
++  prepare;
++  final int Function(Pointer<Void>, int, Pointer<Utf8>, int, Pointer<Void>)
++  bindText;
++  final Pointer<Utf8> Function(Pointer<Void>, int) columnName, columnText;
++  final Pointer<Utf8> Function(Pointer<Void>) errorMessage;
++
++  Map<String, Object?> query(
++    Arena arena,
++    Pointer<Utf8> path,
++    Pointer<Utf8> source,
++    List<String?> parameters,
++  ) {
++    final database = arena<Pointer<Void>>();
++    final statement = arena<Pointer<Void>>();
++    final tail = arena<Pointer<Utf8>>();
++    final columns = <String>[];
++    final rows = <List<String?>>[];
++    var affectedRows = 0;
++    var truncated = false;
++    var error = '';
++    try {
++      do {
++        if (open(path, database, 6, nullptr) != 0) {
++          error = database.value == nullptr
++              ? 'SQLite database open failed.'
++              : SqliteFfi._text(errorMessage(database.value));
++          break;
++        }
++        busyTimeout(database.value, 3000);
++        if (prepare(database.value, source, -1, statement, tail) != 0) {
++          error = SqliteFfi._text(errorMessage(database.value));
++          break;
++        }
++        if (SqliteFfi._text(tail.value).trim().isNotEmpty) {
++          error = 'Only one SQL statement is allowed in a grid query.';
++          break;
++        }
++        if (statement.value == nullptr) {
++          if (parameters.isNotEmpty) {
++            error = 'SQL parameter count does not match the supplied values.';
++          }
++          break;
++        }
++        if (parameters.length != parameterCount(statement.value)) {
++          error = 'SQL parameter count does not match the supplied values.';
++          break;
++        }
++        for (var index = 0; index < parameters.length; index++) {
++          final value = parameters[index];
++          final code = value == null
++              ? bindNull(statement.value, index + 1)
++              : bindText(
++                  statement.value,
++                  index + 1,
++                  value.toNativeUtf8(allocator: arena),
++                  utf8.encode(value).length,
++                  Pointer<Void>.fromAddress(-1),
++                );
++          if (code != 0) {
++            error = SqliteFfi._text(errorMessage(database.value));
++            break;
++          }
++        }
++        if (error.isNotEmpty) break;
++        final count = columnCount(statement.value);
++        for (var index = 0; index < count; index++) {
++          columns.add(SqliteFfi._text(columnName(statement.value, index)));
++        }
++        var bytes = 0;
++        while (true) {
++          final code = step(statement.value);
++          if (code == 101) {
++            affectedRows = changes(database.value);
++            break;
++          }
++          if (code != 100) {
++            error = SqliteFfi._text(errorMessage(database.value));
++            break;
++          }
++          if (rows.length >= 500) {
++            truncated = true;
++            break;
++          }
++          final row = <String?>[];
++          for (var index = 0; index < count; index++) {
++            if (columnType(statement.value, index) == 5) {
++              row.add(null);
++              continue;
++            }
++            final text = columnText(statement.value, index);
++            final length = columnBytes(statement.value, index);
++            if (text == nullptr || bytes + length > 1024 * 1024) {
++              truncated = true;
++              break;
++            }
++            bytes += length;
++            row.add(SqliteFfi._text(text, length: length));
++          }
++          if (truncated) break;
++          rows.add(row);
++        }
++      } while (false);
++    } finally {
++      if (statement.value != nullptr) finalize(statement.value);
++      if (database.value != nullptr) close(database.value);
++    }
++    return {
++      'available': true,
++      'exitCode': error.isEmpty ? 0 : 1,
++      'error': error,
++      'columns': columns,
++      'rows': rows,
++      'affectedRows': affectedRows,
++      'truncated': truncated,
++    };
++  }
++}
+diff --git a/native/.gitignore b/native/.gitignore
+new file mode 100644
+index 0000000..fbb4662
+--- /dev/null
++++ b/native/.gitignore
+@@ -0,0 +1,4 @@
++**/.cxx/
++**/.gradle/
++**/Classes/build/
++**/local.properties
+diff --git a/native/SQLITE_PLATFORMS.md b/native/SQLITE_PLATFORMS.md
+new file mode 100644
+index 0000000..ff7b091
+--- /dev/null
++++ b/native/SQLITE_PLATFORMS.md
+@@ -0,0 +1,52 @@
++# Native SQLite Platforms
++
++The primary local engine uses the retained upstream `third_party/sqlite/sqlite3.c`
++and the existing C script bridge. SQL parsing and execution are performed by
++SQLite. No evaluator, external SQLite command or cloud service is used.
++
++## Build and Load
++
++`native/pubspec.yaml` is a local Flutter FFI plugin. Android builds the C library
++with NDK 27 and CMake; every ELF LOAD segment is linked for 16 KiB pages. Windows
++and Linux plugin CMake files provide the shared library to Flutter's normal
++bundle installer. Windows packages `qfli_sqlite.dll` beside the runner; Linux
++packages `lib/libqfli_sqlite.so`.
++
++iOS/macOS CocoaPods stage the retained C sources inside each local pod root.
++The static pod compiles both C objects, exposes global symbols, and adds app
++linker retention flags for every FFI function. Dart uses process symbols on
++Apple platforms. Apple compilation and execution are unverified without Xcode.
++
++Android opens `libqfli_sqlite.so` from the packaged native library directory.
++Desktop development tests may use `native/build/<operatingSystem>/` or set
++`QFLI_SQLITE_LIBRARY` to an explicit library. A missing library is an error.
++OHOS continues to use its existing native method channel.
++
++## Verification
++
++```powershell
++cmake -S native/runtime -B native/build/windows -G Ninja -DCMAKE_C_COMPILER=<gcc>
++cmake --build native/build/windows
++flutter test --no-pub
++flutter test --no-pub integration_test/sql_native_test.dart -d emulator-5560
++```
++
++On 2026-10-02, the Windows MinGW C build and all 47 Flutter tests passed in a
++source snapshot. The 6 new FFI cases execute the real engine and cover the editor
++entry, persisted scripts, Unicode/quotes/embedded NUL parameters, SQL NULL,
++parameter mismatch, multiple-statement rejection, output limits, actual grid
++mutations and missing-library failure.
++
++All 5 Android x86_64 integration cases passed on emulator-5560, API 37 with
++16 KiB pages. They cover script persistence and SQL errors, structured parameter
++queries, workspace CRUD, shadowed rowid identity and WITHOUT ROWID behavior.
++The APK includes arm64-v8a, armeabi-v7a and x86_64 SQLite libraries; inspection
++confirmed 0x4000 alignment for every native LOAD segment in all three ABIs.
++This is application FFI evidence, not shell execution. Android ARM devices,
++Linux GUI and Apple hosts were unavailable. Full Windows Flutter GUI builds
++require missing Visual Studio C++ tools; the native engine and Flutter tests
++were run. Analysis of changed Dart files was clean. Full analysis retains four
++pre-existing informational lints in sql_document_service/sql_workbench_page.
++
++Local Oracle MySQL outside OHOS remains a separate integration gap. SQLite is
++identified as SQLite and is never reported as MySQL.
+diff --git a/native/analysis_options.yaml b/native/analysis_options.yaml
+new file mode 100644
+index 0000000..31a628e
+--- /dev/null
++++ b/native/analysis_options.yaml
+@@ -0,0 +1,4 @@
++analyzer:
++  exclude:
++    # This harness uses the application's package config, not the FFI plugin's.
++    - tests/mysql_workspace_test.dart
+diff --git a/native/android/build.gradle b/native/android/build.gradle
+new file mode 100644
+index 0000000..fb4d8aa
+--- /dev/null
++++ b/native/android/build.gradle
+@@ -0,0 +1,34 @@
++group = 'com.azurekiln.qfli.sqlite_native'
++version = '1.0.0'
++
++buildscript {
++    repositories {
++        google()
++        mavenCentral()
++    }
++    dependencies {
++        classpath 'com.android.tools.build:gradle:8.11.1'
++    }
++}
++
++apply plugin: 'com.android.library'
++
++android {
++    namespace 'com.azurekiln.qfli.sqlite_native'
++    compileSdk 36
++    ndkVersion '27.0.12077973'
++    defaultConfig {
++        minSdk 24
++        externalNativeBuild {
++            cmake {
++                arguments '-DANDROID_STL=c++_shared'
++            }
++        }
++    }
++    externalNativeBuild {
++        cmake {
++            path '../runtime/CMakeLists.txt'
++            version '3.22.1'
++        }
++    }
++}
+diff --git a/native/android/src/main/AndroidManifest.xml b/native/android/src/main/AndroidManifest.xml
+new file mode 100644
+index 0000000..94cbbcf
+--- /dev/null
++++ b/native/android/src/main/AndroidManifest.xml
+@@ -0,0 +1 @@
++<manifest xmlns:android="http://schemas.android.com/apk/res/android" />
+diff --git a/native/apple/podspec.rb b/native/apple/podspec.rb
+new file mode 100644
+index 0000000..c81ea90
+--- /dev/null
++++ b/native/apple/podspec.rb
+@@ -0,0 +1,50 @@
++require 'fileutils'
++
++module QfliSqliteNative
++  def self.configure(spec, platform, pod_dir)
++    native_dir = File.realpath(File.join(pod_dir, '..'))
++    sources = %w[third_party/sqlite/sqlite3.c third_party/sqlite/sqlite3.h src/qfli_sql_bridge.c src/qfli_sql_bridge.h]
++    staged = sources.map do |relative|
++      source = File.join(native_dir, relative)
++      raise "Missing retained SQLite source: #{source}" unless File.file?(source)
++      target = File.join('Classes/build/sqlite', File.basename(relative))
++      absolute = File.join(pod_dir, target)
++      FileUtils.mkdir_p(File.dirname(absolute))
++      FileUtils.cp(source, absolute) unless File.file?(absolute) && File.binread(source) == File.binread(absolute)
++      target
++    end
++    spec.name = 'qfli_sqlite_native'
++    spec.version = '1.0.0'
++    spec.summary = 'Retained upstream SQLite C runtime for QFLISQLab.'
++    spec.homepage = 'https://sqlite.org'
++    spec.author = 'QFLIStudio'
++    spec.license = { :type => 'Public Domain', :text => 'SQLite source retains its upstream public domain notice. The QFLI bridge retains its application license.' }
++    spec.source = { :path => '.' }
++    spec.source_files = staged
++    spec.private_header_files = staged.select { |path| path.end_with?('.h') }
++    spec.static_framework = true
++    spec.libraries = 'm'
++    spec.pod_target_xcconfig = {
++      'DEFINES_MODULE' => 'NO',
++      'GCC_C_LANGUAGE_STANDARD' => 'gnu99',
++      'GCC_SYMBOLS_PRIVATE_EXTERN' => 'NO',
++      'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) SQLITE_THREADSAFE=1 SQLITE_DEFAULT_MEMSTATUS=0 SQLITE_DQS=0 SQLITE_OMIT_LOAD_EXTENSION'
++    }
++    # Retain both C objects when the app links the static pod archive.
++    symbols = %w[qfli_sql_execute qfli_sql_result_free sqlite3_open_v2 sqlite3_close
++                 sqlite3_busy_timeout sqlite3_prepare_v2 sqlite3_step sqlite3_finalize
++                 sqlite3_bind_parameter_count sqlite3_bind_null sqlite3_bind_text
++                 sqlite3_column_count sqlite3_column_name sqlite3_column_type
++                 sqlite3_column_text sqlite3_column_bytes sqlite3_changes sqlite3_errmsg]
++    spec.user_target_xcconfig = {
++      'OTHER_LDFLAGS' => '$(inherited) ' + symbols.map { |symbol| "-Wl,-u,_#{symbol}" }.join(' ')
++    }
++    if platform == :ios
++      spec.dependency 'Flutter'
++      spec.platform = :ios, '13.0'
++    else
++      spec.dependency 'FlutterMacOS'
++      spec.platform = :osx, '10.15'
++    end
++  end
++end
+diff --git a/native/ios/qfli_sqlite_native.podspec b/native/ios/qfli_sqlite_native.podspec
+new file mode 100644
+index 0000000..7b47b32
+--- /dev/null
++++ b/native/ios/qfli_sqlite_native.podspec
+@@ -0,0 +1,4 @@
++require_relative '../apple/podspec'
++Pod::Spec.new do |s|
++  QfliSqliteNative.configure(s, :ios, __dir__)
++end
+diff --git a/native/linux/CMakeLists.txt b/native/linux/CMakeLists.txt
+new file mode 100644
+index 0000000..0a4fd90
+--- /dev/null
++++ b/native/linux/CMakeLists.txt
+@@ -0,0 +1,5 @@
++cmake_minimum_required(VERSION 3.15)
++project(qfli_sqlite_native LANGUAGES C)
++add_subdirectory(../runtime ${CMAKE_CURRENT_BINARY_DIR}/engine)
++set(qfli_sqlite_native_bundled_libraries
++  $<TARGET_FILE:qfli_sqlite> PARENT_SCOPE)
+diff --git a/native/macos/qfli_sqlite_native.podspec b/native/macos/qfli_sqlite_native.podspec
+new file mode 100644
+index 0000000..a0e9b6e
+--- /dev/null
++++ b/native/macos/qfli_sqlite_native.podspec
+@@ -0,0 +1,4 @@
++require_relative '../apple/podspec'
++Pod::Spec.new do |s|
++  QfliSqliteNative.configure(s, :macos, __dir__)
++end
+diff --git a/native/pubspec.yaml b/native/pubspec.yaml
+new file mode 100644
+index 0000000..d9c50b8
+--- /dev/null
++++ b/native/pubspec.yaml
+@@ -0,0 +1,26 @@
++name: qfli_sqlite_native
++description: Retained upstream SQLite C runtime for QFLISQLab.
++version: 1.0.0
++publish_to: 'none'
++
++environment:
++  sdk: '>=3.4.0 <4.0.0'
++  flutter: '>=3.22.0'
++
++dependencies:
++  flutter:
++    sdk: flutter
++
++flutter:
++  plugin:
++    platforms:
++      android:
++        ffiPlugin: true
++      windows:
++        ffiPlugin: true
++      linux:
++        ffiPlugin: true
++      ios:
++        ffiPlugin: true
++      macos:
++        ffiPlugin: true
+diff --git a/native/runtime/CMakeLists.txt b/native/runtime/CMakeLists.txt
+new file mode 100644
+index 0000000..4cd9f98
+--- /dev/null
++++ b/native/runtime/CMakeLists.txt
+@@ -0,0 +1,25 @@
++cmake_minimum_required(VERSION 3.15)
++project(qfli_sqlite_runtime LANGUAGES C)
++
++add_library(qfli_sqlite SHARED
++  ../third_party/sqlite/sqlite3.c
++  ../src/qfli_sql_bridge.c)
++target_include_directories(qfli_sqlite PRIVATE
++  ../third_party/sqlite ../src)
++target_compile_features(qfli_sqlite PRIVATE c_std_99)
++target_compile_definitions(qfli_sqlite PRIVATE
++  SQLITE_THREADSAFE=1 SQLITE_DEFAULT_MEMSTATUS=0 SQLITE_DQS=0
++  SQLITE_OMIT_LOAD_EXTENSION)
++set_target_properties(qfli_sqlite PROPERTIES
++  WINDOWS_EXPORT_ALL_SYMBOLS ON
++  C_VISIBILITY_PRESET default)
++if(WIN32)
++  set_target_properties(qfli_sqlite PROPERTIES PREFIX "")
++endif()
++if(NOT WIN32)
++  find_package(Threads REQUIRED)
++  target_link_libraries(qfli_sqlite PRIVATE Threads::Threads m)
++endif()
++if(ANDROID)
++  target_link_options(qfli_sqlite PRIVATE -Wl,-z,max-page-size=16384)
++endif()
+diff --git a/native/windows/CMakeLists.txt b/native/windows/CMakeLists.txt
+new file mode 100644
+index 0000000..0a4fd90
+--- /dev/null
++++ b/native/windows/CMakeLists.txt
+@@ -0,0 +1,5 @@
++cmake_minimum_required(VERSION 3.15)
++project(qfli_sqlite_native LANGUAGES C)
++add_subdirectory(../runtime ${CMAKE_CURRENT_BINARY_DIR}/engine)
++set(qfli_sqlite_native_bundled_libraries
++  $<TARGET_FILE:qfli_sqlite> PARENT_SCOPE)
+diff --git a/pubspec.yaml b/pubspec.yaml
+index 5a2adcf..0ed5430 100644
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -17,6 +17,10 @@ dependencies:
+ 
+   path: ^1.9.1
+ 
++  ffi: ^2.2.0
++  qfli_sqlite_native:
++    path: native
++
+   cupertino_icons: ^1.0.8
+ 
+ dependency_overrides:
+diff --git a/test/sql_app_test.dart b/test/sql_app_test.dart
+index aac7c83..a394b84 100644
+--- a/test/sql_app_test.dart
++++ b/test/sql_app_test.dart
+@@ -102,7 +102,7 @@ void main() {
+   });
+ 
+   group('运行后端', () {
+-    test('本语言文件被接管，并在没有原生通道时报告错误', () async {
++    test('本语言文件被接管，错误不会报告为成功', () async {
+       write('main.sql', '// 示例');
+       final result = await sqlProfile.runner!.run(
+         projectPath: project.path,
+@@ -112,7 +112,7 @@ void main() {
+       expect(result!.title, '运行 main.sql');
+       expect(await result.stdout.toList(), isEmpty);
+       expect(await result.stderr.toList(), isNotEmpty);
+-      expect(await result.exitCode, kProgramNotRunExitCode);
++      expect(await result.exitCode, isNonZero);
+     });
+ 
+     test('别的语言文件交回内核', () async {
+diff --git a/test/sql_runner_test.dart b/test/sql_runner_test.dart
+index fab1504..b3dbc05 100644
+--- a/test/sql_runner_test.dart
++++ b/test/sql_runner_test.dart
+@@ -17,15 +17,16 @@ void main() {
+       final entry = File(p.join(project.path, 'main.sql'))
+         ..writeAsStringSync('SELECT 1;');
+ 
+-      final result = await const SqlProgramRunner().run(
+-        projectPath: project.path,
+-        entryFile: entry.path,
+-      );
++      final result = await const SqlProgramRunner(
++        engine: NativeSqliteEngine(
++          channel: MethodChannel('qfli_sql/absent_test'),
++        ),
++      ).run(projectPath: project.path, entryFile: entry.path);
+ 
+       expect(result, isNotNull);
+       expect(result!.title, '运行 main.sql');
+       expect(await result.stdout.toList(), isEmpty);
+-      expect(await result.stderr.toList(), ['当前设备无法连接 Oracle MySQL 引擎。']);
++      expect(await result.stderr.toList(), ['当前设备无法连接 SQLite 引擎。']);
+       expect(await result.exitCode, kProgramNotRunExitCode);
+     });
+ 
+diff --git a/test/sqlite_ffi_test.dart b/test/sqlite_ffi_test.dart
+new file mode 100644
+index 0000000..ff019ac
+--- /dev/null
++++ b/test/sqlite_ffi_test.dart
+@@ -0,0 +1,205 @@
++import 'dart:io';
++
++import 'package:flutter_test/flutter_test.dart';
++import 'package:path/path.dart' as p;
++import 'package:qfli_sql/sql_database.dart';
++import 'package:qfli_sql/sql_runner.dart';
++import 'package:qfli_sql/sql_workspace_repository.dart';
++import 'package:qfli_sql/sqlite_ffi.dart';
++
++void main() {
++  TestWidgetsFlutterBinding.ensureInitialized();
++  final platform = Platform.operatingSystem;
++  final library =
++      Platform.environment['QFLI_SQLITE_LIBRARY'] ??
++      p.join(
++        Directory.current.path,
++        'native',
++        'build',
++        platform,
++        Platform.isWindows ? 'qfli_sqlite.dll' : 'libqfli_sqlite.so',
++      );
++  final missing = !File(library).existsSync();
++
++  group(
++    'retained upstream SQLite C engine',
++    () {
++      late Directory root;
++      late String databasePath;
++      setUp(() async {
++        root = await Directory.systemTemp.createTemp('qfli_sqlite_ffi_');
++        databasePath = p.join(root.path, 'data.sqlite');
++      });
++      tearDown(() => root.delete(recursive: true));
++
++      Future<SqlQueryResult> query(
++        String source, [
++        List<String?> values = const [],
++      ]) async => SqlQueryResult.fromNative(
++        await SqliteFfi.invoke('query', {
++          'databasePath': databasePath,
++          'source': source,
++          'params': values,
++        }, libraryPath: library),
++      );
++
++      test('script, grid and editor use the same persisted C database', () async {
++        final engine = const NativeSqliteEngine();
++        final script = await engine.execute(
++          SqliteRequest(
++            projectPath: root.path,
++            source:
++                'CREATE TABLE people (id INTEGER PRIMARY KEY, name TEXT); '
++                "INSERT INTO people (name) VALUES ('Ada'); SELECT name FROM people;",
++          ),
++        );
++        expect(script.available, isTrue, reason: script.stderr.join('\n'));
++        expect(script.exitCode, 0);
++        expect(script.stdout, ['Ada']);
++        expect(
++          File(p.join(root.path, '.qfli', 'data.sqlite')).existsSync(),
++          isTrue,
++        );
++
++        final entry = File(p.join(root.path, 'main.sql'))
++          ..writeAsStringSync('SELECT id, name FROM people;');
++        final run = await SqlProgramRunner(
++          engine: engine,
++        ).run(projectPath: root.path, entryFile: entry.path);
++        expect(await run!.stdout.toList(), ['1\tAda']);
++        expect(await run.exitCode, 0);
++      });
++
++      test(
++        'binds quotes, UTF-8, embedded NUL and NULL without rewriting SQL',
++        () async {
++          expect(
++            (await query('CREATE TABLE items (value TEXT, note TEXT)')).success,
++            isTrue,
++          );
++          const text = "O'Brien \u4e2d\u6587 \u{1f600}\x00tail";
++          final inserted = await query('INSERT INTO items VALUES (?, ?)', [
++            text,
++            null,
++          ]);
++          expect(inserted.success, isTrue, reason: inserted.error);
++          expect(inserted.affectedRows, 1);
++          final result = await query(
++            'SELECT value, note FROM items WHERE value = ?',
++            [text],
++          );
++          expect(result.rows, [
++            [text, null],
++          ]);
++          final update = await query(
++            'UPDATE items SET note = ? WHERE value = ?',
++            ['ok', text],
++          );
++          expect(update.affectedRows, 1);
++          expect((await query('SELECT note FROM items')).rows, [
++            ['ok'],
++          ]);
++        },
++      );
++
++      test(
++        'reports SQL and parameter errors and rejects a second statement',
++        () async {
++          expect(
++            (await query('SELECT missing FROM unknown_table')).success,
++            isFalse,
++          );
++          final parameters = await query('SELECT ?');
++          expect(parameters.available, isTrue);
++          expect(parameters.error, contains('parameter count'));
++          final multiple = await query(
++            'SELECT 1; CREATE TABLE forbidden (id INTEGER);',
++          );
++          expect(multiple.error, contains('Only one SQL statement'));
++          expect(
++            (await query(
++              "SELECT name FROM sqlite_master WHERE name = 'forbidden'",
++            )).rows,
++            isEmpty,
++          );
++          final later = await query('SELECT 42 AS answer');
++          expect(later.success, isTrue);
++          expect(later.rows, [
++            ['42'],
++          ]);
++        },
++      );
++
++      test(
++        'truncates rows and oversized cells without returning partial rows',
++        () async {
++          final rows = await query(
++            'WITH RECURSIVE numbers(n) AS '
++            '(SELECT 1 UNION ALL SELECT n + 1 FROM numbers WHERE n < 501) SELECT n FROM numbers',
++          );
++          expect(rows.truncated, isTrue);
++          expect(rows.rows.length, 500);
++          final bytes = await query(
++            "SELECT replace(hex(zeroblob(524289)), '0', 'x') AS large",
++          );
++          expect(bytes.truncated, isTrue);
++          expect(bytes.rows, isEmpty);
++        },
++      );
++
++      test(
++        'workspace creates, edits and deletes persisted rows through default FFI',
++        () async {
++          final workspace = SqlWorkspaceRepository(root: root);
++          await workspace.createDatabase('work');
++          await workspace.createTable('work', 'people', const [
++            SqlColumnDraft(name: 'id', type: 'INTEGER', primaryKey: true),
++            SqlColumnDraft(name: 'name', type: 'TEXT'),
++          ]);
++          await workspace.insertRow('work', 'people', {'name': 'Ada'});
++          var page = await workspace.loadTable('work', 'people');
++          expect(page.rows, [
++            ['1', 'Ada'],
++          ]);
++          await workspace.updateCell(
++            'work',
++            'people',
++            page.rowIds.single,
++            'name',
++            'Grace',
++          );
++          page = await workspace.loadTable('work', 'people');
++          expect(page.rows, [
++            ['1', 'Grace'],
++          ]);
++          await workspace.deleteRow('work', 'people', page.rowIds.single);
++          expect((await workspace.loadTable('work', 'people')).rows, isEmpty);
++        },
++      );
++    },
++    skip: missing
++        ? 'Build native/runtime for $platform before running this suite.'
++        : false,
++  );
++
++  test(
++    'does not substitute another engine when the native library is missing',
++    () async {
++      await expectLater(
++        SqliteFfi.invoke(
++          'query',
++          {
++            'databasePath': ':memory:',
++            'source': 'SELECT 1',
++            'params': <String?>[],
++          },
++          libraryPath: p.join(
++            Directory.systemTemp.path,
++            'missing_qfli_sqlite_library',
++          ),
++        ),
++        throwsArgumentError,
++      );
++    },
++  );
++}

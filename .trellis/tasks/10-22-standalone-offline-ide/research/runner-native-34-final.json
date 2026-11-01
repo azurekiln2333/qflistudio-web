@@ -1,0 +1,2456 @@
+{
+  "schemaVersion": 1,
+  "runtime": "ohos-arkweb",
+  "device": {
+    "runId": "1792669631117",
+    "manifest": {
+      "schemaVersion": 1,
+      "kind": "qfli-ohos-catalog",
+      "files": {
+        "examples": {
+          "path": "ohos_catalog/examples.json",
+          "bytes": 796590,
+          "sha256": "2d8f8c0aa321f3e861af5f46cd0a9b2b1430010b513d3c3eea106c0eca2eeb1c"
+        },
+        "tutorials": {
+          "path": "ohos_catalog/tutorials.json",
+          "bytes": 1389546,
+          "sha256": "10e750b7bd8fa8f1cb9d252831bce224248c0075589f5367c4312e37104acb36"
+        }
+      },
+      "counts": {
+        "examples": 481,
+        "tutorials": 481,
+        "lessons": 481
+      }
+    },
+    "environment": {
+      "bundleName": "com.azurekiln.qfli.webforge",
+      "moduleName": "entry_test",
+      "abilityName": "TestAbility",
+      "osFullName": "OpenHarmony-7.0.0.105",
+      "sdkApiVersion": 26,
+      "deviceType": "phone"
+    }
+  },
+  "viewport": null,
+  "host": {
+    "platform": "win32",
+    "architecture": "x64",
+    "node": "v24.15.0"
+  },
+  "browserVersion": "144.0.7559.59",
+  "startedAt": "2026-10-22T12:18:44.050Z",
+  "completedAt": "2026-10-22T12:19:18.621Z",
+  "catalog": {
+    "examplesSha256": "2d8f8c0aa321f3e861af5f46cd0a9b2b1430010b513d3c3eea106c0eca2eeb1c",
+    "tutorialsSha256": "10e750b7bd8fa8f1cb9d252831bce224248c0075589f5367c4312e37104acb36",
+    "totalExamples": 481,
+    "totalLessons": 481,
+    "executedExamples": 34,
+    "complete": false
+  },
+  "passed": 33,
+  "failed": 1,
+  "totalChecks": 380,
+  "mappingIssues": [],
+  "results": [
+    {
+      "id": "css-example-031",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "margin-inline 24px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "padding-block 12px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "box background #e8f0fe",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "6145076eaca3d6c7f0915077872fc28c387d38812d697b66c410a6cb84c91e96",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-035",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 16,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "btn blue",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "btn pointer",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "btn radius 6px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "btn padding 10px 20px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "disabled opacity is exactly 0.5",
+          "ok": true,
+          "detail": "0.5"
+        },
+        {
+          "name": "disabled cursor is not-allowed",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "Tab focuses the first button",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "focus ring is 3px solid #8ab4f8",
+          "ok": true,
+          "detail": "2.85714px solid rgb(138, 180, 248)"
+        },
+        {
+          "name": "hover darkens to #1557b0",
+          "ok": true,
+          "detail": "rgb(21, 87, 176)"
+        },
+        {
+          "name": "pressed button matches :active",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "pressed button sinks by 1px",
+          "ok": true,
+          "detail": "matrix(1, 0, 0, 1, 0, 1)"
+        },
+        {
+          "name": "released button returns to rest",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "d33e1541b3ea26c760e903511515b506fc67906b3494ab574786438475ddbf73",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-041",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 14,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "badge is the positioning context",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "badge background #e8f0fe",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "::after has empty content (pure shape)",
+          "ok": true,
+          "detail": "\"\""
+        },
+        {
+          "name": "::after is absolutely positioned",
+          "ok": true,
+          "detail": "absolute"
+        },
+        {
+          "name": "::after sits at the top-right corner",
+          "ok": true,
+          "detail": "0px/0px"
+        },
+        {
+          "name": "::after borders are 8px solid on all four sides",
+          "ok": true,
+          "detail": "8px/8px/8px/8px solid"
+        },
+        {
+          "name": "::after top and right borders are red #ea4335",
+          "ok": true,
+          "detail": "rgb(234, 67, 53) / rgb(234, 67, 53)"
+        },
+        {
+          "name": "::after bottom and left borders are transparent",
+          "ok": true,
+          "detail": "rgba(0, 0, 0, 0) / rgba(0, 0, 0, 0)"
+        },
+        {
+          "name": "badge is an inline-block sized by its content",
+          "ok": true,
+          "detail": "inline-block"
+        },
+        {
+          "name": "badge box is its text plus 16px padding on both sides",
+          "ok": true,
+          "detail": "128 vs text 96.00 + 16+16"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "646fb40774dd55444b348e2ca2d408178465bff4274bb65c988acb1cd4457011",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-044",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 10,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "max-width really is 65ch",
+          "ok": true,
+          "detail": "592.8 vs 65ch=592.7991333007812"
+        },
+        {
+          "name": "65ch is a readable measure (500-700px)",
+          "ok": true,
+          "detail": "592.7991333007812"
+        },
+        {
+          "name": "line-height is 1.7 x 16px = 27.2px",
+          "ok": true,
+          "detail": "27.2px"
+        },
+        {
+          "name": "article padding is 16px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "article width is min(65ch, available width)",
+          "ok": true,
+          "detail": "318 vs min(592.7991333007812, 318)"
+        },
+        {
+          "name": "at a narrow width the article fills the available width",
+          "ok": true,
+          "detail": "318 vs 318"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "e7c2292bf68795972db6dd460dfa4d6406480aa82a04c0465a1c3ce633dcfd0c",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-114",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 12,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "flex-basis:0 items declare a 0px basis",
+          "ok": true,
+          "detail": "0px"
+        },
+        {
+          "name": "first equal item is 200px wide",
+          "ok": true,
+          "detail": "200"
+        },
+        {
+          "name": "second equal item is 200px wide",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "third equal item is 200px wide even with long text",
+          "ok": true,
+          "detail": "200"
+        },
+        {
+          "name": "equal items sit at 200px steps",
+          "ok": true,
+          "detail": "400"
+        },
+        {
+          "name": "auto basis row declares auto",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "auto basis shares by content, not equally",
+          "ok": true,
+          "detail": "109.33036041259766 vs 333.3348083496094"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=7"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "85c47a3a70e5b98a6069d8d217d740ac8a9a300152297240941d2feba46b5732",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-116",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 12,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "container declares align-content flex-start",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "container wraps",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "row gap is 10px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "container height stays 200px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "second row starts at 50px (40 + 10 gap)",
+          "ok": true,
+          "detail": "50"
+        },
+        {
+          "name": "first row sits at the top",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "three items per row (i3 ends the first row)",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=7"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "90b0dd6e9b9c64bd3b17c9b85b29f3dea16f996a0e2631c76906b47fdb20c49b",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-120",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 11,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "implicit rows are 40px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "explicit columns are 156px each",
+          "ok": true,
+          "detail": "156px 156px"
+        },
+        {
+          "name": "first row item is 40px tall",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "second implicit row starts at 48px",
+          "ok": true,
+          "detail": "48"
+        },
+        {
+          "name": "third implicit row starts at 96px",
+          "ok": true,
+          "detail": "96"
+        },
+        {
+          "name": "row gap is 8px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=6"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "dab96e38086bf792a3fa7576cb9792cf37c8d6af5ddd268ba99244cbad86aa3e",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-122",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 11,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "wrapper generates no box",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "wrapper has zero size",
+          "ok": true,
+          "detail": "no box"
+        },
+        {
+          "name": "paragraph becomes the first grid item",
+          "ok": true,
+          "detail": "60.000003814697266"
+        },
+        {
+          "name": "paragraph starts at the container edge",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "parent tracks are 60px and 230px",
+          "ok": true,
+          "detail": "60px 230px"
+        },
+        {
+          "name": "the following paragraph keeps normal block layout",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=6"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "54c6d601cc0b6c724b6b5dcae0fcc78c93017c1545b701a67bb79c668f9e40ed",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-123",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 11,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "containment is layout paint",
+          "ok": true,
+          "detail": "layout paint"
+        },
+        {
+          "name": "box keeps its fixed 60px height",
+          "ok": true,
+          "detail": "60.000003814697266"
+        },
+        {
+          "name": "inner content is really 200px tall",
+          "ok": true,
+          "detail": "200"
+        },
+        {
+          "name": "clipping does not come from overflow",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "following paragraph starts at 76px, not 276px",
+          "ok": true,
+          "detail": "76"
+        },
+        {
+          "name": "box width is unchanged by containment",
+          "ok": true,
+          "detail": "200"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=6"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "c6f3260ea9a167b7e526678aeecb81044678b6dd6bafcd032676058236664ae9",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-124",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 11,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "width is clamp(200px, 40vw, 320px)",
+          "ok": true,
+          "detail": "320.0000305175781 vs 320.00 at 980px"
+        },
+        {
+          "name": "height is min(120px, 20vh)",
+          "ok": true,
+          "detail": "120.00001525878906 vs 120.00 at 735px"
+        },
+        {
+          "name": "padding is max(8px, 2vw)",
+          "ok": true,
+          "detail": "19.6px vs 19.60"
+        },
+        {
+          "name": "the computed width matches the resolved clamp",
+          "ok": true,
+          "detail": "320px"
+        },
+        {
+          "name": "the narrow box is held at the 200px floor",
+          "ok": true,
+          "detail": "200.00001525878906"
+        },
+        {
+          "name": "10vw would be below the floor at this width",
+          "ok": true,
+          "detail": "98.0 at 980px"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=6"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "91e69098f315827bbc3e1177d1f70f83f93cd57b9e777c7f08bf8fff1937084a",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-125",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 10,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "fit-content shrinks to the available 120px",
+          "ok": true,
+          "detail": "120.00001525878906"
+        },
+        {
+          "name": "max-content overflows its 120px parent",
+          "ok": true,
+          "detail": "139.3303680419922"
+        },
+        {
+          "name": "max-content is the whole line on one line",
+          "ok": true,
+          "detail": "139.3303680419922 vs text 139.33"
+        },
+        {
+          "name": "min-content is the widest single word",
+          "ok": true,
+          "detail": "57.133934020996094 vs word 57.14"
+        },
+        {
+          "name": "min-content is narrower than max-content",
+          "ok": true,
+          "detail": "57.133934020996094 vs 139.3303680419922"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=5"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "4f402d5324b5f4d40b46458dc3d204539408fecfdf4154694faf5b94562da217",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-126",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 11,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "inset-inline-start resolves to left: 20px",
+          "ok": true,
+          "detail": "20px"
+        },
+        {
+          "name": "inset-block-start resolves to top: 10px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "inset-inline-end resolves to right: 0px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "inset-block-end resolves to bottom: 0px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "badge sits 20px from the stage inline start",
+          "ok": true,
+          "detail": "20.000001907348633"
+        },
+        {
+          "name": "note ends flush with the stage inline end",
+          "ok": true,
+          "detail": "0"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=6"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "5394c6a0ae1816ce9e95392f28078ef4fc005b72a2761328b539034d8972c26c",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-127",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 13,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "header is sticky",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "header sticks at top 0",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "sidebar is sticky",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "sidebar sticks at 48px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "anchor reserves 60px of scroll margin",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "header stays at the top after scrolling",
+          "ok": true,
+          "detail": "0"
+        },
+        {
+          "name": "sidebar stops at 48px after scrolling",
+          "ok": true,
+          "detail": "48.000003814697266"
+        },
+        {
+          "name": "anchor jump lands 60px below the viewport top",
+          "ok": true,
+          "detail": "60.00000762939453"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=8"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "7be8930a9b5ff241a2c8ffb0a7b357536a0fe2739def4ff16a108ef1826c1448",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-129",
+      "type": "css",
+      "pass": false,
+      "failed": [
+        {
+          "name": "title is 10cqi of a 400px container = 40px",
+          "ok": false,
+          "detail": "20px"
+        },
+        {
+          "name": "body is 5cqw of a 400px container = 20px",
+          "ok": false,
+          "detail": "10px"
+        },
+        {
+          "name": "title is 10cqi of a 200px container = 20px",
+          "ok": false,
+          "detail": "10px"
+        },
+        {
+          "name": "body is 5cqw of a 200px container = 10px",
+          "ok": false,
+          "detail": "8px"
+        }
+      ],
+      "errors": [],
+      "checks": 11,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "wide card is a size container",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "title is 10cqi of a 400px container = 40px",
+          "ok": false,
+          "detail": "20px"
+        },
+        {
+          "name": "body is 5cqw of a 400px container = 20px",
+          "ok": false,
+          "detail": "10px"
+        },
+        {
+          "name": "title is 10cqi of a 200px container = 20px",
+          "ok": false,
+          "detail": "10px"
+        },
+        {
+          "name": "body is 5cqw of a 200px container = 10px",
+          "ok": false,
+          "detail": "8px"
+        },
+        {
+          "name": "both cards live in the same viewport, so the difference is container-driven",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=6"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "6a8a62882f61f68085eb0a554bb0b8d65abd13040d758c033190f254231d734b",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-131",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 11,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "overflow: clip is applied",
+          "ok": true,
+          "detail": "clip"
+        },
+        {
+          "name": "clip margin is 10px",
+          "ok": true,
+          "detail": "10px"
+        },
+        {
+          "name": "hidden box really uses overflow: hidden",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "clip is not a scroll container (scrollLeft stays 0)",
+          "ok": true,
+          "detail": "0"
+        },
+        {
+          "name": "hidden can be scrolled by script (scrollLeft 40)",
+          "ok": true,
+          "detail": "40"
+        },
+        {
+          "name": "both boxes are 120x60",
+          "ok": true,
+          "detail": "120.00001525878906x60"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=6"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "5b8aba32713022ee613e656694b35b634d5824adfae34e44fcecef3710dc129d",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-132",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 11,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "swatch 1 keeps its oklch value",
+          "ok": true,
+          "detail": "oklch(0.9 0.05 255)"
+        },
+        {
+          "name": "swatch 2 keeps its oklch value",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "swatch 3 keeps its oklch value",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "swatch 4 keeps its oklch value",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "all four swatches are 60x60",
+          "ok": true,
+          "detail": "60.00000762939453x60.00000762939453"
+        },
+        {
+          "name": "swatches are laid out left to right",
+          "ok": true,
+          "detail": "180.00003051757812"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=6"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "1df7aed84bab3f1a054eef4593f1631da95197e1fcba6400d68c7cce714f9f0b",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-133",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 11,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "base swatch is the theme blue",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "50/50 mix resolves in oklab with L = 0.7868",
+          "ok": true,
+          "detail": "0.786837"
+        },
+        {
+          "name": "25/75 mix resolves in oklab with L = 0.8934",
+          "ok": true,
+          "detail": "0.893415"
+        },
+        {
+          "name": "the 25% mix is lighter than the 50% mix",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "all three swatches are 80x40",
+          "ok": true,
+          "detail": "80.00000762939453x40.00000762939453"
+        },
+        {
+          "name": "mixed colour keeps the oklab colour space",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=6"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "3a2c21dafd8a776c4821ae84c6d7d4fc3e63364104125c6752966f99d48cd209",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-135",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 10,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "base swatch is #3366cc",
+          "ok": true,
+          "detail": "rgb(51, 102, 204)"
+        },
+        {
+          "name": "relative colour keeps the channels and applies 40% alpha",
+          "ok": true,
+          "detail": "color(srgb 0.2 0.4 0.8 / 0.4)"
+        },
+        {
+          "name": "calc() raises each channel by 60/255",
+          "ok": true,
+          "detail": "color(srgb 0.435294 0.635294 1.03529)"
+        },
+        {
+          "name": "all swatches are 80x40",
+          "ok": true,
+          "detail": "80.00000762939453x40.00000762939453"
+        },
+        {
+          "name": "the derived colour is lighter than the base",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=5"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "8500b5e2eb47b304ca03e0c624ade772571f89f089791a2116b3253c1410cbf4",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-136",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 9,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "diagonal stripes keep both stops and the 20px period",
+          "ok": true,
+          "detail": "repeating-linear-gradient(45deg, rgb(26, 115, 232) 0px, rgb(26, 115, 232) 10px, rgb(255, 255, 255) 10px, rgb(255, 255, 255) 20px)"
+        },
+        {
+          "name": "zebra stripes use a 40px period",
+          "ok": true,
+          "detail": "repeating-linear-gradient(90deg, rgb(241, 243, 244) 0px, rgb(241, 243, 244) 20px, rgb(232, 240, 254) 20px, rgb(232, 240, 254) 40px)"
+        },
+        {
+          "name": "stripes are painted, not a solid colour",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "stroke block is 200x40",
+          "ok": true,
+          "detail": "200.00001525878906x40.000003814697266"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=4"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "b8588adffb4bf3ebb5e6970343b032b3e649b6cd30cad36aeb8fdbcf0174ed62",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-137",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 10,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "mask fades black to transparent to the right",
+          "ok": true,
+          "detail": "linear-gradient(to right, rgb(0, 0, 0), rgba(0, 0, 0, 0))"
+        },
+        {
+          "name": "mask size is 100% 100%",
+          "ok": true,
+          "detail": "100% 100%"
+        },
+        {
+          "name": "mask does not repeat",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "fade block is 200x40",
+          "ok": true,
+          "detail": "200.00001430511475x40.00000286102295"
+        },
+        {
+          "name": "the element still has its solid blue background",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=5"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "9e87ee609b0693b209c71dd13e93dc57e0d3db0fe6edc55198435a1806ad8576",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-138",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 11,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "two mask layers are declared",
+          "ok": true,
+          "detail": "linear-gradient(rgb(0, 0, 0) 0px, rgb(0, 0, 0) 100%), radial-gradient(circle, rgb(0, 0, 0) 0px, rgb(0, 0, 0) 60%, rgba(0, 0, 0, 0) 60%)"
+        },
+        {
+          "name": "mask-composite resolves to intersect for both layers",
+          "ok": true,
+          "detail": "intersect, intersect"
+        },
+        {
+          "name": "both mask layers cover the box",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "neither layer repeats",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "blend box is 120x120",
+          "ok": true,
+          "detail": "120.00001430511475x120.00001430511475"
+        },
+        {
+          "name": "the radial layer stops at 60%",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=6"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "47816f46da5fae3624382d86ed82c6d866f0f7f12a2f52dc0b6ad90969691ac8",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-139",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 9,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "two background layers are stacked",
+          "ok": true,
+          "detail": "linear-gradient(rgb(26, 115, 232), rgb(26, 115, 232)), linear-gradient(90deg, rgb(255, 255, 255), rgb(0, 0, 0))"
+        },
+        {
+          "name": "blend mode multiply applies to both layers",
+          "ok": true,
+          "detail": "multiply, multiply"
+        },
+        {
+          "name": "base colour under the gradients is white",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "blend block is 200x80",
+          "ok": true,
+          "detail": "200.00001525878906x80.00000762939453"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=4"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "74f98316992e3ce7cc81b8e6a432c26a95a280d5eefcd5c35f4f82e9f26ef243",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-141",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 13,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "emphasis style is a dot",
+          "ok": true,
+          "detail": "dot"
+        },
+        {
+          "name": "emphasis colour is the theme blue",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "emphasis sits above the text",
+          "ok": true,
+          "detail": "over"
+        },
+        {
+          "name": "plain text next to it has no emphasis",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "the plain line box is exactly the 36px line-height",
+          "ok": true,
+          "detail": "36"
+        },
+        {
+          "name": "the emphasis mark never shrinks the line box",
+          "ok": true,
+          "detail": "36 -> 41.42857360839844"
+        },
+        {
+          "name": "the mark costs less than one extra line",
+          "ok": true,
+          "detail": "5.4285736083984375"
+        },
+        {
+          "name": "under a tight line-height the mark must grow the line box",
+          "ok": true,
+          "detail": "20 -> 35.142860412597656"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=8"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "341ec25ff2bc7c63954d6d60fdeaf29d00483040c2286333d7991beb18c4ce49",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-144",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 12,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "long word allows breaking anywhere",
+          "ok": true,
+          "detail": "anywhere"
+        },
+        {
+          "name": "hyphenation is enabled for the english fragment",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "the hyphenation fragment declares lang=\"en\"",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "broken word stays inside the 120px box",
+          "ok": true,
+          "detail": "118.77233409881592"
+        },
+        {
+          "name": "without a hyphenation dictionary the long word overflows",
+          "ok": true,
+          "detail": "234.00003337860107"
+        },
+        {
+          "name": "the anywhere fallback still contains the same word",
+          "ok": true,
+          "detail": "118.77233409881592"
+        },
+        {
+          "name": "both boxes are 120px plus their 1px borders",
+          "ok": true,
+          "detail": "121.71429347991943 / 121.71429347991943"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=7"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "d8242103657170c5e292d9ae9d8ff888809f8c619a06ca9c886985cdf45f38e4",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-145",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 10,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "tabular-nums is applied to the first row",
+          "ok": true,
+          "detail": "tabular-nums"
+        },
+        {
+          "name": "proportional-nums is applied to the second row",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "tabular digits 1111 and 8888 are exactly equal width",
+          "ok": true,
+          "detail": "54.723219871520996 vs 54.72322082519531"
+        },
+        {
+          "name": "tabular digit run is four equal digit advances",
+          "ok": true,
+          "detail": "54.723219871520996 vs text 54.72"
+        },
+        {
+          "name": "both rows start at the same x",
+          "ok": true,
+          "detail": "0"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=5"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "225fa462a528d1eb56e6f5d96aa0954a1b09a4b52611ebefa42e8c63a5263e80",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-147",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 11,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "box-decoration-break is clone",
+          "ok": true,
+          "detail": "clone"
+        },
+        {
+          "name": "the highlight is fragmented into 3 line boxes",
+          "ok": true,
+          "detail": "3"
+        },
+        {
+          "name": "every fragment keeps the 6px left padding",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "every fragment keeps the 3px left border",
+          "ok": true,
+          "detail": "2.85714px"
+        },
+        {
+          "name": "every fragment keeps the highlight background",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "the narrow container is 260px plus its 1px borders",
+          "ok": true,
+          "detail": "261.71432399749756"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=6"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "df5ce08f9d41d289a6e60bd4880c60328005777171099613acde19ec8ac45884",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-148",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 12,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "plain heading has no trimming",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "trimmed heading declares trim-both",
+          "ok": true,
+          "detail": "trim-both"
+        },
+        {
+          "name": "trim edge is cap alphabetic",
+          "ok": true,
+          "detail": "cap alphabetic"
+        },
+        {
+          "name": "plain heading box is 48px tall",
+          "ok": true,
+          "detail": "48px"
+        },
+        {
+          "name": "trimmed heading box shrinks to the cap band",
+          "ok": true,
+          "detail": "28 of 40px"
+        },
+        {
+          "name": "trimming removes the leading above the caps",
+          "ok": true,
+          "detail": "48 -> 28"
+        },
+        {
+          "name": "both headings keep the 40px font size",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=7"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "b9bc50c27a7ab3661dbd7709902d95fcded5a6ca82e87f48f0a5aaf065305c08",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-150",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 11,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "animation name is slide",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "duration is 0.3s",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "delay is 0.1s",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "fill mode is forwards",
+          "ok": true,
+          "detail": "forwards"
+        },
+        {
+          "name": "the final frame is kept at translateX(60px)",
+          "ok": true,
+          "detail": "matrix(1, 0, 0, 1, 60, 0)"
+        },
+        {
+          "name": "the bar keeps its 60px width",
+          "ok": true,
+          "detail": "60.00001525878906"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=6"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "0bd16166c30c7982092cb4bfe16e41703fbf7fd471acf28f8fa3d52d7fa06876",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-153",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 13,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "spinner animates by default",
+          "ok": true,
+          "detail": "spin"
+        },
+        {
+          "name": "spin loops forever",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "spin duration is 1s",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "the ring is circular",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "the reduce media query is declared",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "reduced motion turns the animation off",
+          "ok": true,
+          "detail": "none"
+        },
+        {
+          "name": "the spinner keeps its 32px size",
+          "ok": true,
+          "detail": "32pxx32px"
+        },
+        {
+          "name": "the 4px border makes the ring 40px across",
+          "ok": true,
+          "detail": "32px + 2 x 4"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=8"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "0bf03739f92499f835af4598c218769d1cd1120e7e085516f4a5a25e5d54872f",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-154",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 11,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "replace composition keeps the last animation only",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "accumulate composition applies to both animations",
+          "ok": true,
+          "detail": "accumulate, accumulate"
+        },
+        {
+          "name": "replace ends at translateX(20px)",
+          "ok": true,
+          "detail": "matrix(1, 0, 0, 1, 20, 0)"
+        },
+        {
+          "name": "accumulate ends at translateX(30px)",
+          "ok": true,
+          "detail": "matrix(1, 0, 0, 1, 30, 0)"
+        },
+        {
+          "name": "both boxes keep fill-mode forwards",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "both boxes are 20x20",
+          "ok": true,
+          "detail": "20x20.000003814697266"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=6"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "dd0371a03d4c7dc0b9c2d951089e3496df18d530a630c0471f1903bf06527490",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-155",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 11,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "rail snaps on the x axis mandatorily",
+          "ok": true,
+          "detail": "x mandatory"
+        },
+        {
+          "name": "cards snap their start edge",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "rail is 220px wide",
+          "ok": true,
+          "detail": "220.0000295639038"
+        },
+        {
+          "name": "content is 640px wide (3 x 200 + 2 x 20 gap)",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "the rail snaps to the 220px snap point",
+          "ok": true,
+          "detail": "220"
+        },
+        {
+          "name": "the last card snaps to the clamped end (420px)",
+          "ok": true,
+          "detail": "420"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=6"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "c4c575abc3f7b9812ea898b816f5b2673844309820e454001884aedd1f135d5c",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-156",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 11,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "stable gutter is declared",
+          "ok": true,
+          "detail": "stable"
+        },
+        {
+          "name": "the plain box has no gutter",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "overlay scrollbars take no space, so stable reserves 0px",
+          "ok": true,
+          "detail": "200px"
+        },
+        {
+          "name": "the plain box keeps the full 200px",
+          "ok": true,
+          "detail": "200px"
+        },
+        {
+          "name": "neither box actually overflows",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "both boxes keep the same outer width",
+          "ok": true,
+          "detail": "200.00001430511475 vs 200.00001430511475"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=6"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "423c656425c9c86e770ba9145993696caf6feb6e01af9d3a157c5426762d6735",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-157",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 12,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "outer scroller contains its overscroll",
+          "ok": true,
+          "detail": "contain"
+        },
+        {
+          "name": "the outer scroller is really scrollable",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "the inner content is 600px tall in a 200px scroller",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "inner scroller reaches its bottom (400px)",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "the scroller stays pinned at its end under further wheel",
+          "ok": true,
+          "detail": "400"
+        },
+        {
+          "name": "contain applies to both scroll axes",
+          "ok": true,
+          "detail": "viewport 980px, scroller at x=300.0000305175781"
+        },
+        {
+          "name": "this engine chains wheel overscroll to the page despite contain",
+          "ok": true,
+          "detail": "page scrolled while the scroller was at its end (viewport 980px)"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=7"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "7bb2fd19c1b53fb2becef20461bdb11a78b223b63f50f9f4b611b16cf805d52f",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-158",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 11,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "input declares field-sizing: content",
+          "ok": true,
+          "detail": "content"
+        },
+        {
+          "name": "textarea declares field-sizing: content",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "short content sits at the 80px minimum",
+          "ok": true,
+          "detail": "80px"
+        },
+        {
+          "name": "typing grows the input",
+          "ok": true,
+          "detail": "97.71429347991943 -> 277.71429347991943"
+        },
+        {
+          "name": "growth stops at the 260px max plus padding and border (278px)",
+          "ok": true,
+          "detail": "277.71429347991943"
+        },
+        {
+          "name": "the textarea grows in height with its lines",
+          "ok": true,
+          "detail": "35.42858123779297 -> 78.8571548461914"
+        },
+        {
+          "name": "expansion semantic coverage",
+          "ok": true,
+          "detail": "handled=true, assertions=6"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "7dfd8f3c1ff55055c5b3cd0205b87cca98744084f72aed99f24d388b35dce164",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    }
+  ]
+}

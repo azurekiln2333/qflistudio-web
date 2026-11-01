@@ -33,6 +33,23 @@ Reference: `test/web_tools_navigation_test.dart`.
 - Pump real route transitions (`pumpAndSettle`) before interacting with tabs and
   dialogs; assert with real Material text/tooltips (`find.byTooltip`,
   `find.text`).
+- A tooltip finder identifies the tooltip widget; this SDK can return
+  `RawTooltip`. When inspecting `IconButton.onPressed`, find the actual public
+  `IconButton` by its `tooltip` property before casting. The inline server
+  lifecycle regression reached all HTTP/log assertions and then failed because
+  `tester.widget<IconButton>(find.byTooltip(...))` cast the wrapper.
+- In nested scroll views, align the outer panel first and reveal each control
+  through the inner public `ScrollPosition.ensureVisible`. Require
+  `target.hitTestable()` before tapping. A built target can still be offscreen;
+  calling `tester.ensureVisible(target)` scrolled the entire outer Tools panel
+  away in the lifecycle fixture. Repair9 passed Clear and subsequent log checks
+  with inner-only reveal in both regular and320px/2x layouts.
+- Prove listener cleanup using the recorded endpoint and strict native refusal
+  codes. Timeouts do not prove closure. On this Windows host an independent
+  own-listener control took2.032s to report10061 after closure, so a2s cap
+  produced a synthetic timeout. The current fixture uses5s and still rejects
+  timeout10060. Pump between live TCP attempts so asynchronous widget disposal
+  can progress. See the task's `research/web-server-tools-lifecycle.md`.
 - Assert persisted effects, not just that a button was tapped — e.g. read
   `.qfli/web.json` back and compare the decoded map
   (`test/web_tools_navigation_test.dart`).

@@ -1,0 +1,192 @@
+{
+  "observedUtc": "2026-10-26T05:49:57.997135+00:00",
+  "originalExecSession": 7698,
+  "actualOriginalTerminal": true,
+  "originalExitCode": 1,
+  "observerPid": 87884,
+  "observerCreatedDate": "2026-10-26T13:47:14.166598+08:00",
+  "resourcesReleased": true,
+  "heldJobs": 0,
+  "validation": {
+    "name": "validation",
+    "errors": [],
+    "command": [
+      "D:\\ProgramFiles\\Python\\Python313\\python.exe",
+      "-B",
+      "-X",
+      "utf8",
+      "D:\\MyNewProjects\\qfli_web\\.trellis\\tasks\\10-22-standalone-offline-ide\\research\\run-web-relay-window.py",
+      "--execute-reviewed",
+      "--authorization",
+      "D:\\MyNewProjects\\qfli_web\\build\\web-c843-reviewed-receipt-20261026.json",
+      "--reviewed-raw-sha256",
+      "d7c2c7cf007dab7bab4dcfff64ab3e81682dbd5ee902f8d4db77e330e7f3b8f9",
+      "--grant",
+      "Web-observed-app-20261026-03",
+      "--run-name",
+      "web-app-c843-20261026",
+      "--next-owner",
+      "c-coordinator"
+    ],
+    "observationDeadlineMonotonic": 47174.5794871,
+    "admitted": true,
+    "admission": "ADMITTED",
+    "startedUtc": "2026-10-26T05:47:14.285884+00:00",
+    "processStarted": true,
+    "root": {
+      "pid": 71720,
+      "threadId": 83640,
+      "createdSuspended": true,
+      "assignedBeforeResume": true,
+      "terminal": true,
+      "creationFiletime100ns": "134374672342866742",
+      "jobActiveProcesses": 0,
+      "exitCode": 1
+    },
+    "deadlineReached": false,
+    "holdSeen": false,
+    "forcedCleanup": false,
+    "custodianPreserved": true,
+    "handlesClosed": true,
+    "terminalConfirmed": true,
+    "jobHandle": "316",
+    "processHandle": "412",
+    "queryConfirmed": true,
+    "status": "TERMINAL",
+    "handlesRetained": false,
+    "terminalObservedUtc": "2026-10-26T05:48:58.995212+00:00",
+    "finishedUtc": "2026-10-26T05:48:58.996829+00:00"
+  },
+  "finalSender": {
+    "phase": {
+      "name": "final-sender",
+      "errors": [],
+      "command": [
+        "D:\\ProgramFiles\\nodejs\\node.exe",
+        "D:\\AppData\\Roaming\\npm\\node_modules\\@mindfoldhq\\trellis\\bin\\trellis.js",
+        "channel",
+        "send",
+        "qfli-core-release-sync",
+        "--scope",
+        "global",
+        "--as",
+        "web-offline-1022",
+        "--to",
+        "c-coordinator",
+        "--text-file",
+        "D:\\MyNewProjects\\qfli_web\\.trellis\\tasks\\10-22-standalone-offline-ide\\research\\web-app-c843-20261026-observed\\final-release.txt"
+      ],
+      "observationDeadlineMonotonic": 47107.3781473,
+      "admitted": true,
+      "admission": "ADMITTED",
+      "startedUtc": "2026-10-26T05:48:59.036574+00:00",
+      "processStarted": true,
+      "root": {
+        "pid": 88116,
+        "threadId": 88052,
+        "createdSuspended": true,
+        "assignedBeforeResume": true,
+        "terminal": true,
+        "creationFiletime100ns": "134374673390379035",
+        "jobActiveProcesses": 0,
+        "exitCode": 0
+      },
+      "deadlineReached": false,
+      "holdSeen": false,
+      "forcedCleanup": false,
+      "custodianPreserved": false,
+      "handlesClosed": true,
+      "terminalConfirmed": true,
+      "jobHandle": "404",
+      "processHandle": "416",
+      "queryConfirmed": true,
+      "status": "TERMINAL",
+      "handlesRetained": false,
+      "terminalObservedUtc": "2026-10-26T05:48:59.620316+00:00",
+      "finishedUtc": "2026-10-26T05:48:59.621773+00:00"
+    },
+    "delivered": true,
+    "controlPlaneOnly": true,
+    "selfTerminalClaim": false,
+    "coordinatorRelayRequired": false,
+    "localReleasePath": "D:\\MyNewProjects\\qfli_web\\.trellis\\tasks\\10-22-standalone-offline-ide\\research\\web-app-c843-20261026-observed\\local-release.json",
+    "finishedUtc": "2026-10-26T05:48:59.622791+00:00",
+    "heldJobs": 0
+  },
+  "assessment": {
+    "releaseEligible": true,
+    "gate": "FAIL",
+    "errors": []
+  },
+  "wrapperAssessment": {
+    "gate": "FAIL",
+    "ownership": "RELEASE_READY",
+    "publication": "DELIVERED",
+    "budget": "PROVISIONAL_WITHIN"
+  },
+  "elapsedSeconds": 105.387,
+  "localBudget": "PROVISIONAL_WITHIN",
+  "errors": [],
+  "childPhases": [
+    {
+      "name": "format",
+      "status": "PASS",
+      "terminalConfirmed": true,
+      "root": {
+        "pid": 89764,
+        "threadId": 56428,
+        "createdSuspended": true,
+        "assignedBeforeResume": true,
+        "terminal": true,
+        "creationFiletime100ns": "134374672362557299",
+        "jobActiveProcesses": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "name": "tests",
+      "status": "FAIL_OR_INCOMPLETE",
+      "terminalConfirmed": true,
+      "root": {
+        "pid": 11388,
+        "threadId": 91192,
+        "createdSuspended": true,
+        "assignedBeforeResume": true,
+        "terminal": true,
+        "creationFiletime100ns": "134374672372774703",
+        "jobActiveProcesses": 0,
+        "exitCode": 1
+      }
+    },
+    {
+      "name": "analysis",
+      "status": "PASS",
+      "terminalConfirmed": true,
+      "root": {
+        "pid": 91100,
+        "threadId": 9660,
+        "createdSuspended": true,
+        "assignedBeforeResume": true,
+        "terminal": true,
+        "creationFiletime100ns": "134374673320220579",
+        "jobActiveProcesses": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "name": "content",
+      "status": "PASS",
+      "terminalConfirmed": true,
+      "root": {
+        "pid": 80740,
+        "threadId": 25460,
+        "createdSuspended": true,
+        "assignedBeforeResume": true,
+        "terminal": true,
+        "creationFiletime100ns": "134374673368368337",
+        "jobActiveProcesses": 0,
+        "exitCode": 0
+      }
+    }
+  ]
+}

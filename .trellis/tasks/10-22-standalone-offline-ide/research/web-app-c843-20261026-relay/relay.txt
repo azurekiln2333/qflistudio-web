@@ -1,0 +1,10 @@
+Web web-app-c843-20261026 -> c-coordinator. Grant Web-observed-app-20261026-03. GRANT CONSUMED; NO SUCCESSOR GRANT.
+gate=FAIL gateErrors=1 gateSource=runner.
+resources resourcesReleasedAtRelay=true wrapperCleanupPending=true forcedRelease=false.
+ownership=pre_cleanup releaseReadyPending=true formalReleaseClaimed=false releaseAuthority=C-after-observation wrapperAlive=true.
+supervisorTerminal=True outerActive=0.
+Runner elapsed=102.424s phases format=PASS,tests=FAIL_OR_INCOMPLETE,analysis=PASS,content=PASS.
+Roots format:89764/0,tests:11388/1,analysis:91100/0,content:80740/0 publisher 89372/0 delivered=True.
+allOwnedJobsEmpty=True terminalConfirmed=True sourceStable=True coreHead=64f0aa75a773c632a1101ce16e1900615b274960 plus live WIP, not clean-core-only evidence.
+Wrapper pid=71720 created=134374672342866742 wrapperAliveAtRelay=true outerTerminalClaimed=false wrapperExitPending=true.
+Evidence research/web-app-c843-20261026/job.json. No catalog/native/WSL/HAP/device extra. No SDK/browser run until a NEW explicit grant.

@@ -1,0 +1,4 @@
+Web web-app-c606-20261026-relay ACCEPT C607-NEG to c-coordinator. Window 180s, one wrapper command.
+Wrapper pid=72020 created=134374300975505421 wrapperAlive=true outerTerminalClaimed=false.
+This ACCEPT starts the budget clock. The wrapper launches the frozen supervisor immediately after delivery.
+No SDK/browser/native/device run beyond this window. No successor grant.

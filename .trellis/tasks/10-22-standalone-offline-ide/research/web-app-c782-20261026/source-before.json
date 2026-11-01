@@ -1,0 +1,1673 @@
+{
+  "coreHead": "2f9039a3ba95449679b17257b0313c1ee3644a2c",
+  "runtimePaths": {
+    "flutter": "D:\\ProgramFiles\\flutter_ohos\\bin\\flutter.bat",
+    "dart": "D:\\ProgramFiles\\flutter_ohos\\bin\\cache\\dart-sdk\\bin\\dart.exe",
+    "python": "D:\\ProgramFiles\\Python\\Python313\\python.exe",
+    "powershell.exe": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    "node": "D:\\ProgramFiles\\nodejs\\node.exe",
+    "syntaxOverride": null
+  },
+  "files": [
+    {
+      "path": "../qfli_studio_core/analysis_options.yaml",
+      "bytes": 950,
+      "sha256": "59ad2d166e36e2f1b72d6b3cce595b7c4d96a96633fa13ae20332b417f342e07"
+    },
+    {
+      "path": "../qfli_studio_core/assets/content/examples.json",
+      "bytes": 2286562,
+      "sha256": "df0555c005d4230ad8248fc0d0a44073d393e60fc3ae152254be3ca20f4306b6"
+    },
+    {
+      "path": "../qfli_studio_core/assets/content/tutorials.json",
+      "bytes": 4729105,
+      "sha256": "7d858d27e440cb0de93cbfa2cd2469ed99005c3cedf6a846d95ebbb355f694ba"
+    },
+    {
+      "path": "../qfli_studio_core/lib/app.dart",
+      "bytes": 4462,
+      "sha256": "e1763de75de969a92fe039719d2846daa7456f2dd8d171854ff8020d2d19b59f"
+    },
+    {
+      "path": "../qfli_studio_core/lib/community/community_widgets.dart",
+      "bytes": 13017,
+      "sha256": "167d28c1bc42abc8eddaf7bb3d1c2bd900f4bbd1635e441e447220e92ce3e021"
+    },
+    {
+      "path": "../qfli_studio_core/lib/community/models.dart",
+      "bytes": 7876,
+      "sha256": "fc4434966754a22d05e4a4b66cca532d2c1429eb65f41d86bde6ed8ac04054b1"
+    },
+    {
+      "path": "../qfli_studio_core/lib/config/agreement_config.dart",
+      "bytes": 267,
+      "sha256": "8b9fb9ab3754c91d4ac36a9eb6180e1c8c048146ffca63a708a34e6f248ada7a"
+    },
+    {
+      "path": "../qfli_studio_core/lib/config/api_config.dart",
+      "bytes": 1169,
+      "sha256": "b792fa4a527f81799cf5b22905898a426b7771965d13b46e59555ffdf2bf6a24"
+    },
+    {
+      "path": "../qfli_studio_core/lib/config/compliance_config.dart",
+      "bytes": 171,
+      "sha256": "d137d991bd91a990e45df6e363dba0e793932155a818e4b7c42cfb368488ae83"
+    },
+    {
+      "path": "../qfli_studio_core/lib/content/asset_content_repository.dart",
+      "bytes": 2452,
+      "sha256": "2664c50ae2425f6d4a20aee695855489597c8b3a53035c36e9f48401d768311a"
+    },
+    {
+      "path": "../qfli_studio_core/lib/content/content_repository.dart",
+      "bytes": 16510,
+      "sha256": "cc76ca9e78795858a20b1f4049f37bb8fb7c8c180f1b901181aada472f67ab6b"
+    },
+    {
+      "path": "../qfli_studio_core/lib/content/content_validator.dart",
+      "bytes": 5002,
+      "sha256": "52cc58a2384283cecbfdad4c37627b26d597ef1870c3119a5d4ab6d7ab12aa24"
+    },
+    {
+      "path": "../qfli_studio_core/lib/content/java_catalog_audit.dart",
+      "bytes": 13805,
+      "sha256": "985d81fd95237c4cfe9d7724a1deecfacade3d895ba34cc9bf5f48a75db23b29"
+    },
+    {
+      "path": "../qfli_studio_core/lib/content/local_content_adapter.dart",
+      "bytes": 4879,
+      "sha256": "550f0156a9fa39c9853eea7c867b3ce53913d0afa3150655f69c19902c4d8416"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/ai_panel.dart",
+      "bytes": 21722,
+      "sha256": "cf771223c30311cd8029a327f1eae04d9eb5c6a17ec17fe304cf2d89500f5fe1"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/code_minimap.dart",
+      "bytes": 5466,
+      "sha256": "5f888b8811da014c47b31d3f16f46a6934daaae76a4fb6326aa9eae60d0f38d7"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/editor_analysis_controller.dart",
+      "bytes": 11706,
+      "sha256": "7b6e83e668c7eb3abe8b6b2b127bff39f52f32d5bb0c21fb0ca8f8b0113be20b"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/editor_controller.dart",
+      "bytes": 10364,
+      "sha256": "1f5c479936575046f6af374e1d41538b00c69af93124b0b0781a2c6d400311f2"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/editor_debug_controller.dart",
+      "bytes": 27489,
+      "sha256": "4233d340f30ae39c152af31975e425fac016f7f4fb63d009c19ddaea1ae2b0d9"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/editor_debug_widgets.dart",
+      "bytes": 18803,
+      "sha256": "b14cabf2e93eada57c011d5935e8d0d531ca0358f6b1281dcbc8b48fa647a521"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/editor_delete_fix.dart",
+      "bytes": 1502,
+      "sha256": "4603f7e32af5131f3167d478ade1517cfbca247096ef246402866285aa20fa50"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/editor_diagnostics.dart",
+      "bytes": 9816,
+      "sha256": "0627318dbeb531b3ca3f6eef60397e41e8e24ce959aeb2f0aa4ac240df0bdb2d"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/editor_find_panel.dart",
+      "bytes": 6474,
+      "sha256": "2796ad68ff8b0538e0252c33b6ebbb9fd3f8427af46882d5bc6ed6a1551cd030"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/editor_fonts.dart",
+      "bytes": 2418,
+      "sha256": "45289eaf519ff1b1296b938529e4b4eddad9a2dcc1faccd028d18e31b4a36566"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/editor_output_panel.dart",
+      "bytes": 13896,
+      "sha256": "145d59d02f7a8117a639df8db117b8cd7edcd6ed98528608abf77ba9a035e2ae"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/editor_page.dart",
+      "bytes": 134795,
+      "sha256": "8549c7e4d00692c27876636d436811100a231d04cb842f263d50eaaab7c07ca4"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/editor_page_diag.dart",
+      "bytes": 2087,
+      "sha256": "30011950d83211432e89e5ea297920c6f7c48ceb64675b43427ccf9ddbc702a3"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/editor_problems_bar.dart",
+      "bytes": 5893,
+      "sha256": "dafbfc6aec077afb715484861198d269b564a2bf248bb13a78eea7c184fd470f"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/editor_selection_toolbar.dart",
+      "bytes": 7393,
+      "sha256": "f8e08255aa2f0bd9fbf5ff0a2dcb6d58e139c433a257c433cd2775c6c898fa98"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/file_explorer.dart",
+      "bytes": 52131,
+      "sha256": "6b99ad68a789e2a20d4f49f54ccbf9fa193e9eca852e34a8976bf0b13353a661"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/highlight_import.dart",
+      "bytes": 9671,
+      "sha256": "c855d07f12629a5f169d4e7ba00a3b608556ecf70cacccb799cf9f2c96bdf59b"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/highlight_themes.dart",
+      "bytes": 10663,
+      "sha256": "63d1655d1218faa739dbc44776aa7e8d8e82230223b0c6822822a1cc6f04ba24"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/new_file_dialog.dart",
+      "bytes": 8268,
+      "sha256": "a55258542ab1eebbbbdf609c0f499f5614113478c9bb12c550da20a8027b8a91"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/open_file.dart",
+      "bytes": 2927,
+      "sha256": "63a1ec0a81efbf3a97930e7793e12e6b7ab510d06b77de7cdc464790c278b4ad"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/open_performance.dart",
+      "bytes": 3149,
+      "sha256": "26c13da1335357e37c44a62b16eaebcc8254745f7a48467de3344aa7fcfa958d"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/project_history.dart",
+      "bytes": 9641,
+      "sha256": "d90e00a4a0ed7f92729dc1d19aac4331ed035ca881afc6924ce669aac3337eba"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/retained_editor_host.dart",
+      "bytes": 25229,
+      "sha256": "58d91921b177173842222f1d2aecb1261f73633abe3a8fefeb4ae33f27e8ba78"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/retained_editor_restore_control.dart",
+      "bytes": 18262,
+      "sha256": "071f76e9931caa33f1641b867d9b10a0783b06b6865fbc85d0a3e3d703e87aae"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/symbols_bar.dart",
+      "bytes": 16046,
+      "sha256": "76ae9a0df2622b98c10e986b81418e87a4b1b0dcf9cd9330c7e85a6991245e6a"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/terminal_pane.dart",
+      "bytes": 82279,
+      "sha256": "7bf7d36524eb4db8b4d57d10aace5227446769f95622879af80ac7216d6beffd"
+    },
+    {
+      "path": "../qfli_studio_core/lib/editor/textmate_grammar.dart",
+      "bytes": 7401,
+      "sha256": "a22dd8ce2d2682030cb354f8ab824564fced68eacd2e0b63d49bc434035e7abd"
+    },
+    {
+      "path": "../qfli_studio_core/lib/i18n/studio_localizations.dart",
+      "bytes": 26215,
+      "sha256": "c5dc5a1f003f4925bf6b752928dd63577cbc79ee8617e5dc24aa0706be30b5b0"
+    },
+    {
+      "path": "../qfli_studio_core/lib/models/project.dart",
+      "bytes": 2892,
+      "sha256": "40158e234e8aa7129b87bb8fd7000e6cf67c121a15a994886adeaa556f15a45c"
+    },
+    {
+      "path": "../qfli_studio_core/lib/models/tutorial.dart",
+      "bytes": 7205,
+      "sha256": "108cd796f1b25e45080cf05424794272d45286b24ae867cf7e985053bf6d5cd1"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/about_page.dart",
+      "bytes": 9282,
+      "sha256": "8893b2487706a9f5a35b4c92cdb295936b4fa5f232534b35058b8f4e1aac9489"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/activity_stats_page.dart",
+      "bytes": 5443,
+      "sha256": "d0f5001d09d55e95132d5fa87c470e299649203bc3f009a5a47b5718397caf32"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/audit_page.dart",
+      "bytes": 6423,
+      "sha256": "126a55727bea0f09142cf7100fc5f30cdb8cace1f12443071d7203fde253a8ee"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/auth/account_login_page.dart",
+      "bytes": 10918,
+      "sha256": "f488a59b92d19a1265c5a23bc189988679a5f8db1c7fb0d72d694d18418a1c98"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/auth/agreement_page.dart",
+      "bytes": 2612,
+      "sha256": "4d49fc94f9403016e0e348a752ba8dbffed3e8fd5bad0048a1e7ac84b8f558b0"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/auth/captcha_dialog.dart",
+      "bytes": 1013,
+      "sha256": "d74caca507cc360cfe70309c98cc0da7b19077768625cff709497d6d1b5ac4fa"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/auth/gateway_captcha_field.dart",
+      "bytes": 3240,
+      "sha256": "3370602193b9abcd71d6ae2ff38dbd66ac8a0b492febef5e31122f9a081a834b"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/auth/huawei_quick_login_view.dart",
+      "bytes": 3717,
+      "sha256": "50429961bf532c58b5c044ebbae515114aa7562495113b35e9d74f9571a8b276"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/auth/login_page.dart",
+      "bytes": 12403,
+      "sha256": "054e3e702667697e9a1e7d6487fa1d723ddba05e6554b0c020574e5d6918c08b"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/auth/register_page.dart",
+      "bytes": 10736,
+      "sha256": "f9feaab675a451d961b9219573467461abd802187314bb454c3a39c2f8a26bf9"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/auth/second_factor_dialog.dart",
+      "bytes": 1530,
+      "sha256": "e5b24fe377b320b1603c2a4a246b536397ad24a8a26f1c1652752ada9d17d775"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/checkin_calendar_page.dart",
+      "bytes": 6538,
+      "sha256": "3baba059e08e46cd939143e1ce05afc233738cbb87bac38b0db6c8e6b852d420"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/community/post_detail_page.dart",
+      "bytes": 13421,
+      "sha256": "6a664c908c393cd19cfca2c623f8da452cd51c8c5908b2ed79d91f799bb65241"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/community/post_list_page.dart",
+      "bytes": 11564,
+      "sha256": "5b7874fd0f15690ce87688feb9822f0a667e749c5a2973dc0b6415945517b996"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/community/publish_page.dart",
+      "bytes": 6272,
+      "sha256": "9b7a911f8bcc7ed6fbdc112671924c93252b1d4383ef1751e9bbafb2ced2493c"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/content_tools_pages.dart",
+      "bytes": 11775,
+      "sha256": "a8479ebae0b41bb80477423a61b043ad7d85513b417c7841af22daea934a6926"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/editor_font_settings_page.dart",
+      "bytes": 4773,
+      "sha256": "7433c51abaa62599ebe32b0b0fa2b6f581369fc6fd029aed10a239ff706f45a0"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/file_history_page.dart",
+      "bytes": 13655,
+      "sha256": "0bfc6c327a1b25c6740f684f2e6da97a5c605b5435ccd64eacda005f70fad667"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/git_page.dart",
+      "bytes": 11472,
+      "sha256": "8dbc59458ccbb7048cd7489d39f8f2212f03f19c33c877f0b72a94c29e751b20"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/highlight_settings_page.dart",
+      "bytes": 18731,
+      "sha256": "77c887c8c0f6745559ced3f007e3b78583d97279fc50396e24672c0d44a1bc8c"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/home_page.dart",
+      "bytes": 50071,
+      "sha256": "84cdfc0f3e6fd16c001e2200b45447a470fe66e7eff363bbb54773f02085be3c"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/local_content_pages.dart",
+      "bytes": 33899,
+      "sha256": "82d0be20bf537410bd1b37c10372ab9b781a3a4f61708baf8ea166b1d45652b6"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/local_stats_audit_pages.dart",
+      "bytes": 25314,
+      "sha256": "72c1611810af87b31c3d594eb708b7f350b2a7261393f378185a47267048ae15"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/my_posts_page.dart",
+      "bytes": 4020,
+      "sha256": "d3a32125efb8ae0f8c8b037196d7c8c8ab833cef916fa9307f0498bb479dcc75"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/offline_text_tool_pages.dart",
+      "bytes": 31263,
+      "sha256": "217ac3cdde8f320604c144be6d36e9ff315619603920e2b04d7b53d54c8d5ed2"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/offline_tool_pages.dart",
+      "bytes": 19381,
+      "sha256": "e4573b691d6423d59686c6d08fd0c361b3f144605f6cb95dd7cba5d4901425f1"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/online_terminal_page.dart",
+      "bytes": 11444,
+      "sha256": "9b7641428ba32a6d261e0f86f8d2340796f2f6bc7ce7d8f40dd6229dd502219d"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/points_page.dart",
+      "bytes": 21948,
+      "sha256": "41c0eb63cbd0bbb3f3367e8d5f0478de1bbb47103c6be8e360d14930d54e0ab7"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/profile_page.dart",
+      "bytes": 18375,
+      "sha256": "6a7b66fe8092d77ac7dc11d66ce43d6dba34b5e3e217316e2be0135441631e34"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/quick_tools_page.dart",
+      "bytes": 5109,
+      "sha256": "ddd3ff649d3bf0618422943b021d82798be0ecee983b5a30a4b11fea72390f92"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/recovery_page.dart",
+      "bytes": 12223,
+      "sha256": "a0581ffef76a59a2a5e078e141687ae146d2a083940951161d75fb9ee26878eb"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/restore_complete_page.dart",
+      "bytes": 1847,
+      "sha256": "d7029bb5f8f6347cd95e4b352dfdd46167cbdde62d737098e10d94657de3b6d1"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/settings_page.dart",
+      "bytes": 16594,
+      "sha256": "1d5f8a48a1a87dca96446c68f21d01e0a2debffd28ace1a11b5f72c1bc2f3b63"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/task_config_page.dart",
+      "bytes": 4778,
+      "sha256": "a067f1f8fd07289a4a9552d512891a1cb538e89dccbe9711686039642f277883"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/tasks_page.dart",
+      "bytes": 11276,
+      "sha256": "2a65482b0af228656896cb4c236f5dccd569115dbfcc67f9bd64f042077fe61f"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/terminax_terminal_page.dart",
+      "bytes": 16539,
+      "sha256": "be16b11a500876693abca667d905de46b3df4f283bc4ff37ea07598ea2ca6e35"
+    },
+    {
+      "path": "../qfli_studio_core/lib/pages/tools_grid.dart",
+      "bytes": 8731,
+      "sha256": "b12c17a4b58e70cbd8165d880249bef2d969f74f1fff8b06911a57406c8a89e1"
+    },
+    {
+      "path": "../qfli_studio_core/lib/runtime/native_runtime.dart",
+      "bytes": 3552,
+      "sha256": "3d4df20174432f9ffb3312bf4c529be9425bfbbf5ede50ea579cdc1da4ba5852"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/ai_service.dart",
+      "bytes": 7163,
+      "sha256": "829b73ce5aa90577f5b460e5de6248a5d47f8851222bcaeb2535766d71554bea"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/api_client.dart",
+      "bytes": 29601,
+      "sha256": "14b4cfc1b7dba45b346ff3e88a7596ac52865c80a65e5e380999d58488abaa45"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/app_backup_codec.dart",
+      "bytes": 3869,
+      "sha256": "0022abe8eb2081bdeaf1335c9c7565333013d9fdbbfa868fadfcc5d90e4a4526"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/app_backup_service.dart",
+      "bytes": 58967,
+      "sha256": "a78d6b32451768a6794946f7fa43ae6c724923b508d14785cec8efd301bc9024"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/app_paths.dart",
+      "bytes": 7058,
+      "sha256": "a16eff0376123dc467c7cf638bf55ab19e584305174f80d954ca82a7c20edb69"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/app_private_roots.dart",
+      "bytes": 1968,
+      "sha256": "8225927534eb562f78258bcfb40019db1db60414b22f09b2087d83413e170cc3"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/app_restore_gate.dart",
+      "bytes": 536,
+      "sha256": "3e8cd6c60e4d72bc3e8be7339dd4dddc3dc7aad74db1ca7290d554479cd82e78"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/avatar_cache.dart",
+      "bytes": 3106,
+      "sha256": "8f2ee0d7d6ce8a0a92286148b6f481580becaf85d388de74f1a624c8ecadd9ac"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/cloud_sql.dart",
+      "bytes": 2073,
+      "sha256": "c10f7196849b1627899801df5dd21719c32a6b5a5182a9d3920c8dea15b3fa1b"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/cloud_sync_service.dart",
+      "bytes": 8910,
+      "sha256": "a74ed7993f381b692b13b5b71695e11982a4ed0d8821ad574048f0bdf67a097e"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/code_analysis.dart",
+      "bytes": 2354,
+      "sha256": "27a0f58e0f49750559efe9adbaae3a6573bbf05b138f22bca01b3a37117792e6"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/code_formatter.dart",
+      "bytes": 5153,
+      "sha256": "ed8969d809b90cc2f4e4f270c542a0c1545cb0b450b00a05cebefd368f00cfe3"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/code_import_service.dart",
+      "bytes": 23137,
+      "sha256": "80da1db4ac31a9f56576e9f48ffdc2971d621f852280516157bed0a293d7fe19"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/debug_session.dart",
+      "bytes": 10063,
+      "sha256": "1a4bd5d1cb83906b7d8d1c9404f2d5c7aec54a9ee2ea556a93dcc633a80ff81b"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/demo_run_service.dart",
+      "bytes": 4430,
+      "sha256": "4ff12cda2fc4cce396708181999af4598d1683ddeb69c0ceb9adf3b476cb9be0"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/example_code_store.dart",
+      "bytes": 8167,
+      "sha256": "32108d4ee879c5c0eb0511627270d169be0ec297e0c470a1f9ad06249f57efe8"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/example_input_fixtures.dart",
+      "bytes": 2062,
+      "sha256": "fb60cb6a30b83e34f40ae6e01630ae86ca90ad32b4bb444f142f080c454fe7a6"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/file_backup.dart",
+      "bytes": 5834,
+      "sha256": "7c05e6d61a307d9cdea4fa6825ddc1f64edb5490103d206a29f2aeaa5e7f1044"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/file_encoding.dart",
+      "bytes": 3808,
+      "sha256": "92c35f2466ef7d446e720cee2b079baf1b7a47231f6775a50ff09037a322fe49"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/file_service.dart",
+      "bytes": 3990,
+      "sha256": "7a56d33d8bf52c7096798bbcafa16c97c82fb09b3efe06a813d1a74ac6639a08"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/git_service.dart",
+      "bytes": 2375,
+      "sha256": "06b9c15a16ce74b473fe21a20abb46804bb41711c70cde73313b6d336575e2d9"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/go_source_file_name.dart",
+      "bytes": 6627,
+      "sha256": "6b07833e080e7a6e18d1f7f568c5d748245e386bba9250082a40292ec89311b7"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/java_source_renamer.dart",
+      "bytes": 15114,
+      "sha256": "76f92f985bbfc1c8ddab9cb092c64ace3e2807fc1f53b6a09a9f783df0d556ba"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/local_audit_service.dart",
+      "bytes": 10365,
+      "sha256": "9d617d9c31917fea3f1762000d145a60de563cfded00bbf7ed67750d51c5873b"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/local_stats_service.dart",
+      "bytes": 19451,
+      "sha256": "05897ddc16b6e8b566581d0eb178ed88c39b4aacb3baacf0d1e5a9825619d403"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/local_store_backend.dart",
+      "bytes": 1997,
+      "sha256": "5fbe5ba71de776df1211abf00fd8454f92926f2e7b4cb67738b2c38a068b953c"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/local_web_server.dart",
+      "bytes": 7661,
+      "sha256": "ce58dd337f8561cd2025d0d6f800bc237de11ce32c8e009bbed5f06e11480bfb"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/online_program.dart",
+      "bytes": 4400,
+      "sha256": "016854ccd2c740b591c7a9a372f154d3a045a6f6b701a390e2b7d9123d94c4a5"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/picker_service.dart",
+      "bytes": 3358,
+      "sha256": "8b7b489f7a1e0d532c1bd1496702af6d4d24f926bf7f1912153f50fe51e39fa0"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/points_feed.dart",
+      "bytes": 17363,
+      "sha256": "3e95bbd7cd114f9eccfaaaeaebd2ecffe35194e96b7984f2858f728db76873d3"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/process_identity_ffi.dart",
+      "bytes": 1963,
+      "sha256": "789cecf0158b6e1a6863e7615694d2db8a1906a0df1302383c470cf1d548ea48"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/process_identity_stub.dart",
+      "bytes": 246,
+      "sha256": "4a47a0970d3764220aa1ccbca6bc7d0857113279a7eb4a928b32f4dde975310c"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/process_supervisor.dart",
+      "bytes": 21248,
+      "sha256": "25ba430ce7c0a6e2740c506ce6b0319eeecd31c90a3dc20b53a005861d8f54a1"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/project_archive_service.dart",
+      "bytes": 5983,
+      "sha256": "e1d9b9178620fdd1034ff4d24732a6c809aab7723e733a1707280d5f5c27bc2f"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/project_config.dart",
+      "bytes": 2826,
+      "sha256": "1b9f38c37f80086a5dc48f05ead80990b6dd2474b6673f06ca79387554636b4d"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/project_templates.dart",
+      "bytes": 7108,
+      "sha256": "d0ec981974bbaa559dca3a3141f7a0967bb1e3162a6c6f498ee508bdfd7e5449"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/project_zip_service.dart",
+      "bytes": 13137,
+      "sha256": "26e976e1761843ca311021a994e7efd83c47f20a89f53ce86cebbc27ff3a6032"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/recovery_service.dart",
+      "bytes": 6941,
+      "sha256": "77dceadeab9b6846088e3d75c60b1fd7b1d05771c41118bb1577c081f753a1cd"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/recycle_bin.dart",
+      "bytes": 5029,
+      "sha256": "008c460ccc7cece279c71ba993320f40ad95b282631311231bb6d220d896d3a9"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/resource_import_service.dart",
+      "bytes": 2334,
+      "sha256": "80ad249fb6c95169814774c3fbd3d5e8fdce4f693884d7af5e66644a3adc8985"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/runner_service.dart",
+      "bytes": 7887,
+      "sha256": "27cc66e548522aec67091ef83831c0ea9bfad63c3cfd30c0deb42cd419a8a650"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/share_service.dart",
+      "bytes": 763,
+      "sha256": "508632329a0ca4e82ed3993e18467985e256737c25869041b36c6ad7ee4ba2b3"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/structured_content_service.dart",
+      "bytes": 2937,
+      "sha256": "d5fbce71e76bbf3ec59dde489d7c692f55d0ac0ac0f3d19ba8935c7a33bf61c2"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/studio_profile.dart",
+      "bytes": 13498,
+      "sha256": "0368fe6860309229369814dedd656ec370f47d2db7f6f3d9e0141cd5cda9c81c"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/task_activity_service.dart",
+      "bytes": 15823,
+      "sha256": "d0675696eba2551360809658bb1a89957ee029bc0fa2f1a989d83f2fb2e18ea7"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/tutorial_service.dart",
+      "bytes": 9378,
+      "sha256": "3b70cf8ca98b55dd10cc8e02221642c26bea3ffa320c5a66048bef86bc8cd19e"
+    },
+    {
+      "path": "../qfli_studio_core/lib/services/web_preview_file.dart",
+      "bytes": 3223,
+      "sha256": "6db2aa3152daac82f2e805a3b146f39e9f8691246e382ccf48affa32e38492e6"
+    },
+    {
+      "path": "../qfli_studio_core/lib/splash_screen.dart",
+      "bytes": 3437,
+      "sha256": "b179378cac3e057ec67d6038f60addf2c30b35589f958e141eaa6491bfefcf2b"
+    },
+    {
+      "path": "../qfli_studio_core/lib/store/auth_store.dart",
+      "bytes": 4996,
+      "sha256": "81d3edfce6eda4524faabe9c76543396343dc016fbca756389fe6bcca811bf95"
+    },
+    {
+      "path": "../qfli_studio_core/lib/store/project_store.dart",
+      "bytes": 21182,
+      "sha256": "3c01d88492acde965cb12ebbf0c5184670d65507a172f4cdf8f44b25816a047e"
+    },
+    {
+      "path": "../qfli_studio_core/lib/store/settings_store.dart",
+      "bytes": 14232,
+      "sha256": "cd9ce506ebbb9d4140aa158eaffdc70254999a588bb54eb749287312160f29a5"
+    },
+    {
+      "path": "../qfli_studio_core/lib/terminal/models/terminal_session.dart",
+      "bytes": 11333,
+      "sha256": "004ac4358a961cef81e3f5afe1493981814e839d0c2b4c0aed76dd64e828ec43"
+    },
+    {
+      "path": "../qfli_studio_core/lib/terminal/shell/ansi.dart",
+      "bytes": 10449,
+      "sha256": "9010a7c92bf73028b383b5bd981b9e8f1ad9995645fa2488d796481d7cd08af2"
+    },
+    {
+      "path": "../qfli_studio_core/lib/terminal/shell/command_parser.dart",
+      "bytes": 8569,
+      "sha256": "d33d87ec016734093e3de3e6a6501fdb075f8123ff63740dbc85fbc673f04cf9"
+    },
+    {
+      "path": "../qfli_studio_core/lib/terminal/shell/local_shell.dart",
+      "bytes": 227,
+      "sha256": "5d9ed94af5c0f5f2392ec1fddbbeeafb557aedcbede757928ad380d8721f2d42"
+    },
+    {
+      "path": "../qfli_studio_core/lib/terminal/shell/local_shell_io.dart",
+      "bytes": 13891,
+      "sha256": "d8d527b6b796aacf5aac4c6ea7457846ba171a4a06fe1c2533550cef5f17c3b7"
+    },
+    {
+      "path": "../qfli_studio_core/lib/terminal/shell/local_shell_stub.dart",
+      "bytes": 1747,
+      "sha256": "3d37b2f80871a12bdcb1747536efa40b7d6dc3629f209e014af33991d22eda81"
+    },
+    {
+      "path": "../qfli_studio_core/lib/terminal/shell/portable_filesystem.dart",
+      "bytes": 15336,
+      "sha256": "e1108bc392203229327e0ee717e92f15f496f23efe473ce113968dfeed1bb574"
+    },
+    {
+      "path": "../qfli_studio_core/lib/terminal/shell/sandbox_shell_backend.dart",
+      "bytes": 14401,
+      "sha256": "bd0e112ec51b6eb7bf0494f2b30fc5d8bce54a9ba9a94ad74789c8e7d1467081"
+    },
+    {
+      "path": "../qfli_studio_core/lib/terminal/shell/shell_backend.dart",
+      "bytes": 14011,
+      "sha256": "4220790fc630f24ab557e721fc334f2462a51f854311cfdfdb325c1394b5f68f"
+    },
+    {
+      "path": "../qfli_studio_core/lib/terminal/state/terminal_manager.dart",
+      "bytes": 4508,
+      "sha256": "f7ce734b23decf41037bbfc10ea4f19c219d5fe111296749dae9553e1c8ebfd3"
+    },
+    {
+      "path": "../qfli_studio_core/lib/terminal/theme/app_theme.dart",
+      "bytes": 5218,
+      "sha256": "4234a51a28dbe8d0affbbb3385b9210ef448164a712f8f62789dc659c2096f3b"
+    },
+    {
+      "path": "../qfli_studio_core/lib/terminal/widgets/key_cap.dart",
+      "bytes": 4089,
+      "sha256": "729e651e1bfa5d1de5b69ad73abed1f650afa7a9916667d9e555281e7098d0b5"
+    },
+    {
+      "path": "../qfli_studio_core/lib/terminal/widgets/shortcut_bar.dart",
+      "bytes": 18250,
+      "sha256": "0727ca5acb8a156b3ee1012058d90672f5813a04c4c9381da49e78913d30aebb"
+    },
+    {
+      "path": "../qfli_studio_core/lib/terminal/widgets/terminal_input.dart",
+      "bytes": 5566,
+      "sha256": "77fd7a89e8f6b5b2dc898d27ecd3d7d058034848f16e87baa1bfd5873c9d2321"
+    },
+    {
+      "path": "../qfli_studio_core/lib/terminal/widgets/terminal_output.dart",
+      "bytes": 17440,
+      "sha256": "74a5859d66d695afe2f21e809e71466e4ee07d65da0c838cf6ff4c8ddc306cee"
+    },
+    {
+      "path": "../qfli_studio_core/lib/terminal/widgets/terminal_tabs.dart",
+      "bytes": 13333,
+      "sha256": "e1cc06b3929c17925d5331f6a67ed86aa16f1129235d1812cdfd2f69d6796c3f"
+    },
+    {
+      "path": "../qfli_studio_core/lib/theme/app_theme.dart",
+      "bytes": 2130,
+      "sha256": "064c702ead6e77368138c7e5223c952d469e545cd7dfd467197333e6ae0ea9af"
+    },
+    {
+      "path": "../qfli_studio_core/lib/tools/offline_text_tools.dart",
+      "bytes": 35937,
+      "sha256": "df348963cb872fc310533a773b202eb909fbd8bec1d05a86ed2beeda35d7d7af"
+    },
+    {
+      "path": "../qfli_studio_core/lib/tools/offline_tools.dart",
+      "bytes": 24419,
+      "sha256": "13ec51e31854ba4d3516f8339e2480c4ea6840cdaf4e4b74d6a953741a8ec4ae"
+    },
+    {
+      "path": "../qfli_studio_core/lib/widgets/code_snippet.dart",
+      "bytes": 30834,
+      "sha256": "88f96f9e62082da794e672be5138da6121da8538098cc9542236a73cd9f563b6"
+    },
+    {
+      "path": "../qfli_studio_core/lib/widgets/language_badge.dart",
+      "bytes": 1820,
+      "sha256": "2a653ec65d9c39d8aa09db4017ce717e19cb193bfb559d140ede6abf1cb6dae7"
+    },
+    {
+      "path": "../qfli_studio_core/lib/widgets/project_card.dart",
+      "bytes": 14242,
+      "sha256": "8a186b34f9b9d19a2b1ef6e3f4766c46968616533515d94e3ff1b1a1bfda7812"
+    },
+    {
+      "path": "../qfli_studio_core/lib/widgets/project_dialogs.dart",
+      "bytes": 15755,
+      "sha256": "a7a1307018c2d6c0560472635df72a745f70bb1745df0a0405658f9a358d7cac"
+    },
+    {
+      "path": "../qfli_studio_core/lib/widgets/retained_page.dart",
+      "bytes": 593,
+      "sha256": "7f65102ee63bedfe34fa23d42e0466045e7336df92c9793106eb97c9249aef4b"
+    },
+    {
+      "path": "../qfli_studio_core/lib/widgets/settings_section.dart",
+      "bytes": 1074,
+      "sha256": "a1bef68bbb788a721935ec111e19648577084bb5d431d4e3fea2bf384adaa300"
+    },
+    {
+      "path": "../qfli_studio_core/lib/widgets/tool_widgets.dart",
+      "bytes": 11295,
+      "sha256": "a1dd84b89b1e7aa93b5e82e1716d2c921cdb3eac2dc4298aa6d35205dcd8462f"
+    },
+    {
+      "path": "../qfli_studio_core/lib/workspace/editor_workspace.dart",
+      "bytes": 1869,
+      "sha256": "07e8b0ce9745a2e907434075b75d6684849d8dd605c2134398212a1cd655bdc3"
+    },
+    {
+      "path": "../qfli_studio_core/lib/workspace/saved_workspace.dart",
+      "bytes": 8524,
+      "sha256": "f658b3ddca9dcf8152282304428523836b4b3b93ab95a1d034b43316f3bc5720"
+    },
+    {
+      "path": "../qfli_studio_core/lib/workspace/saved_workspaces_tab.dart",
+      "bytes": 12763,
+      "sha256": "d63e6e55d4cfadf4982ff841a2c3835d6d7ee727d966682a5a1914494b4536a5"
+    },
+    {
+      "path": "../qfli_studio_core/lib/workspace/workspace_dialogs.dart",
+      "bytes": 9058,
+      "sha256": "a947571b26fb23f513221e2955a5e81123beb0931d4031cd2ce2c3c424c00481"
+    },
+    {
+      "path": "../qfli_studio_core/lib/workspace/workspace_store.dart",
+      "bytes": 14316,
+      "sha256": "1c1cd747f3b3c66b92399aa92a6f61703774a6e1754423ca61acf222a9fecf8d"
+    },
+    {
+      "path": "../qfli_studio_core/pubspec.yaml",
+      "bytes": 1652,
+      "sha256": "eb2b2fa84539d43b630f1544d31c71f4cbe1779b3ee87bb8f76360d2c6f3e1fd"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/example/assets/code.dart",
+      "bytes": 225,
+      "sha256": "2f1e8ee1d9c10cf5b0de91ae76ca62f6240d7ffa1808ac4b26dad7e071beb21e"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/example/lib/editor_autocomplete.dart",
+      "bytes": 12069,
+      "sha256": "b2b985a60cae89386aab395f4989f2bd6f3391c2b014cf7879f9e89ff052176c"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/example/lib/editor_basic_field.dart",
+      "bytes": 372,
+      "sha256": "304071523e4e8c26801928ebfb357e5a4807d1227cddb48b0929b356b40163e2"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/example/lib/editor_json.dart",
+      "bytes": 1863,
+      "sha256": "35126c85bebd40438c27619800835cddceb8f8b39f8b11d61faf8fe3fda3a820"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/example/lib/editor_large_text.dart",
+      "bytes": 1532,
+      "sha256": "b0aba3e82f30daf3f992d7937626e7d87f763fb71a4e30d89aea5d1a17a0b75c"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/example/lib/find.dart",
+      "bytes": 8045,
+      "sha256": "205c25243f183a09b84b9133c5cf7ad0d6990ad6edd3912cac3e6df141484d43"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/example/lib/main.dart",
+      "bytes": 3044,
+      "sha256": "e88072ba1949d2ef54d070db104ab0b1a1cfb7130c4c2a6aa99428982e30747e"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/example/lib/menu.dart",
+      "bytes": 1450,
+      "sha256": "45b2cad37fedd4b137917e4e805b57d0e318732c54461729e7ba2d640c1241db"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/example/pubspec.yaml",
+      "bytes": 1908,
+      "sha256": "01ca2de56f86c957e7ab22d1b657feec145cd5df6e507a06353346bc1a478e53"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/re_editor.dart",
+      "bytes": 28,
+      "sha256": "901a2ce144a0df4a01ed873995c1c36af56616d5b223c01a6cec9df742ca4912"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/_code_autocomplete.dart",
+      "bytes": 9350,
+      "sha256": "ed1b6726b4c22a6574aef4df3f4eabda5d3b7e213696a3f7751cbb2a8c68573e"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/_code_editable.dart",
+      "bytes": 15695,
+      "sha256": "86b12fda3752abf0b0dd916f5a167b6c11c262f57e6e1cb489ce6e4d8343b77a"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/_code_extensions.dart",
+      "bytes": 773,
+      "sha256": "77d99d0508b849f88bebbe8f9aa7a7380588688ae3ca92453eeed212820d7cb4"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/_code_field.dart",
+      "bytes": 56700,
+      "sha256": "f08e19fac95a6b1b3f52a39acb78b1252640af1b864a09466366fd184db5f480"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/_code_find.dart",
+      "bytes": 14812,
+      "sha256": "da8759574e9ab498482195bd7e83f16dcebd79fffa662fd7bf8395d81ee30017"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/_code_floating_cursor.dart",
+      "bytes": 5648,
+      "sha256": "98758df1ca6023b451498416213c5f39dd12cbd61947cbb113d7431057f9d45e"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/_code_formatter.dart",
+      "bytes": 24214,
+      "sha256": "1d9b8380265c7f3fcc07e627976f653893fbcd8dd7bd57fdb9a814fd33ca1129"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/_code_highlight.dart",
+      "bytes": 11469,
+      "sha256": "9a2c5776a465e5b58c00f12d8a41c785393788a68229e60117f03e6174aa9b39"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/_code_indicator.dart",
+      "bytes": 10527,
+      "sha256": "546c0bddbb4a996f70b09c89482ba0d2681668c324b2e3a6f049de3704b19523"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/_code_input.dart",
+      "bytes": 23357,
+      "sha256": "9f63e5682f460980e6a9f6a55a53b812bbe0b731bf4ce9f79dd4515685809a6f"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/_code_line.dart",
+      "bytes": 68925,
+      "sha256": "59e9980c13d6465520a391c41f7c0b6189018889963efd497cfa77a789a24901"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/_code_lines.dart",
+      "bytes": 639,
+      "sha256": "6c248720c3c07b9a9f0bcbd6bce7579ae38839d3bc55feb15bd6355a6ac628ca"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/_code_paragraph.dart",
+      "bytes": 9762,
+      "sha256": "688bc96b777c82e3c084cc117c3509f9cc85da33aa2e09461fa1ef7b2f3892e9"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/_code_scroll.dart",
+      "bytes": 3742,
+      "sha256": "b0ab38556a00d40441fe8ee2b1fadc4168b9d9dd050b6725b304dee9e066831e"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/_code_selection.dart",
+      "bytes": 40222,
+      "sha256": "9065a1e36bfd5b4057a1950171531fe72d640e17cd02d20158cbbe85c64cea36"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/_code_shortcuts.dart",
+      "bytes": 11033,
+      "sha256": "1178808b323fb0fb7223d494c048a9ea3347b8f6d16ccf2b90108e747242f074"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/_code_span.dart",
+      "bytes": 787,
+      "sha256": "666abc4877b54b5ed9d4ea936d47783b87cb7e1d0f43e626ed07bfc4106603d0"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/_consts.dart",
+      "bytes": 655,
+      "sha256": "2c6f94cc5fbdd71d34b5231f2de1423e36a640e9ac8fb2066809f979f877c84a"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/_isolate.dart",
+      "bytes": 4611,
+      "sha256": "6dadc2bd9752d4fcb0b3c3161fe8525340c7d3b653d89d7dcc708c0f852c414b"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/code_autocomplete.dart",
+      "bytes": 8104,
+      "sha256": "bc9ac61530ce300a2fbde210332f3c3c81d6bd2fd34d43d93002121a1ed39cd7"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/code_chunk.dart",
+      "bytes": 9715,
+      "sha256": "25fbe972fb0d3fa4162e58c229c45793b8feb985b097d628f14f94d402a40bd8"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/code_editor.dart",
+      "bytes": 24264,
+      "sha256": "d0ea3f243a60bccb0a80036175da6ee1cef05f67adda7b98f9cf40c54b5f92f4"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/code_find.dart",
+      "bytes": 4965,
+      "sha256": "f8692da97d806953b94b7efb23b9045bdd7257d3b10af0db6b634f8608499b0c"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/code_formatter.dart",
+      "bytes": 516,
+      "sha256": "5fc6b3707a62ad071d0cb0461aed6326989d1cf34411808a565acb8001f10675"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/code_indicator.dart",
+      "bytes": 6196,
+      "sha256": "e1fe93a7ea7d08764526ed8b98f51ba226fd4f6c62cc1497fa75487e4b726e20"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/code_line.dart",
+      "bytes": 34524,
+      "sha256": "0f0b61a61502226b176ea9b078fe9cd0218f464629e3d9786ab818fde61b50a1"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/code_lines.dart",
+      "bytes": 11568,
+      "sha256": "d3db603e5f6fd8d27b4bc057ad08bacaea6f4e499420e143b0c84b41b5ac2d6b"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/code_paragraph.dart",
+      "bytes": 562,
+      "sha256": "0360c861bb6cd464d09126d767b999955bc993e44eb5805049929e3478cfbd04"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/code_scroll.dart",
+      "bytes": 947,
+      "sha256": "a46991f65499727c57c49e5e064a9097aa5559c85e028c938437ff4fbf434a0a"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/code_shortcuts.dart",
+      "bytes": 21923,
+      "sha256": "4f04b5e25b96ffbf8ed3012e86f8a369742cf16a66d3a374f515015fe2604d2d"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/code_span.dart",
+      "bytes": 705,
+      "sha256": "5e402a1bd4e83719e02abf35f8d99d42e55b2714872ecba328b03dd7df85af7b"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/code_theme.dart",
+      "bytes": 2705,
+      "sha256": "4d9c4ddfff1d25261a191d75ef1f27466c643d80ddac803ea965cd053d91cc3a"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/code_toolbar.dart",
+      "bytes": 859,
+      "sha256": "e739745dd27c4eefb2f0000f77634f176bca1d8bcc63a229e966cb25bb58add5"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/debug/_trace.dart",
+      "bytes": 618,
+      "sha256": "c36d99329c90841b6c04ffac68c6a1a0df5306e3c9ea5f14a9429300f200f98b"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/lib/src/re_editor.dart",
+      "bytes": 1372,
+      "sha256": "75c59a18a69bdad7022363f4289cc0c6a665b94b82b37c6fd601cd19a0c87cc7"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/pubspec.yaml",
+      "bytes": 385,
+      "sha256": "17d407727e76140c80ac13810e067c9a533c8fb028d538c9a3b21ac5476320db"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/test/code_chunk_default_analyzer_test.dart",
+      "bytes": 17001,
+      "sha256": "41f7a0cb5b09c4992de5550a60f6c9b4a065b8c6875ae6d682ff15b462b5c1c6"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/test/code_chunk_test.dart",
+      "bytes": 28660,
+      "sha256": "841c37e027bdb0b31e463989d82e07ec5317481722372e0acf6f24f59aed1297"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/test/code_line_editing_controller_test.dart",
+      "bytes": 150902,
+      "sha256": "322a842d2e5327268a8377640441ae5b29cd44baf1c4068768e092bea818af87"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/test/code_line_editing_value_test.dart",
+      "bytes": 6646,
+      "sha256": "6d568fdd2a7abb9980697232ed3f06a77932b76fa2d73ff101b6484f72380136"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/test/code_line_extension_test.dart",
+      "bytes": 905,
+      "sha256": "88eae776f32012dd4e47d5cb5ccd16f8e57eaa7e8b8a4a06cb42140dfca1c201"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/test/code_line_position_test.dart",
+      "bytes": 2992,
+      "sha256": "c64ddfb3b1507f306b4db64dacc06ebceb62b64a7a3d92afe73dd7d5d12b6e88"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/test/code_line_range_test.dart",
+      "bytes": 2868,
+      "sha256": "c69d92c103b873eb01faa7b3e95906873b6397d56b0afa85ee4de53b79491265"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/test/code_line_selection_test.dart",
+      "bytes": 18285,
+      "sha256": "12f7ee09fd430aebe06b6a955519f764f9ec32019e1802ba24f915dc74523fc7"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/test/code_line_test.dart",
+      "bytes": 7018,
+      "sha256": "4d94b29d9bc74143775fdfdbca3b1917a8d7f1da109a4f5b5ff30d216063c18b"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/test/code_lines_test.dart",
+      "bytes": 32233,
+      "sha256": "28361aa63aadf72ab2de272b4fa740bad0f4527f0a0fdbec956f24deed87aaad"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/test/code_search_controller_test.dart",
+      "bytes": 31165,
+      "sha256": "d023c86bcb5b60c2f484edb8aad8ac39fd260cf64c62436b589db7c4e5b36415"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/test/code_search_option_test.dart",
+      "bytes": 3101,
+      "sha256": "4e325f52da10e7a7f66f8464d1993a7429d4dc19fc26670a7ead81246d580698"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/test/code_search_result_test.dart",
+      "bytes": 16252,
+      "sha256": "1c74cd8a4c57cfbebe7b4479cf94743f9bc7a5550d83e3e0f3e8000a88b31ad5"
+    },
+    {
+      "path": "../qfli_studio_core/vendor/re_editor/test/code_search_value_test.dart",
+      "bytes": 5790,
+      "sha256": "e1ccf6a6228a8b626b712fb42aa227a285847c639e5519301940993be6694a05"
+    },
+    {
+      "path": ".dart_tool/package_config.json",
+      "bytes": 13946,
+      "sha256": "975624422c4aad7d18bf32237c0eb5c68dbab9d91a0affe39f628271c402afab"
+    },
+    {
+      "path": ".trellis/tasks/10-22-standalone-offline-ide/research/run-web-app-window.py",
+      "bytes": 17492,
+      "sha256": "d80c46e1b1cf2abe7e7a582e61016ac36266354242de198a5623628659922a19"
+    },
+    {
+      "path": ".trellis/tasks/10-22-standalone-offline-ide/research/run-web-app-worker.ps1",
+      "bytes": 3814,
+      "sha256": "074ac02216bab95e8da23d87dca7d1567be5f2fcc4722d43e53d059227fb8b78"
+    },
+    {
+      "path": ".trellis/tasks/10-22-standalone-offline-ide/research/run-web-owned-window.py",
+      "bytes": 12228,
+      "sha256": "9df7a94399aae38951337d61693d65de6e3cef438d02d4e51c787242dfda7fbe"
+    },
+    {
+      "path": "analysis_options.yaml",
+      "bytes": 1479,
+      "sha256": "3250c59612eb9bf73d21d45b4134267819907efcadb900ef4e21e9b2257c9e46"
+    },
+    {
+      "path": "assets/content/examples.json",
+      "bytes": 800054,
+      "sha256": "b40f900eaf6caa44abc2d1d9fb26d695f8571f8a7394408b99b4dd11632a57cd"
+    },
+    {
+      "path": "assets/content/tutorials.json",
+      "bytes": 1395900,
+      "sha256": "fe05fd1b3164219bba9b259b1aa3564b2052dd816c857c0e076cfed15d077f89"
+    },
+    {
+      "path": "assets/runtime/nginx/windows/nginx.exe",
+      "bytes": 6667264,
+      "sha256": "2429269c8ea20ce6c5040bb4eb5fd78a28003dfa272f66d146338320353c5f62"
+    },
+    {
+      "path": "build/native/web_syntax/windows/qfli_web_syntax.dll",
+      "bytes": 1351317,
+      "sha256": "11967d444d1cb681b813bc3836da7e4be969a6e11320c077d64757ef2a93dce2"
+    },
+    {
+      "path": "integration_test/content_import_test.dart",
+      "bytes": 11681,
+      "sha256": "28c6f148e9c76fff20eb63951151b9b4ff566d16631428c0fa41087ec048de0b"
+    },
+    {
+      "path": "integration_test/nginx_runtime_test.dart",
+      "bytes": 3581,
+      "sha256": "d8741e3735058e68dc1c51d678be34c7e88c69470b9803b59ba5a5e126a4ca19"
+    },
+    {
+      "path": "lib/content/webforge_content_repository.dart",
+      "bytes": 3702,
+      "sha256": "f091f80e180340aeb83cb4f24c73db116efd57b9f1de677ab43b72282671bf50"
+    },
+    {
+      "path": "lib/main.dart",
+      "bytes": 4504,
+      "sha256": "7395a48e7e23fff17cc55ae23880b1d8fb9cfbb0a29ab34f9a1254c621d8c72b"
+    },
+    {
+      "path": "lib/pages/web_tools_overview.dart",
+      "bytes": 7617,
+      "sha256": "52762e974b4f91699072fbe7aea5943f287aaab713440fb143493adaf1fff31d"
+    },
+    {
+      "path": "lib/pages/web_tools_page.dart",
+      "bytes": 28443,
+      "sha256": "5806ac0508d96dc413da287926f301c12e45898753dc9923588dee445d44ca98"
+    },
+    {
+      "path": "lib/services/nginx_host.dart",
+      "bytes": 6104,
+      "sha256": "83de5b2c992565f4aca76b9832b78069b39eb559d7e291a6491bf924262b009c"
+    },
+    {
+      "path": "lib/services/nginx_session.dart",
+      "bytes": 11670,
+      "sha256": "f6754fa66374aa89a0cf206b04332e1c0e5bf6dec79733ed96db1c9a9cedbe0f"
+    },
+    {
+      "path": "lib/services/owned_preview_policy.dart",
+      "bytes": 15003,
+      "sha256": "05b03839124ba5d5b590e4f351c54f69f89bb1e33faa92f8da13c3e34628d7a8"
+    },
+    {
+      "path": "lib/services/owned_preview_resource_broker.dart",
+      "bytes": 11650,
+      "sha256": "d91cf7811e138aa9cdd41348f6f33f0a3698bea99234bdbb6c876cae6a8fafde"
+    },
+    {
+      "path": "lib/services/web_code_analyzer.dart",
+      "bytes": 11435,
+      "sha256": "3b7f5db4f6d8b4bc0d6a7cfccb70cacff655c1932cb024893ecc5d7e48e6debc"
+    },
+    {
+      "path": "lib/services/web_css_tools.dart",
+      "bytes": 45148,
+      "sha256": "d0e2dd2b17d342d442b2dbf85c03e5132d05812e258e1a52c7552ab9cb6049c7"
+    },
+    {
+      "path": "lib/services/web_dev_server.dart",
+      "bytes": 19841,
+      "sha256": "409c5fab43aa4ea51d8b76244dafa3e65129081f6593db04877663c2aa95ea90"
+    },
+    {
+      "path": "lib/services/web_javascript_syntax.dart",
+      "bytes": 355,
+      "sha256": "eca9550a51174bddcb6dd0cba6b2afbec05dc7d5fbd9ab542a5a2ec068a06e52"
+    },
+    {
+      "path": "lib/services/web_javascript_syntax_native.dart",
+      "bytes": 3534,
+      "sha256": "1a134e8ac10906549fc5515d69e779d463d1277a0004195c84d14ad3a2ff45f7"
+    },
+    {
+      "path": "lib/services/web_javascript_syntax_stub.dart",
+      "bytes": 286,
+      "sha256": "a7c4e5d9f2d4ce5d37bf8a3e6175a7a7327a1773851325b5c37f94ecdf73837c"
+    },
+    {
+      "path": "lib/services/web_markup_inspector.dart",
+      "bytes": 45049,
+      "sha256": "3606b6cd84d5e41ea69490ffc8fe2df84681a42e4696b0a7d8726de0207cfc7a"
+    },
+    {
+      "path": "lib/services/web_project_config.dart",
+      "bytes": 7292,
+      "sha256": "27697cdac9bf3e3f8f1c569f1b2999a0f068032163571282902826014858acdd"
+    },
+    {
+      "path": "lib/services/web_runtime.dart",
+      "bytes": 3235,
+      "sha256": "3d353a4c72dfd42cf98c5ef6abea5423e9cfb8c2497fe6792e1bbe3286c42ace"
+    },
+    {
+      "path": "lib/services/web_runtime_session.dart",
+      "bytes": 492,
+      "sha256": "5da8e3cf6c91c5aa4a785c2c8646a5680c925e17982c6ca98d5f1b453f8e9382"
+    },
+    {
+      "path": "lib/services/web_source_scan.dart",
+      "bytes": 5343,
+      "sha256": "23442951123322a0e8b818e01a55910fcde3797f5055b8f939f388afad7ba294"
+    },
+    {
+      "path": "lib/widgets/web_tools/web_css_tools_view.dart",
+      "bytes": 11555,
+      "sha256": "6d13d09ed99d3b4956900406cd1dff66a113eb1f9ac77e6fafac780a8009587b"
+    },
+    {
+      "path": "lib/widgets/web_tools/web_markup_check_view.dart",
+      "bytes": 5035,
+      "sha256": "48ceb8630b80127150cb7bc75ef22f1a9bf71cd48678381e343db69035686144"
+    },
+    {
+      "path": "lib/widgets/web_tools/web_source_inspector_view.dart",
+      "bytes": 11743,
+      "sha256": "6dc03b0219f872f0cf00aca17a7408bc70276eab62d8cb3639c013c7f8ae6d65"
+    },
+    {
+      "path": "lib/widgets/web_tools/web_tools_panel.dart",
+      "bytes": 7923,
+      "sha256": "84d0ccf18d79f953e9b6edd074df2fdac2200e922cb3673eed820ed6626f4bdf"
+    },
+    {
+      "path": "node_modules/playwright-core/browsers.json",
+      "bytes": 1135,
+      "sha256": "2cfd419f71ac6475d81e1301fa86c34cf2a2a6bae2a0da4b5a2b18310216b6bf"
+    },
+    {
+      "path": "node_modules/playwright-core/package.json",
+      "bytes": 876,
+      "sha256": "8aa1c9863fa8dea324e674254158cdc79440f4124ef2d84d38053013541cb7d6"
+    },
+    {
+      "path": "node_modules/playwright/package.json",
+      "bytes": 1219,
+      "sha256": "313d23ce667d93962d3a1ab4be80908cefe840e4d9e48f1cd5863b91f65e8e39"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 1185,
+      "sha256": "a8af0320850285c9c175c191e4bb2fcca5bb905651874f60ad0c183fc9ec5551"
+    },
+    {
+      "path": "package.json",
+      "bytes": 295,
+      "sha256": "78b2281828cdaff104b16dee52c754ed76849e284609ff9e89aca536c7aa43e4"
+    },
+    {
+      "path": "pubspec.lock",
+      "bytes": 15768,
+      "sha256": "126618772c6cdb437ed072ab701eb1c10c027a94c25fc4cf674731635998c409"
+    },
+    {
+      "path": "pubspec.yaml",
+      "bytes": 866,
+      "sha256": "f85c0cd770a5c4aebd9f92ee3744e5a79d970b3606688943ba6cf2c371a15d2c"
+    },
+    {
+      "path": "scripts/audit_web_content.py",
+      "bytes": 9860,
+      "sha256": "68031e247210c365467d409bf0edc5a56b8c0f2e080178d44fdf15c7695348c4"
+    },
+    {
+      "path": "scripts/build_web_syntax.py",
+      "bytes": 8753,
+      "sha256": "618607f200083a256c46f90b4373176bcb8debca0193ec441b4709f0569bedfd"
+    },
+    {
+      "path": "scripts/catalog_device_contract.mjs",
+      "bytes": 4491,
+      "sha256": "80078afab37709d82da4bbf0af4411f2cf22a540ab5aeb8c32f802701fe70ebd"
+    },
+    {
+      "path": "scripts/catalog_device_contract.test.mjs",
+      "bytes": 4415,
+      "sha256": "0feb70ae2c6057c24b718a5671a5c289875e18442d2f1a20900563f1f1a55847"
+    },
+    {
+      "path": "scripts/css_expansion_assertions.mjs",
+      "bytes": 91237,
+      "sha256": "0150b8dc9cf5f9b96caf9f082c195b61fcd74de0233ba72d541c31a405a3eb5b"
+    },
+    {
+      "path": "scripts/curriculum/__init__.py",
+      "bytes": 49,
+      "sha256": "e9952e625ba56547ab79afb7427df9515ea28fccf31cc1aa4838dad720aa5990"
+    },
+    {
+      "path": "scripts/curriculum/common.py",
+      "bytes": 224,
+      "sha256": "74a25914076f4579ffefd3ed29c127170148fd797328c0a3396d870e600f7bdf"
+    },
+    {
+      "path": "scripts/curriculum/css_data.py",
+      "bytes": 27264,
+      "sha256": "383978b34c31cd45174a649bf4ac16d9b07cb9457317f4664990b7918b035a59"
+    },
+    {
+      "path": "scripts/curriculum/css_data2.py",
+      "bytes": 20958,
+      "sha256": "0e6a2dcf024325808f1143b3aaa35c9a6d0a99309a4daaf4620db8e0ded9be4a"
+    },
+    {
+      "path": "scripts/curriculum/css_data3.py",
+      "bytes": 23499,
+      "sha256": "c817f1ec94e23ae1f9cc5606f13a615f66f61fbfaabca8b88ed01b21d772cd76"
+    },
+    {
+      "path": "scripts/curriculum/css_data4.py",
+      "bytes": 31542,
+      "sha256": "533548005996d5534edab3f819a42af8c032d3d7ec782e92ba8e17724fb9ae5c"
+    },
+    {
+      "path": "scripts/curriculum/css_data5.py",
+      "bytes": 32987,
+      "sha256": "c5f627b12782aeb6991a1deabf77fe23d9e656dccaa380a61f876542b5d325c5"
+    },
+    {
+      "path": "scripts/curriculum/css_expansion.py",
+      "bytes": 137025,
+      "sha256": "f3e280f23fbcdce73461fc53b7f10c49709804232b48960589799c53fa4f4dab"
+    },
+    {
+      "path": "scripts/curriculum/html_data.py",
+      "bytes": 22173,
+      "sha256": "005e1192fa3db8baa99f9f5763a595f14f93c1bd0e8502d97130767767733928"
+    },
+    {
+      "path": "scripts/curriculum/html_data2.py",
+      "bytes": 30909,
+      "sha256": "16e6ec63a506810a7f0c669c86152a51f7273f7e6eb99d312d1dff69207909a9"
+    },
+    {
+      "path": "scripts/curriculum/html_data3.py",
+      "bytes": 45112,
+      "sha256": "e2b9821e06b8c0df25f68d78dccb8b3021efcbae1830b4d514c4845df7d611d6"
+    },
+    {
+      "path": "scripts/curriculum/html_data4.py",
+      "bytes": 34588,
+      "sha256": "5b75daaa86fea5af06da78a19dfc9fc519568872a121de565a06518409167682"
+    },
+    {
+      "path": "scripts/curriculum/html_expansion.py",
+      "bytes": 160853,
+      "sha256": "061bacaa601f5d3125f7645c0b9b944ade03c58171ba8ab2bbd34fc20f718009"
+    },
+    {
+      "path": "scripts/curriculum/js_data.py",
+      "bytes": 27439,
+      "sha256": "2cb1859b20fd3ba3b91dfccbf8e40bde87ea7a29371a9581f399b9d509d840da"
+    },
+    {
+      "path": "scripts/curriculum/js_data2.py",
+      "bytes": 26655,
+      "sha256": "d226967de9f3291298cfdc697c9f411bdb8d0f8e0dd8a76430a4bfe5ad94755d"
+    },
+    {
+      "path": "scripts/curriculum/js_data3.py",
+      "bytes": 15770,
+      "sha256": "d09d5f1d966e130d42878a8087738f5c93eea771567a012b393c713b03471095"
+    },
+    {
+      "path": "scripts/curriculum/js_data4.py",
+      "bytes": 41833,
+      "sha256": "ed3969e45176b8af3397779788f2e54bcd5abaaaa5409933761e0e63f87d51d7"
+    },
+    {
+      "path": "scripts/curriculum/js_data5.py",
+      "bytes": 44061,
+      "sha256": "7ac572106ecbca4f6aa7359d370ad39ed909ef45f27319899f1a27a7059dc65c"
+    },
+    {
+      "path": "scripts/curriculum/js_expansion.py",
+      "bytes": 173893,
+      "sha256": "5bcb69333fce25905e06ec2f7ad152f24619813bfe49dd288b7290cac439b8a9"
+    },
+    {
+      "path": "scripts/curriculum/make_demo_font.py",
+      "bytes": 5093,
+      "sha256": "973b297fa2a943f80ea7af15bea1fce3610566d97e1a1897ef43414cb9c00f7f"
+    },
+    {
+      "path": "scripts/curriculum/supplement.py",
+      "bytes": 14870,
+      "sha256": "8ab77b2267db6907080de5ecc67be0f417291275bf0aa3dffa510f2c97e9f195"
+    },
+    {
+      "path": "scripts/emit_content.py",
+      "bytes": 14093,
+      "sha256": "a1802088c445b48f978a4e7b984867391f06820288aa82a7c0ee32eb0044392c"
+    },
+    {
+      "path": "scripts/html_expansion_assertions.mjs",
+      "bytes": 67265,
+      "sha256": "029a862be6c3f1b9d86455ffab9fdef1624fc95eefe4b2f3ae13ff020afc3dc6"
+    },
+    {
+      "path": "scripts/js_example_assertions.mjs",
+      "bytes": 29223,
+      "sha256": "d3af746a77f0c87c7ca29552fccf11c6135286078349823e3bd62e2694dfec9b"
+    },
+    {
+      "path": "scripts/js_expansion_assertions.mjs",
+      "bytes": 25322,
+      "sha256": "cf7090653ac550000be3c9ccf5dba17fe95728db04998d3cc40a0aa1c747a468"
+    },
+    {
+      "path": "scripts/prepare_ohos_catalog.py",
+      "bytes": 5342,
+      "sha256": "dba45b99b3e9fb312388ec256ce5770e6535e4ba7c8ffb38403e8cce5347625b"
+    },
+    {
+      "path": "scripts/run_examples.mjs",
+      "bytes": 25689,
+      "sha256": "d35964740e43acb46e4c1324145ff122b545be805129433bee56f7de58f6c5c4"
+    },
+    {
+      "path": "scripts/run_ohos_catalog.py",
+      "bytes": 26105,
+      "sha256": "9bbaa999f6b5bec5a8c2fbc08d10ea2c5dd9a4d57f8e305920c95e074f990e53"
+    },
+    {
+      "path": "scripts/ste-lint-zh.py",
+      "bytes": 20114,
+      "sha256": "4571e2c4c1c8d79062593c598999f207e390cf006f3f29a16d84107600c907cf"
+    },
+    {
+      "path": "scripts/test_clipboard_lifecycle.mjs",
+      "bytes": 9899,
+      "sha256": "695b5869a41e1bd5a6efddb857067fdfbc4a1b9df0ff591880fb47c58672fe2a"
+    },
+    {
+      "path": "scripts/test_emit_content.py",
+      "bytes": 18069,
+      "sha256": "d41aedb2301b99f81e965423db1f1032055aa7e98ec91c5cf972cb772f002fec"
+    },
+    {
+      "path": "scripts/test_native_offline_channel.mjs",
+      "bytes": 17311,
+      "sha256": "3227778429d3ba25f57af56c5ba62ab1b4b699c214d3f564f5e733fcb0a0ad99"
+    },
+    {
+      "path": "scripts/test_ohos_catalog_driver.py",
+      "bytes": 22926,
+      "sha256": "d155232d584ce967577e6d0553882f26a099ca10d5ce3ab7179a5273d7a066de"
+    },
+    {
+      "path": "scripts/test_self_cdp_protocol.mjs",
+      "bytes": 25409,
+      "sha256": "29ea3a1f3e0355d6eaab7b62ceb04c30d55fda32fbbdb25cdd256c4ef0aaa2ee"
+    },
+    {
+      "path": "scripts/test_web_console_bridge.mjs",
+      "bytes": 4895,
+      "sha256": "021637740694fe3cf39f140e65de095db511cfa60237cf0151d614e2d10644ed"
+    },
+    {
+      "path": "scripts/test_web_offline_browser.mjs",
+      "bytes": 11101,
+      "sha256": "fcfd2cb2880556375db36a56ad64223f42d85c29207483ac6cf1412815c944ce"
+    },
+    {
+      "path": "scripts/web_markup_assertions.mjs",
+      "bytes": 153378,
+      "sha256": "a0ed70341d61b9e262aa1dda099652fd7c647a76f25256071917774976292393"
+    },
+    {
+      "path": "test/content/webforge_content_test.dart",
+      "bytes": 9153,
+      "sha256": "df69b86c00c4f0542f7c160ca05eb6570fb73d20ae821abbacac96b153f80ee0"
+    },
+    {
+      "path": "test/nginx_host_test.dart",
+      "bytes": 4948,
+      "sha256": "a0e579af2a70c185bd9bdf39106aa83be9cc88e6f38bc24aa2f800a61d3c131b"
+    },
+    {
+      "path": "test/nginx_session_test.dart",
+      "bytes": 9102,
+      "sha256": "0aca65c6a93ad0df00523bf4152f28f699ed93ba4f5293ec6fbcdc191ac421bd"
+    },
+    {
+      "path": "test/owned_preview_policy_test.dart",
+      "bytes": 16927,
+      "sha256": "d03ff9bee6c89c04357938737283f550501c57949e68495d1fb4eaa0f613cc2e"
+    },
+    {
+      "path": "test/owned_preview_resource_broker_test.dart",
+      "bytes": 19508,
+      "sha256": "db10067dd64a2e802f62fe5915fa3ac05374934b141b64069f9a9d1c7b6456a2"
+    },
+    {
+      "path": "test/startup_test.dart",
+      "bytes": 4358,
+      "sha256": "766f71b3dad2cf8315599642297d223f9a6b32dffd103eeb9f75a3027bb9aa03"
+    },
+    {
+      "path": "test/web_app_test.dart",
+      "bytes": 5591,
+      "sha256": "e3027f66a13e2c29feed1854bcebc5c4742de88706bb9fa136713fc83d12162a"
+    },
+    {
+      "path": "test/web_catalog_language_test.dart",
+      "bytes": 15200,
+      "sha256": "04592d5e26fe4b9e63aa66925dfa6ba703a42dfb1c9834eb22006f6b62dc591e"
+    },
+    {
+      "path": "test/web_code_analyzer_test.dart",
+      "bytes": 16048,
+      "sha256": "84dd5920dad95c080ca1484c2e65a680786810f944369250da42cbc30cbcfcc4"
+    },
+    {
+      "path": "test/web_css_tools_test.dart",
+      "bytes": 12227,
+      "sha256": "6bc3b58334b480a27943cbe1d035cc78065931fb262fb357e60d21cf704f225b"
+    },
+    {
+      "path": "test/web_dev_server_test.dart",
+      "bytes": 20537,
+      "sha256": "f2e17c3c9e0b5e76f594b81dcb053268b8815cdece80dfebf850ab142977d79a"
+    },
+    {
+      "path": "test/web_editor_analysis_test.dart",
+      "bytes": 10918,
+      "sha256": "5b23798a4d961eaf5bd705a657718441c9b3bcd564b5df16b2185a8e7f4f866d"
+    },
+    {
+      "path": "test/web_markup_inspector_test.dart",
+      "bytes": 17545,
+      "sha256": "ebbf578f1e5d4707ee98b498d86c984be42eb90e7b29b2acd4345aff101cebf0"
+    },
+    {
+      "path": "test/web_offline_browser_test.dart",
+      "bytes": 9073,
+      "sha256": "506c39720b1ea9badd7bf716c2b790cbb7e2b773ee1d896e34612a7f4c29d098"
+    },
+    {
+      "path": "test/web_offline_policy_test.dart",
+      "bytes": 14455,
+      "sha256": "0af939862c451884f1b4b3d7d08cb9592bf4bd5ae335cf4fc1d3a2d4898b3114"
+    },
+    {
+      "path": "test/web_preview_current_file_test.dart",
+      "bytes": 19059,
+      "sha256": "e2ed5e4d6cec1740a3022129405a70266fca4fbf3acb281e46ec1529d472c3ab"
+    },
+    {
+      "path": "test/web_saved_workspaces_test.dart",
+      "bytes": 18040,
+      "sha256": "e9d8e9ea0dabc5fa2703f78d942e5f40d0d0ad62115639feb781a8017a914d0a"
+    },
+    {
+      "path": "test/web_server_tools_lifecycle_test.dart",
+      "bytes": 13385,
+      "sha256": "f77c31a3481077fa28e1dbead38272d4a19a9b3ea59280b9939344d66a0c0db1"
+    },
+    {
+      "path": "test/web_terminal_release_test.dart",
+      "bytes": 13524,
+      "sha256": "92abc9e58625f502ebf4f04ed9e9d86407c847678d0fa8613084bbeb303b1630"
+    },
+    {
+      "path": "test/web_tools_navigation_test.dart",
+      "bytes": 9368,
+      "sha256": "c8b9d534cd1e696c71d96f06658c45ad2918dec2a6cac8d610d25deb92c161ef"
+    },
+    {
+      "path": "test/web_tools_overview_test.dart",
+      "bytes": 12171,
+      "sha256": "739e3cd7765520f9ed4ab7bc10bbc333a194474428a6f02cc46778de4bb68c29"
+    },
+    {
+      "path": "test/web_tools_page_test.dart",
+      "bytes": 5413,
+      "sha256": "2b25200ba708b8ab2c4a5b105cf1ae840c52fa85c00b1760e0726dc276453c85"
+    },
+    {
+      "path": "tool/nginx_smoke.dart",
+      "bytes": 9545,
+      "sha256": "7c1dc600cf717f85f62628ea1d6057b53f52b04966f66dd5e69d2b75613544a3"
+    },
+    {
+      "path": "tool/web_ohos_acceptance.dart",
+      "bytes": 17589,
+      "sha256": "510ebda01624a64b25eebe16a1027e7d34d69abf983a2fc9bd0f35846242d13a"
+    }
+  ]
+}

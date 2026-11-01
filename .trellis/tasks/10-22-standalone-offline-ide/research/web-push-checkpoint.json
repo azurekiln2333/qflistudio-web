@@ -1,0 +1,49 @@
+{
+  "scope": "six committed Web delivery checkpoints; ongoing catalog/panel work excluded",
+  "commit": "e0f81a56230ec27890b67eb9ac0c1df71a805c71",
+  "branch": "feat/offline-web-ide",
+  "startedAt": "2026-10-22T17:45:54.520175+00:00",
+  "results": [
+    {
+      "url": "https://github.com/azurekiln2333/qflistudio-web.git",
+      "pushExitCode": 0,
+      "pushOutput": "remote: \nremote: Create a pull request for 'feat/offline-web-ide' on GitHub by visiting:        \nremote:      https://github.com/azurekiln2333/qflistudio-web/pull/new/feat/offline-web-ide        \nremote: \nTo https://github.com/azurekiln2333/qflistudio-web.git\n * [new branch]      e0f81a56230ec27890b67eb9ac0c1df71a805c71 -> feat/offline-web-ide\n",
+      "verifyExitCode": 0,
+      "remoteCommit": "e0f81a56230ec27890b67eb9ac0c1df71a805c71",
+      "verified": true
+    },
+    {
+      "url": "https://gitee.com/azurekiln/qflistudio-web.git",
+      "pushExitCode": 0,
+      "pushOutput": "remote: Powered by \u001b[01;33mGITEE.COM \u001b[0m[1.1.23]        \nremote: Set trace flag c24464b2        \nremote: Create a pull request for 'feat/offline-web-ide' on Gitee by visiting:        \nremote: https://gitee.com/azurekiln/qflistudio-web/pull/new/azurekiln:feat/offline-web-ide...azurekiln:main        \nTo https://gitee.com/azurekiln/qflistudio-web.git\n * [new branch]      e0f81a56230ec27890b67eb9ac0c1df71a805c71 -> feat/offline-web-ide\n",
+      "verifyExitCode": 0,
+      "remoteCommit": "e0f81a56230ec27890b67eb9ac0c1df71a805c71",
+      "verified": true
+    },
+    {
+      "url": "git@gitlab.com:azurekiln-team/qflistudio-web.git",
+      "pushExitCode": 0,
+      "pushOutput": "remote: \nremote: To create a merge request for feat/offline-web-ide, visit:        \nremote:   https://gitlab.com/azurekiln-team/qflistudio-web/-/merge_requests/new?merge_request%5Bsource_branch%5D=feat%2Foffline-web-ide        \nremote: \nTo gitlab.com:azurekiln-team/qflistudio-web.git\n * [new branch]      e0f81a56230ec27890b67eb9ac0c1df71a805c71 -> feat/offline-web-ide\n",
+      "verifyExitCode": 0,
+      "remoteCommit": "e0f81a56230ec27890b67eb9ac0c1df71a805c71",
+      "verified": true
+    },
+    {
+      "url": "https://cnb.cool/azurekiln/qflistudio-web",
+      "pushExitCode": 0,
+      "pushOutput": "remote: \nremote: Create a pull request for 'feat/offline-web-ide' to 'main' by visiting:        \nremote: \nremote: \thttps://cnb.cool/azurekiln/qflistudio-web/-/compare/main...feat/offline-web-ide        \nremote: \nTo https://cnb.cool/azurekiln/qflistudio-web\n * [new branch]      e0f81a56230ec27890b67eb9ac0c1df71a805c71 -> feat/offline-web-ide\n",
+      "verifyExitCode": 0,
+      "remoteCommit": "e0f81a56230ec27890b67eb9ac0c1df71a805c71",
+      "verified": true
+    },
+    {
+      "url": "https://gitcode.com/azurekiln/qflistudio-web.git",
+      "pushExitCode": 0,
+      "pushOutput": "remote: Start Git Hooks Checking \t\t\t\t\t\u001b[40;36m[PASSED]\u001b[0m        \nremote: \nremote: To create a merge request for feat/offline-web-ide, visit:        \nremote:   https://gitcode.com/azurekiln/qflistudio-web/merge_requests/new?source_branch=feat/offline-web-ide        \nremote: \nTo https://gitcode.com/azurekiln/qflistudio-web.git\n * [new branch]      e0f81a56230ec27890b67eb9ac0c1df71a805c71 -> feat/offline-web-ide\n",
+      "verifyExitCode": 0,
+      "remoteCommit": "e0f81a56230ec27890b67eb9ac0c1df71a805c71",
+      "verified": true
+    }
+  ],
+  "completedAt": "2026-10-22T17:47:00.715904+00:00"
+}

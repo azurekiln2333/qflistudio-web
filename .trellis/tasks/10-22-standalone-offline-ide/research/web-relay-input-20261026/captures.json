@@ -1,0 +1,88 @@
+{
+  "capturedUtc": "2026-10-26T04:15:55.232106+00:00",
+  "python": "D:\\ProgramFiles\\Python\\Python313\\python.exe",
+  "root": "D:\\MyNewProjects\\qfli_web",
+  "commands": [
+    {
+      "name": "relay-window-default",
+      "script": "run-web-relay-window.py",
+      "arguments": [],
+      "scriptSha256": "401F61D44495DD0A8B681A25746263E589203A9555F30C49106ECA791DB0FDB3",
+      "command": [
+        "python",
+        "-B",
+        "-X",
+        "utf8",
+        "run-web-relay-window.py"
+      ],
+      "exitCode": 0,
+      "stdoutBytes": 1968,
+      "stdoutSha256": "1E5F2888EC0C549A41B1FD799425B6C4197B6A691B0DBBC023A0AB7F98652E32",
+      "stderrBytes": 0,
+      "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "name": "app-window-snapshot-only",
+      "script": "run-web-app-window.py",
+      "arguments": [
+        "--snapshot-only"
+      ],
+      "scriptSha256": "D80C46E1B1CF2ABE7E7A582E61016AC36266354242DE198A5623628659922A19",
+      "command": [
+        "python",
+        "-B",
+        "-X",
+        "utf8",
+        "run-web-app-window.py",
+        "--snapshot-only"
+      ],
+      "exitCode": 0,
+      "stdoutBytes": 553,
+      "stdoutSha256": "BB10387ECD6056570696F1B96F5DBA194F5AECF771F1C5C1606659FDEBE0B46C",
+      "stderrBytes": 0,
+      "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "name": "native-window-snapshot-only",
+      "script": "run-web-native-window.py",
+      "arguments": [
+        "--snapshot-only"
+      ],
+      "scriptSha256": "63391CD84D72EDC59AD5D497DF11EE32520AE6208B1AAC84D4812D5E44B9A6E7",
+      "command": [
+        "python",
+        "-B",
+        "-X",
+        "utf8",
+        "run-web-native-window.py",
+        "--snapshot-only"
+      ],
+      "exitCode": 0,
+      "stdoutBytes": 5848,
+      "stdoutSha256": "D258C6672A57A05B92020F24D2C22BC75D83787168CDF0C8B061DE84BA83CA0C",
+      "stderrBytes": 0,
+      "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "name": "ohpm-window-snapshot-only",
+      "script": "run-web-ohpm-window.py",
+      "arguments": [
+        "--snapshot-only"
+      ],
+      "scriptSha256": "95D5F5F74C6E5347C4941DBB91A76D960DF791654377A323F6C5884E8B7E1BE1",
+      "command": [
+        "python",
+        "-B",
+        "-X",
+        "utf8",
+        "run-web-ohpm-window.py",
+        "--snapshot-only"
+      ],
+      "exitCode": 0,
+      "stdoutBytes": 4272,
+      "stdoutSha256": "67EF16E5459535E4122F8C53BDAD814540B36C677BF00E5D10931DA8A2444ADB",
+      "stderrBytes": 0,
+      "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    }
+  ]
+}

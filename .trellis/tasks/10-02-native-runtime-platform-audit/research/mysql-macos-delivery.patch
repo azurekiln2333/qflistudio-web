@@ -1,0 +1,958 @@
+diff --git a/.trellis/spec/backend/index.md b/.trellis/spec/backend/index.md
+index 909d4b6..37b3675 100644
+--- a/.trellis/spec/backend/index.md
++++ b/.trellis/spec/backend/index.md
+@@ -23,7 +23,7 @@ This directory contains guidelines for backend development. Fill in each file wi
+ | [SQLite Workspace](./sql-workspace.md) | Stable grid identity and fixed-offset paging | Documented |
+ | [SQLite Native Runtime](./sqlite-native-runtime.md) | Multi-platform C packaging, FFI, queries and real runtime evidence | Implemented |
+ | [Oracle MySQL Workspace](./mysql-workspace.md) | Oracle metadata, primary keys, binary values, and native client | Documented |
+-| [Oracle Desktop Runtime](./mysql-desktop-runtime.md) | Windows/Linux private server lifecycle, FFI and bundle contract | Implemented |
++| [Oracle Desktop Runtime](./mysql-desktop-runtime.md) | Windows/Linux lifecycle/FFI/bundles and macOS helper build/signing contract | Windows/Linux verified; macOS execution unverified |
+ | [Oracle Android Runtime](./mysql-android-runtime.md) | Bionic build, installed code/data layout and private server lifecycle | Implemented; x86_64 device verified |
+ 
+ ---
+diff --git a/.trellis/spec/backend/mysql-desktop-runtime.md b/.trellis/spec/backend/mysql-desktop-runtime.md
+index 63abff8..f026e7d 100644
+--- a/.trellis/spec/backend/mysql-desktop-runtime.md
++++ b/.trellis/spec/backend/mysql-desktop-runtime.md
+@@ -2,12 +2,14 @@
+ 
+ ## Scope
+ 
+-Windows/Linux local Oracle MySQL backend and packaging. The default product
++Windows/Linux local Oracle MySQL backend and packaging, plus the macOS helper
++build/signing integration. The default product
+ engine preference currently remains SQLite/cloud; selection of this local
+ backend is a separate workbench integration change. Android has its own verified
+-runtime contract in mysql-android-runtime.md. macOS bundle/signing and native
+-iOS hosting remain implementation gaps. Never
+-report those platforms as delivered based on portable source or desktop tests.
++runtime contract in mysql-android-runtime.md. Actual macOS SDK packaging,
++signing and sandboxed execution remain unverified; native iOS hosting remains
++an implementation gap. Never report Apple functionality as verified based on
++portable source or desktop tests.
+ 
+ ## Interfaces And Transport
+ 
+@@ -73,6 +75,26 @@ resources/plugins and license inputs. Keep provenance and host libc prerequisite
+ explicit. CMake requires verified Oracle source RapidJSON headers; no ad hoc JSON
+ serializer or replacement SQL engine is allowed.
+ 
++macOS Runner invokes native/mysql/macos/bundle.py before outer app signing.
++It requires complete Oracle 8.4.6 SDKs for each Xcode ARCHS entry, builds the
++bridge/launcher, and packages separate QfliMySql-{arm64,x64}.app helpers. Their
++MacOS/Frameworks/PlugIns/Resources layout is selected by the current Dart FFI
++ABI. Explicit QFLI_MYSQL_BUNDLE keeps the flat desktop layout. pluginDirectory
++is injected during initialization and normal server start for helper plugins.
++
++Reuse CMake BundleUtilities for the native dependency closure. Dependencies
++must come from the SDK/staged helper or Apple system library paths. Validate
++CPU, macOS platform and minimum OS, thin universal inputs, rewrite references
++to @loader_path and remove native RPATHs. @executable_path is incorrect for the
++bridge dlopened in the outer Flutter executable. Reject SDKs requiring a newer
++OS than Runner's declared target; do not silently change deployment settings.
++
++Sign libraries/plugins, then executables and helper apps before outer Runner
++signing. The helper only inherits sandbox permissions. Runner owns network
++client/server entitlements for the private Unix socket; do not disable library
++validation. Record final signed hashes in outer Resources, avoiding a helper
++resource hash/signature cycle. Preserve upstream licenses and exact input hashes.
++
+ ## Verification
+ 
+ - Standalone lifecycle test: actual upstream initialization/version/private
+@@ -85,6 +107,9 @@ serializer or replacement SQL engine is allowed.
+ - Available evidence: Windows 8.4.6, Linux 8.0.46, complete installed runtime
+   bundles, Windows Flutter tests. MSVC/full desktop GUIs and Apple execution
+   are not established by these checks.
++- macOS portable packaging-validator regressions do not establish actual Apple
++  build/signing/sandbox behavior. On an Apple host use the packaged app to check
++  CRUD, persistence, stop and parent-death recovery with real Oracle SDKs.
+ 
+ ## Wrong Vs Correct
+ 
+diff --git a/lib/local_mysql_runtime.dart b/lib/local_mysql_runtime.dart
+index 4b40177..9506f1e 100644
+--- a/lib/local_mysql_runtime.dart
++++ b/lib/local_mysql_runtime.dart
+@@ -1,5 +1,6 @@
+ import 'dart:async';
+ import 'dart:convert';
++import 'dart:ffi';
+ import 'dart:io';
+ import 'dart:math';
+ 
+@@ -17,6 +18,7 @@ class LocalMySqlRuntime {
+     this.serverPath,
+     this.serverUser,
+     this.libraryDirectory,
++    this.pluginDirectory,
+     this.temporaryDirectory,
+     this.readinessTimeout = const Duration(seconds: 45),
+   });
+@@ -38,6 +40,7 @@ class LocalMySqlRuntime {
+   // Only explicit host fixtures may ask mysqld to run as root.
+   final String? serverUser;
+   final String? libraryDirectory;
++  final String? pluginDirectory;
+   final Directory? temporaryDirectory;
+   final Duration readinessTimeout;
+   Future<void> _tail = Future<void>.value();
+@@ -161,6 +164,7 @@ class LocalMySqlRuntime {
+             '--no-defaults',
+             '--initialize-insecure',
+             '--basedir=${bundleDirectory.path}',
++            if (pluginDirectory != null) '--plugin-dir=$pluginDirectory',
+             if (Platform.isAndroid)
+               '--lc-messages-dir=${p.join(bundleDirectory.path, 'share')}',
+             '--datadir=${staging.path}',
+@@ -206,7 +210,7 @@ class LocalMySqlRuntime {
+         '--no-defaults',
+         '--basedir=${bundleDirectory.path}',
+         '--datadir=${data.path}',
+-        '--plugin-dir=${p.join(bundleDirectory.path, 'lib', 'plugin')}',
++        '--plugin-dir=${pluginDirectory ?? p.join(bundleDirectory.path, 'lib', 'plugin')}',
+         '--lc-messages-dir=${p.join(bundleDirectory.path, 'share')}',
+         '--socket=$_socket',
+         '--skip-networking',
+@@ -425,10 +429,22 @@ class LocalMySqlRuntime {
+   static LocalMySqlRuntime _discover() {
+     final app = p.dirname(Platform.resolvedExecutable);
+     final configured = Platform.environment['QFLI_MYSQL_BUNDLE'];
++    final helperLayout = Platform.isMacOS && configured == null;
++    final helper = helperLayout
++        ? p.normalize(
++            p.join(
++              app,
++              '..',
++              'Helpers',
++              'QfliMySql-${Abi.current() == Abi.macosArm64 ? 'arm64' : 'x64'}.app',
++              'Contents',
++            ),
++          )
++        : null;
+     final bundle = Directory(
+       configured ??
+-          (Platform.isMacOS
+-              ? p.normalize(p.join(app, '..', 'Resources', 'qfli_mysql'))
++          (helperLayout
++              ? p.join(helper!, 'Resources')
+               : p.join(app, 'qfli_mysql')),
+     );
+     final home =
+@@ -451,18 +467,26 @@ class LocalMySqlRuntime {
+     return LocalMySqlRuntime(
+       bundleDirectory: bundle,
+       dataDirectory: Directory(p.join(root, 'qfli_sql', 'mysql')),
+-      launcherPath: p.join(
+-        bundle.path,
+-        'bin',
+-        Platform.isWindows ? 'qfli_mysql_launcher.exe' : 'qfli_mysql_launcher',
+-      ),
+-      libraryPath: p.join(
+-        bundle.path,
+-        Platform.isWindows ? 'bin' : 'lib',
+-        Platform.isWindows
+-            ? 'qfli_mysql_bridge.dll'
+-            : 'libqfli_mysql_bridge.${Platform.isMacOS ? 'dylib' : 'so'}',
+-      ),
++      serverPath: helperLayout ? p.join(helper!, 'MacOS', 'mysqld') : null,
++      pluginDirectory: helperLayout ? p.join(helper!, 'PlugIns') : null,
++      launcherPath: helperLayout
++          ? p.join(helper!, 'MacOS', 'qfli_mysql_launcher')
++          : p.join(
++              bundle.path,
++              'bin',
++              Platform.isWindows
++                  ? 'qfli_mysql_launcher.exe'
++                  : 'qfli_mysql_launcher',
++            ),
++      libraryPath: helperLayout
++          ? p.join(helper!, 'Frameworks', 'libqfli_mysql_bridge.dylib')
++          : p.join(
++              bundle.path,
++              Platform.isWindows ? 'bin' : 'lib',
++              Platform.isWindows
++                  ? 'qfli_mysql_bridge.dll'
++                  : 'libqfli_mysql_bridge.${Platform.isMacOS ? 'dylib' : 'so'}',
++            ),
+     );
+   }
+ }
+diff --git a/macos/Runner/DebugProfile.entitlements b/macos/Runner/DebugProfile.entitlements
+index dddb8a3..08c3ab1 100644
+--- a/macos/Runner/DebugProfile.entitlements
++++ b/macos/Runner/DebugProfile.entitlements
+@@ -8,5 +8,7 @@
+ 	<true/>
+ 	<key>com.apple.security.network.server</key>
+ 	<true/>
++	<key>com.apple.security.network.client</key>
++	<true/>
+ </dict>
+ </plist>
+diff --git a/macos/Runner/Release.entitlements b/macos/Runner/Release.entitlements
+index 852fa1a..64cabb4 100644
+--- a/macos/Runner/Release.entitlements
++++ b/macos/Runner/Release.entitlements
+@@ -4,5 +4,9 @@
+ <dict>
+ 	<key>com.apple.security.app-sandbox</key>
+ 	<true/>
++	<key>com.apple.security.network.server</key>
++	<true/>
++	<key>com.apple.security.network.client</key>
++	<true/>
+ </dict>
+ </plist>
+diff --git a/macos/Runner.xcodeproj/project.pbxproj b/macos/Runner.xcodeproj/project.pbxproj
+index 0d7bf48..7577b98 100644
+--- a/macos/Runner.xcodeproj/project.pbxproj
++++ b/macos/Runner.xcodeproj/project.pbxproj
+@@ -208,6 +208,7 @@
+ 				33CC10EA2044A3C60003C045 /* Frameworks */,
+ 				33CC10EB2044A3C60003C045 /* Resources */,
+ 				33CC110E2044A8840003C045 /* Bundle Framework */,
++				A870F87D3067000100000001 /* Bundle Oracle MySQL */,
+ 				3399D490228B24CF009A79C7 /* ShellScript */,
+ 			);
+ 			buildRules = (
+@@ -291,6 +292,18 @@
+ /* End PBXResourcesBuildPhase section */
+ 
+ /* Begin PBXShellScriptBuildPhase section */
++		A870F87D3067000100000001 /* Bundle Oracle MySQL */ = {
++			isa = PBXShellScriptBuildPhase;
++			alwaysOutOfDate = 1;
++			buildActionMask = 2147483647;
++			files = ();
++			inputPaths = ();
++			name = "Bundle Oracle MySQL";
++			outputPaths = ();
++			runOnlyForDeploymentPostprocessing = 0;
++			shellPath = /bin/sh;
++			shellScript = "/usr/bin/python3 \"$PROJECT_DIR/../native/mysql/macos/bundle.py\"\n";
++		};
+ 		3399D490228B24CF009A79C7 /* ShellScript */ = {
+ 			isa = PBXShellScriptBuildPhase;
+ 			alwaysOutOfDate = 1;
+diff --git a/native/mysql/desktop/CMakeLists.txt b/native/mysql/desktop/CMakeLists.txt
+index 5949aa5..927505f 100644
+--- a/native/mysql/desktop/CMakeLists.txt
++++ b/native/mysql/desktop/CMakeLists.txt
+@@ -34,6 +34,11 @@ elseif(UNIX AND NOT APPLE)
+ endif()
+ add_executable(qfli_mysql_launcher launcher.cpp)
+ target_compile_features(qfli_mysql_launcher PRIVATE cxx_std_17)
++if(APPLE)
++  foreach(target qfli_mysql_bridge qfli_mysql_launcher)
++    target_link_options(${target} PRIVATE -Wl,-headerpad_max_install_names)
++  endforeach()
++endif()
+ if(MINGW)
+   target_link_options(qfli_mysql_bridge PRIVATE -static)
+   target_link_options(qfli_mysql_launcher PRIVATE -static -municode)
+diff --git a/native/mysql/desktop/README.md b/native/mysql/desktop/README.md
+index f62c2a3..3e2ad80 100644
+--- a/native/mysql/desktop/README.md
++++ b/native/mysql/desktop/README.md
+@@ -1,6 +1,6 @@
+ # Oracle MySQL Desktop Runtime
+ 
+-Windows and Linux use the actual upstream Oracle server and C client. The
++Windows, Linux and the macOS helper integration use the actual upstream Oracle server and C client. The
+ adapter in `lib/mysql_database.dart` starts the private server through
+ `LocalMySqlRuntime` and invokes `qfli_mysql_bridge` on worker isolates. Explicit
+ injected channels retain their existing behavior. No TCP service is opened and
+@@ -52,6 +52,11 @@ dependencies in `bin`; Linux keeps the bridge and shared libraries in `lib`.
+ The runtime explicitly points mysqld at its bundled resources and plugins.
+ Retain all upstream LICENSE/docs and source/build provenance in release bundles.
+ 
++macOS Runner packaging is described in `../macos/README.md`. It requires full
++Oracle macOS SDKs per architecture and Xcode, builds signed helper applications,
++and selects the current process ABI. The default helper layout and the existing
++flat `QFLI_MYSQL_BUNDLE` override are separate installed layouts.
++
+ ## Lifecycle
+ 
+ The default storage is the user's local application data under `qfli_sql/mysql`.
+@@ -84,7 +89,8 @@ exercise the typed application adapter using a temporary database.
+ 
+ Windows Oracle 8.4.6 and Linux Oracle 8.0.46 have real-engine evidence. Full
+ Windows Flutter GUI build remains unverified without MSVC; Linux Flutter GUI
+-and Apple execution have not been tested. Portable macOS launcher/runtime source
+-exists, but macOS bundle/signing integration is still required. Android server
+-build/lifecycle, native iOS hosting and the product's local-MySQL engine selector
+-remain open requirements. This backend delivery does not establish them.
++and Apple execution have not been tested. macOS helper bundle/signing source is
++integrated, but actual Apple SDK packaging and sandboxed execution remain
++unverified. Android server build/lifecycle was delivered separately; native iOS
++hosting remains missing and the applied engine selector awaits its ownership
++decision. Portable source tests do not establish native Apple functionality.
+diff --git a/native/mysql/desktop/runtime_test.dart b/native/mysql/desktop/runtime_test.dart
+index fd974a4..8677d2c 100644
+--- a/native/mysql/desktop/runtime_test.dart
++++ b/native/mysql/desktop/runtime_test.dart
+@@ -24,13 +24,15 @@ Future<void> main(List<String> arguments) async {
+       ? Directory(args[3])
+       : await Directory.systemTemp.createTemp('qfli-mysql-test-');
+   LocalMySqlRuntime createRuntime() => LocalMySqlRuntime(
+-    bundleDirectory: Directory(args[0]),
+-    dataDirectory: root,
+-    libraryPath: args[1],
+-    launcherPath: args[2],
+-    serverPath: Platform.environment['QFLI_MYSQL_TEST_SERVER'],
+-    serverUser: Platform.environment['QFLI_MYSQL_TEST_USER'],
+-  );
++        bundleDirectory: Directory(args[0]),
++        dataDirectory: root,
++        libraryPath: args[1],
++        launcherPath: args[2],
++        serverPath: Platform.environment['QFLI_MYSQL_TEST_SERVER'],
++        serverUser: Platform.environment['QFLI_MYSQL_TEST_USER'],
++        pluginDirectory:
++            Platform.environment['QFLI_MYSQL_TEST_PLUGIN_DIRECTORY'],
++      );
+   var runtime = createRuntime();
+   Future<Map<String, Object?>> query(
+     String source, [
+diff --git b/native/mysql/macos/Helper.entitlements b/native/mysql/macos/Helper.entitlements
+new file mode 100644
+index 0000000..92a5b64
+--- /dev/null
++++ b/native/mysql/macos/Helper.entitlements
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
++<plist version="1.0">
++<dict>
++  <key>com.apple.security.app-sandbox</key>
++  <true/>
++  <key>com.apple.security.inherit</key>
++  <true/>
++</dict>
++</plist>
+diff --git b/native/mysql/macos/README.md b/native/mysql/macos/README.md
+new file mode 100644
+index 0000000..7e5d5a2
+--- /dev/null
++++ b/native/mysql/macos/README.md
+@@ -0,0 +1,86 @@
++# Oracle MySQL macOS Helpers
++
++The Runner build invokes `bundle.py` with Xcode's environment. It builds the
++existing native client bridge and parent launcher, embeds the actual Oracle
++server and its resources, relocates dependencies, then signs each helper before
++the outer application's signing step. Python 3.9+, CMake 3.20+ and Xcode command
++line tools are required. The script uses only Python's standard library.
++
++## Inputs
++
++Supply the complete official Oracle **8.4.6** macOS distributions for the
++architectures in Xcode's `ARCHS`. Retain archive provenance and verify the
++upstream download before extracting; this repository does not supply or claim
++verified Apple archives. Each SDK must contain `bin/mysqld`, development headers,
++native client/dependency libraries, `share` and the upstream `LICENSE`.
++
++```bash
++export QFLI_MYSQL_MACOS_ARM64=/verified/mysql-8.4.6-macos-arm64
++export QFLI_MYSQL_MACOS_X64=/verified/mysql-8.4.6-macos-x86_64
++export QFLI_MYSQL_SOURCE=/verified/mysql-8.4.6-source
++flutter build macos
++```
++
++Only requested architectures need SDKs. The pinned source supplies RapidJSON
++headers, as on Windows/Linux. Use `runtime.json` in an SDK to retain its archive
++URL/hash/license provenance. The final manifest also hashes the exact SDK native
++inputs and all signed helper files.
++
++The app's `MACOSX_DEPLOYMENT_TARGET` must meet the minimum encoded in **every**
++native input. Runner currently declares 10.15; a newer Oracle distribution can
++require raising that setting in every Xcode configuration before building.
++The packager rejects incompatible inputs and never silently raises the target.
++
++## Layout And Signing
++
++For each ABI, the app contains:
++
++```text
++Contents/Helpers/QfliMySql-{arm64,x64}.app/Contents/
++  MacOS/qfli_mysql_launcher
++  MacOS/mysqld
++  Frameworks/libqfli_mysql_bridge.dylib
++  Frameworks/<Oracle/dependency dylibs>
++  PlugIns/<server plugins and configuration>
++  Resources/{share,docs,licenses,LICENSE,...}
++Contents/Resources/qfli-mysql-runtime.json
++```
++
++CMake BundleUtilities resolves the full native dependency chain using the SDK.
++Non-system dependencies must come from that SDK or the staged helper. Native
++files are thinned and checked for CPU, macOS load commands and minimum OS.
++Final library references use `@loader_path`, including the bridge loaded inside
++the outer Flutter process; `@executable_path` would refer to Runner in that case.
++Native RPATHs are removed, and the complete internal closure is checked.
++
++The packager signs dylibs/plugins first, then executables and the helper app.
++Helpers use only app-sandbox and inherit entitlements. Network client/server
++permissions belong to Runner and cover the private Unix socket. The signing
++identity is Xcode's `EXPANDED_CODE_SIGN_IDENTITY`; an empty identity uses ad hoc
++signing. A real identity uses hardened runtime and timestamping. No library
++validation exemption or public TCP listener is added.
++
++Runtime discovery chooses the current process ABI, including x64 under Rosetta.
++It injects explicit server, bridge, launcher, resource and plugin paths into the
++existing private lifecycle. `QFLI_MYSQL_BUNDLE` still selects the existing flat
++`{bin,lib,share}` desktop layout. Signed files remain in the app; writable data
++stays in the app's Application Support directory. Final signed-file hashes live
++outside the helper signature to avoid a circular resource hash.
++
++## Verification
++
++```bash
++python3 -m unittest discover -s native/mysql/macos -p test_bundle.py -v
++```
++
++These portable tests validate native headers, OS/CPU rejection, relocation and
++dependency containment. They do not establish an Apple build or execution pass.
++On an Apple host, inspect both requested helpers, verify their signatures, then
++run real SQL CRUD/persistence/stop and application-death recovery in the packaged
++sandboxed application. Unsandboxed command line tests cannot establish sandbox
++behavior. This delivery has no Apple build/sign/run evidence on the Windows host.
++
++For standalone lifecycle/adapter fixtures in the helper layout, use its
++Resources as the bundle, supply the bridge and launcher paths, and set
++`QFLI_MYSQL_TEST_SERVER` and `QFLI_MYSQL_TEST_PLUGIN_DIRECTORY` to the helper's
++mysqld and PlugIns paths. Production never reads these test environment inputs.
+diff --git b/native/mysql/macos/bundle.py b/native/mysql/macos/bundle.py
+new file mode 100644
+index 0000000..6956507
+--- /dev/null
++++ b/native/mysql/macos/bundle.py
+@@ -0,0 +1,336 @@
++#!/usr/bin/env python3
++"""Build, relocate and sign Oracle helpers during the macOS Runner build."""
++
++from __future__ import annotations
++
++import hashlib
++import json
++import os
++from pathlib import Path
++import plistlib
++import posixpath
++import re
++import shutil
++import struct
++import subprocess
++import sys
++import tempfile
++
++
++ORACLE_VERSION = "8.4.6"
++ARCHITECTURES = {"arm64": (0x0100000C, "arm64"), "x86_64": (0x01000007, "x64")}
++DYLIB_COMMANDS = {0xC, 0x80000018, 0x8000001F, 0x80000023}
++MACHO_MAGICS = {b"\xcf\xfa\xed\xfe", b"\xca\xfe\xba\xbe", b"\xca\xfe\xba\xbf"}
++
++
++def run(*arguments: str) -> str:
++    return subprocess.check_output(arguments, text=True, stderr=subprocess.STDOUT)
++
++
++def digest(path: Path) -> str:
++    with path.open("rb") as stream:
++        result = hashlib.sha256()
++        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
++            result.update(chunk)
++    return result.hexdigest()
++
++
++def version(value: str) -> tuple[int, int, int]:
++    if not re.fullmatch(r"\d+(?:\.\d+){0,2}", value):
++        raise ValueError(f"Invalid macOS version: {value}")
++    return tuple((list(map(int, value.split("."))) + [0, 0])[:3])
++
++
++def unpack_version(value: int) -> tuple[int, int, int]:
++    return value >> 16, (value >> 8) & 255, value & 255
++
++
++def read_macho(path: Path) -> dict:
++    # Read only the bounded Mach-O header/load commands, never server data.
++    with path.open("rb") as stream:
++        header = stream.read(32)
++        if len(header) != 32 or header[:4] != b"\xcf\xfa\xed\xfe":
++            raise ValueError(f"Expected a thin 64-bit Mach-O: {path}")
++        _, cpu, _, kind, count, size, _, _ = struct.unpack("<8I", header)
++        if size > 16 * 1024 * 1024 or count > size // 8:
++            raise ValueError(f"Invalid Mach-O command table: {path}")
++        commands = stream.read(size)
++    if len(commands) != size:
++        raise ValueError(f"Truncated Mach-O command table: {path}")
++    dependencies, rpaths, platforms, minimums = [], [], [], []
++    offset = 0
++    for _ in range(count):
++        if offset + 8 > size:
++            raise ValueError(f"Truncated Mach-O load command: {path}")
++        command, length = struct.unpack_from("<2I", commands, offset)
++        if length < 8 or length % 8 or offset + length > size:
++            raise ValueError(f"Invalid Mach-O load command size: {path}")
++        data = commands[offset:offset + length]
++        if command in DYLIB_COMMANDS or command in {0xD, 0x8000001C}:
++            minimum = 12 if command == 0x8000001C else 24
++            if length < minimum:
++                raise ValueError(f"Invalid Mach-O string command: {path}")
++            start = struct.unpack_from("<I", data, 8)[0]
++            if start < minimum or start >= length or b"\0" not in data[start:]:
++                raise ValueError(f"Invalid Mach-O string offset: {path}")
++            value = data[start:].split(b"\0", 1)[0].decode("utf-8")
++            if command in DYLIB_COMMANDS:
++                dependencies.append(value)
++            elif command == 0x8000001C:
++                rpaths.append(value)
++        elif command == 0x32:
++            if length < 24:
++                raise ValueError(f"Invalid LC_BUILD_VERSION: {path}")
++            target, minimum, _, tools = struct.unpack_from("<4I", data, 8)
++            if length < 24 + tools * 8:
++                raise ValueError(f"Invalid LC_BUILD_VERSION tools: {path}")
++            platforms.append(target)
++            minimums.append(unpack_version(minimum))
++        elif command in {0x24, 0x25, 0x2F, 0x30}:
++            if length < 16:
++                raise ValueError(f"Invalid minimum OS command: {path}")
++            platforms.append(1 if command == 0x24 else -1)
++            minimums.append(unpack_version(struct.unpack_from("<I", data, 8)[0]))
++        offset += length
++    if offset != size:
++        raise ValueError(f"Trailing Mach-O load commands: {path}")
++    return {"cpu": cpu, "kind": kind, "dependencies": dependencies,
++            "rpaths": rpaths, "platforms": platforms, "minimums": minimums}
++
++
++def validate_target(path: Path, architecture: str, deployment: str) -> dict:
++    info = read_macho(path)
++    if info["cpu"] != ARCHITECTURES[architecture][0]:
++        raise ValueError(f"Wrong architecture for {architecture}: {path}")
++    if not info["platforms"] or any(item != 1 for item in info["platforms"]):
++        raise ValueError(f"Not a macOS native input: {path}")
++    if any(item > version(deployment) for item in info["minimums"]):
++        raise ValueError(f"Native input requires a newer OS than macOS {deployment}: {path}")
++    if info["kind"] not in {2, 6, 8}:
++        raise ValueError(f"Unsupported Mach-O file type: {path}")
++    return info
++
++
++def is_system(dependency: str) -> bool:
++    return posixpath.normpath(dependency).startswith(("/usr/lib/", "/System/Library/"))
++
++
++def native_files(root: Path) -> list[Path]:
++    result = []
++    for path in sorted(root.rglob("*")):
++        if path.is_file():
++            with path.open("rb") as stream:
++                if stream.read(4) in MACHO_MAGICS:
++                    result.append(path)
++    return result
++
++
++def dependency_path(dependency: str, loader: Path, contents: Path, rpaths: list[str]) -> Path:
++    def expand(value: str) -> Path:
++        if value.startswith("@loader_path/"):
++            return loader.parent / value[len("@loader_path/"):]
++        if value.startswith("@executable_path/"):
++            return contents / "MacOS" / value[len("@executable_path/"):]
++        return Path(value)
++
++    if dependency.startswith("@rpath/"):
++        tail = dependency[len("@rpath/"):]
++        candidates = [expand(item) / tail for item in rpaths]
++        candidates.append(contents / "Frameworks" / tail)
++    else:
++        candidates = [expand(dependency)]
++    for candidate in candidates:
++        resolved = candidate.resolve()
++        if resolved.is_relative_to(contents.resolve()) and resolved.is_file():
++            return resolved
++    raise ValueError(f"Unresolved or external dependency {dependency} in {loader}")
++
++
++def validate_closure(contents: Path, architecture: str, deployment: str) -> list[Path]:
++    files = native_files(contents)
++    resolved_files = {path.resolve() for path in files}
++    for path in files:
++        if not path.resolve().is_relative_to(contents.resolve()):
++            raise ValueError(f"External native symlink: {path}")
++        info = validate_target(path, architecture, deployment)
++        if info["rpaths"]:
++            raise ValueError(f"Unrelocated native RPATH: {path}")
++        for dependency in info["dependencies"]:
++            if not is_system(dependency):
++                if not dependency.startswith("@loader_path/"):
++                    raise ValueError(f"Non-loader-relative dependency: {dependency} in {path}")
++                target = dependency_path(dependency, path, contents, [])
++                if target not in resolved_files:
++                    raise ValueError(f"Dependency is not packaged native code: {target}")
++    return files
++
++
++def copy_native(source: Path, destination: Path, architecture: str, deployment: str) -> None:
++    destination.parent.mkdir(parents=True, exist_ok=True)
++    if destination.exists():
++        raise ValueError(f"Duplicate native destination: {destination}")
++    architectures = run("lipo", "-archs", str(source)).split()
++    if architecture not in architectures:
++        raise ValueError(f"Missing {architecture} input: {source}")
++    if len(architectures) == 1:
++        shutil.copy2(source.resolve(), destination)
++    else:
++        run("lipo", str(source), "-thin", architecture, "-output", str(destination))
++    destination.chmod(0o755)
++    validate_target(destination, architecture, deployment)
++
++
++def build_helper(root: Path, sdk: Path, temporary: Path, architecture: str,
++                 deployment: str, identity: str, identifier: str) -> tuple[Path, dict]:
++    header = sdk / "include/mysql_version.h"
++    text = header.read_text(encoding="utf-8")
++    if not re.search(r'^\s*#\s*define\s+MYSQL_SERVER_VERSION\s+"8\.4\.6"', text, re.MULTILINE):
++        raise ValueError(f"The full Oracle {ORACLE_VERSION} SDK is required: {sdk}")
++    for required in (sdk / "bin/mysqld", sdk / "share", sdk / "lib", sdk / "LICENSE"):
++        if not required.exists():
++            raise ValueError(f"Incomplete Oracle SDK: {required}")
++    build = temporary / f"build-{architecture}"
++    run("cmake", "-S", str(root / "native/mysql/desktop"), "-B", str(build),
++        "-DCMAKE_BUILD_TYPE=Release", f"-DCMAKE_OSX_ARCHITECTURES={architecture}",
++        f"-DCMAKE_OSX_DEPLOYMENT_TARGET={deployment}", f"-DQFLI_ORACLE_HOME={sdk}",
++        f"-DQFLI_MYSQL_SOURCE={os.environ.get('QFLI_MYSQL_SOURCE', root / 'build/mysql-port/mysql-8.4.6')}")
++    run("cmake", "--build", str(build), "--config", "Release", "--parallel", "2")
++    abi = ARCHITECTURES[architecture][1]
++    helper = temporary / f"QfliMySql-{abi}.app"
++    contents = helper / "Contents"
++    for directory in ("MacOS", "Frameworks", "PlugIns", "Resources"):
++        (contents / directory).mkdir(parents=True)
++    inputs = {"include/mysql_version.h": digest(header)}
++
++    def copy(source: Path, target: Path) -> None:
++        copy_native(source, target, architecture, deployment)
++        label = str(source.relative_to(sdk)) if source.is_relative_to(sdk) else f"built/{source.name}"
++        inputs[label] = digest(source)
++
++    copy(sdk / "bin/mysqld", contents / "MacOS/mysqld")
++    copy(build / "qfli_mysql_launcher", contents / "MacOS/qfli_mysql_launcher")
++    copy(build / "libqfli_mysql_bridge.dylib", contents / "Frameworks/libqfli_mysql_bridge.dylib")
++    # Oracle keeps plugins under lib/plugin and its other dylibs under lib/private.
++    plugins = sdk / "lib/plugin"
++    sdk_native_files = native_files(sdk / "lib")
++    for source in sdk_native_files:
++        if source.is_relative_to(plugins):
++            target = contents / "PlugIns" / source.relative_to(plugins)
++        else:
++            target = contents / "Frameworks" / source.name
++        copy(source, target)
++    if plugins.is_dir():
++        native_sources = set(sdk_native_files)
++        for source in plugins.rglob("*"):
++            if source.is_file() and source not in native_sources:
++                if source.suffix in {".so", ".dylib"}:
++                    raise ValueError(f"Plugin is not a macOS native library: {source}")
++                if source.suffix not in {".a", ".la"}:
++                    target = contents / "PlugIns" / source.relative_to(plugins)
++                    target.parent.mkdir(parents=True, exist_ok=True)
++                    shutil.copy2(source, target)
++    for directory in ("share", "docs", "licenses"):
++        if (sdk / directory).is_dir():
++            shutil.copytree(sdk / directory, contents / "Resources" / directory)
++    for filename in ("LICENSE", "README", "runtime.json"):
++        if (sdk / filename).is_file():
++            shutil.copy2(sdk / filename, contents / "Resources" / filename)
++    (contents / "Info.plist").write_bytes(plistlib.dumps({
++        "CFBundleIdentifier": f"{identifier}.mysql.{abi}",
++        "CFBundleName": f"QfliMySql-{abi}", "CFBundlePackageType": "APPL",
++        "CFBundleExecutable": "qfli_mysql_launcher", "CFBundleVersion": ORACLE_VERSION,
++        "CFBundleShortVersionString": ORACLE_VERSION, "LSMinimumSystemVersion": deployment,
++        "LSUIElement": True,
++    }))
++    run("cmake", f"-DHELPER_APP={helper}", f"-DORACLE_HOME={sdk}",
++        "-P", str(root / "native/mysql/macos/fixup.cmake"))
++    # BundleUtilities can materialize a universal dependency from the SDK.
++    for path in native_files(contents):
++        if len(run("lipo", "-archs", str(path)).split()) > 1:
++            thin = path.with_name(path.name + ".thin")
++            run("lipo", str(path), "-thin", architecture, "-output", str(thin))
++            thin.chmod(0o755)
++            thin.replace(path)
++    for path in native_files(contents):
++        info = validate_target(path, architecture, deployment)
++        for dependency in info["dependencies"]:
++            if is_system(dependency):
++                continue
++            target = dependency_path(dependency, path, contents, info["rpaths"])
++            replacement = "@loader_path/" + os.path.relpath(target, path.parent)
++            run("install_name_tool", "-change", dependency, replacement, str(path))
++        if info["kind"] == 6:
++            run("install_name_tool", "-id", f"@loader_path/{path.name}", str(path))
++        for rpath in dict.fromkeys(info["rpaths"]):
++            run("install_name_tool", "-delete_rpath", rpath, str(path))
++    files = validate_closure(contents, architecture, deployment)
++    sign = ["codesign", "--force", "--sign", identity]
++    if identity != "-":
++        sign += ["--options", "runtime", "--timestamp"]
++    entitlements = str(root / "native/mysql/macos/Helper.entitlements")
++    for path in sorted(files, key=lambda item: read_macho(item)["kind"] == 2):
++        options = ["--entitlements", entitlements] if read_macho(path)["kind"] == 2 else []
++        run(*sign, *options, str(path))
++    run(*sign, "--entitlements", entitlements, str(helper))
++    run("codesign", "--verify", "--deep", "--strict", str(helper))
++    manifest = {"architecture": architecture, "oracleVersion": ORACLE_VERSION,
++                "minimumMacOS": deployment, "nativeInputs": inputs,
++                "files": {str(path.relative_to(helper)): digest(path)
++                          for path in sorted(helper.rglob("*")) if path.is_file()}}
++    return helper, manifest
++
++
++def main() -> None:
++    if sys.platform != "darwin":
++        raise ValueError("Oracle macOS packaging requires a macOS host with Xcode.")
++    root = Path(__file__).resolve().parents[3]
++    target = Path(os.environ["TARGET_BUILD_DIR"]).resolve()
++    contents = (target / os.environ["CONTENTS_FOLDER_PATH"]).resolve()
++    if not contents.is_relative_to(target) or contents == target:
++        raise ValueError("The app Contents directory must be inside TARGET_BUILD_DIR.")
++    deployment = os.environ["MACOSX_DEPLOYMENT_TARGET"]
++    version(deployment)
++    architectures = list(dict.fromkeys(os.environ["ARCHS"].split()))
++    if not architectures or any(item not in ARCHITECTURES for item in architectures):
++        raise ValueError(f"Unsupported Xcode architectures: {architectures}")
++    identity = os.environ.get("EXPANDED_CODE_SIGN_IDENTITY") or "-"
++    identifier = os.environ["PRODUCT_BUNDLE_IDENTIFIER"]
++    derived = Path(os.environ["DERIVED_FILE_DIR"]).resolve()
++    derived.mkdir(parents=True, exist_ok=True)
++    helpers = contents / "Helpers"
++    helpers.mkdir(parents=True, exist_ok=True)
++    with tempfile.TemporaryDirectory(prefix="qfli-mysql-", dir=derived) as work:
++        manifests = []
++        staged = []
++        for architecture in architectures:
++            key = f"QFLI_MYSQL_MACOS_{ARCHITECTURES[architecture][1].upper()}"
++            if not os.environ.get(key):
++                raise ValueError(f"Set {key} to the complete Oracle {ORACLE_VERSION} macOS SDK.")
++            sdk = Path(os.environ[key]).resolve(strict=True)
++            helper, manifest = build_helper(root, sdk, Path(work), architecture,
++                                            deployment, identity, identifier)
++            staged.append(helper)
++            manifests.append(manifest)
++        for abi in ("arm64", "x64"):
++            destination = helpers / f"QfliMySql-{abi}.app"
++            if destination.is_symlink() or destination.parent.resolve() != (contents / "Helpers").resolve():
++                raise ValueError(f"Invalid helper destination: {destination}")
++            if destination.exists():
++                shutil.rmtree(destination)
++        for helper in staged:
++            shutil.move(str(helper), helpers / helper.name)
++        resources = contents / "Resources"
++        resources.mkdir(parents=True, exist_ok=True)
++        (resources / "qfli-mysql-runtime.json").write_text(
++            json.dumps({"format": 1, "helpers": manifests}, indent=2) + "\n", encoding="utf-8")
++    print("Oracle macOS helper packaging and signing completed.")
++
++
++if __name__ == "__main__":
++    try:
++        main()
++    except (ValueError, KeyError, OSError, subprocess.CalledProcessError) as error:
++        print(f"Oracle macOS packaging failed: {error}", file=sys.stderr)
++        if isinstance(error, subprocess.CalledProcessError):
++            print(error.output, file=sys.stderr)
++        sys.exit(1)
+diff --git b/native/mysql/macos/fixup.cmake b/native/mysql/macos/fixup.cmake
+new file mode 100644
+index 0000000..805a25c
+--- /dev/null
++++ b/native/mysql/macos/fixup.cmake
+@@ -0,0 +1,28 @@
++cmake_minimum_required(VERSION 3.20)
++if(NOT CMAKE_HOST_APPLE)
++  message(FATAL_ERROR "Oracle helper dependency fixup requires macOS")
++endif()
++set(APPLE TRUE)
++if(NOT IS_DIRECTORY "${HELPER_APP}/Contents" OR NOT IS_DIRECTORY "${ORACLE_HOME}/lib")
++  message(FATAL_ERROR "Pass a staged helper app and complete Oracle distribution")
++endif()
++include(BundleUtilities)
++file(GLOB_RECURSE libraries LIST_DIRECTORIES FALSE
++  "${HELPER_APP}/Contents/Frameworks/*.dylib"
++  "${HELPER_APP}/Contents/Frameworks/*.so"
++  "${HELPER_APP}/Contents/PlugIns/*.dylib"
++  "${HELPER_APP}/Contents/PlugIns/*.so")
++set(search "${ORACLE_HOME}/lib;${ORACLE_HOME}/lib/private;${ORACLE_HOME}/lib/plugin")
++get_bundle_keys("${HELPER_APP}" "${libraries}" "${search}" keys)
++file(REAL_PATH "${HELPER_APP}" helper_root)
++file(REAL_PATH "${ORACLE_HOME}" oracle_root)
++foreach(key IN LISTS keys)
++  file(REAL_PATH "${${key}_RESOLVED_ITEM}" resolved)
++  cmake_path(IS_PREFIX helper_root "${resolved}" NORMALIZE in_helper)
++  cmake_path(IS_PREFIX oracle_root "${resolved}" NORMALIZE in_oracle)
++  if(NOT in_helper AND NOT in_oracle)
++    message(FATAL_ERROR "Oracle dependency must be provided by its SDK: ${resolved}")
++  endif()
++endforeach()
++clear_bundle_keys(keys)
++fixup_bundle("${HELPER_APP}" "${libraries}" "${search}")
+diff --git b/native/mysql/macos/test_bundle.py b/native/mysql/macos/test_bundle.py
+new file mode 100644
+index 0000000..46860f8
+--- /dev/null
++++ b/native/mysql/macos/test_bundle.py
+@@ -0,0 +1,127 @@
++"""Portable validator regressions; these do not execute macOS native code."""
++
++from pathlib import Path
++import struct
++import tempfile
++import unittest
++
++import bundle
++
++
++def packed_version(value):
++    return (value[0] << 16) | (value[1] << 8) | value[2]
++
++
++def string_command(command, value, header=24):
++    value = value.encode() + b"\0"
++    size = (header + len(value) + 7) & ~7
++    return struct.pack("<3I", command, size, header) + bytes(header - 12) + value + bytes(size - header - len(value))
++
++
++def macho(cpu=0x01000007, platform=1, minimum=(10, 15, 0), dependencies=(), rpaths=(), legacy=False):
++    if legacy:
++        commands = [struct.pack("<4I", 0x24, 16, packed_version(minimum), 0)]
++    else:
++        commands = [struct.pack("<6I", 0x32, 24, platform, packed_version(minimum), 0, 0)]
++    commands.extend(string_command(0xC, item) for item in dependencies)
++    commands.extend(string_command(0x8000001C, item, 12) for item in rpaths)
++    data = b"".join(commands)
++    return struct.pack("<8I", 0xFEEDFACF, cpu, 0, 6, len(commands), len(data), 0, 0) + data
++
++
++class NativeValidationTest(unittest.TestCase):
++    def setUp(self):
++        self.temporary = tempfile.TemporaryDirectory()
++        self.root = Path(self.temporary.name)
++        self.contents = self.root / "Helper.app/Contents"
++
++    def tearDown(self):
++        self.temporary.cleanup()
++
++    def write(self, name, data):
++        path = self.contents / name
++        path.parent.mkdir(parents=True, exist_ok=True)
++        path.write_bytes(data)
++        return path
++
++    def test_current_and_legacy_macos_headers(self):
++        for legacy in (False, True):
++            path = self.write("Frameworks/client.dylib", macho(legacy=legacy))
++            self.assertEqual(bundle.validate_target(path, "x86_64", "10.15")["minimums"], [(10, 15, 0)])
++
++    def test_arm64_and_rosetta_architectures_are_separate(self):
++        path = self.write("Frameworks/client.dylib", macho(cpu=0x0100000C, minimum=(11, 0, 0)))
++        bundle.validate_target(path, "arm64", "11.0")
++        with self.assertRaisesRegex(ValueError, "Wrong architecture"):
++            bundle.validate_target(path, "x86_64", "11.0")
++
++    def test_newer_sdk_minimum_os_is_rejected(self):
++        path = self.write("Frameworks/client.dylib", macho(minimum=(14, 0, 0)))
++        with self.assertRaisesRegex(ValueError, "newer OS"):
++            bundle.validate_target(path, "x86_64", "10.15")
++
++    def test_ios_binary_is_rejected(self):
++        path = self.write("Frameworks/client.dylib", macho(platform=2))
++        with self.assertRaisesRegex(ValueError, "Not a macOS"):
++            bundle.validate_target(path, "x86_64", "10.15")
++
++    def test_truncated_and_malformed_load_commands_are_rejected(self):
++        good = macho()
++        oversized = bytearray(good)
++        struct.pack_into("<I", oversized, 36, 80)
++        for data in (good[:-1], good[:20], bytes(oversized)):
++            with self.subTest(data=data):
++                path = self.write("Frameworks/client.dylib", data)
++                with self.assertRaises(ValueError):
++                    bundle.read_macho(path)
++
++    def test_invalid_dylib_string_is_rejected(self):
++        data = bytearray(macho(dependencies=("@loader_path/dependency.dylib",)))
++        struct.pack_into("<I", data, 32 + 24 + 8, 4)
++        path = self.write("Frameworks/client.dylib", data)
++        with self.assertRaisesRegex(ValueError, "string offset"):
++            bundle.read_macho(path)
++
++    def test_launcher_plugins_and_ffi_use_loader_relative_closure(self):
++        self.write("Frameworks/client.dylib", macho(dependencies=("/usr/lib/libSystem.B.dylib",)))
++        for name, dependency in (("MacOS/mysqld", "@loader_path/../Frameworks/client.dylib"),
++                                 ("PlugIns/plugin.so", "@loader_path/../Frameworks/client.dylib"),
++                                 ("Frameworks/bridge.dylib", "@loader_path/client.dylib")):
++            self.write(name, macho(dependencies=(dependency,)))
++        self.assertEqual(len(bundle.validate_closure(self.contents, "x86_64", "10.15")), 4)
++
++    def test_outer_executable_relative_and_rpath_dependencies_fail_final_validation(self):
++        for dependency in ("@executable_path/../Frameworks/client.dylib", "@rpath/client.dylib"):
++            self.write("Frameworks/bridge.dylib", macho(dependencies=(dependency,)))
++            with self.assertRaisesRegex(ValueError, "Non-loader-relative"):
++                bundle.validate_closure(self.contents, "x86_64", "10.15")
++        self.write("Frameworks/bridge.dylib", macho(rpaths=("/opt/homebrew/lib",)))
++        with self.assertRaisesRegex(ValueError, "RPATH"):
++            bundle.validate_closure(self.contents, "x86_64", "10.15")
++
++    def test_dependency_cannot_escape_helper(self):
++        (self.root / "external.dylib").write_bytes(macho())
++        self.write("Frameworks/bridge.dylib", macho(dependencies=("@loader_path/../../../../external.dylib",)))
++        with self.assertRaisesRegex(ValueError, "Unresolved or external"):
++            bundle.validate_closure(self.contents, "x86_64", "10.15")
++
++    def test_data_file_is_not_a_native_dependency(self):
++        self.write("Frameworks/client.dylib", b"not a library")
++        self.write("Frameworks/bridge.dylib", macho(dependencies=("@loader_path/client.dylib",)))
++        with self.assertRaisesRegex(ValueError, "not packaged native code"):
++            bundle.validate_closure(self.contents, "x86_64", "10.15")
++
++    def test_dependency_resolution_before_relocation(self):
++        dependency = self.write("Frameworks/client.dylib", macho())
++        loader = self.write("MacOS/mysqld", macho())
++        result = bundle.dependency_path("@rpath/client.dylib", loader, self.contents,
++                                        ["@executable_path/../Frameworks"])
++        self.assertEqual(result, dependency.resolve())
++
++    def test_system_path_prefix_cannot_hide_parent_components(self):
++        self.assertTrue(bundle.is_system("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation"))
++        self.assertFalse(bundle.is_system("/System/Library/../../external.dylib"))
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/test/mysql_desktop_database_test.dart b/test/mysql_desktop_database_test.dart
+index 13d0c22..5ee46e4 100644
+--- a/test/mysql_desktop_database_test.dart
++++ b/test/mysql_desktop_database_test.dart
+@@ -24,7 +24,7 @@ void main() {
+             Platform.isWindows ? 'bin' : 'lib',
+             Platform.isWindows
+                 ? 'qfli_mysql_bridge.dll'
+-                : 'libqfli_mysql_bridge.so',
++                : 'libqfli_mysql_bridge.${Platform.isMacOS ? 'dylib' : 'so'}',
+           ),
+           launcherPath: p.join(
+             bundle,
+@@ -34,6 +34,9 @@ void main() {
+                 : 'qfli_mysql_launcher',
+           ),
+           serverUser: Platform.environment['QFLI_MYSQL_TEST_USER'],
++          serverPath: Platform.environment['QFLI_MYSQL_TEST_SERVER'],
++          pluginDirectory:
++              Platform.environment['QFLI_MYSQL_TEST_PLUGIN_DIRECTORY'],
+         );
+         database = NativeMySqlDatabase(runtime: runtime);
+       });

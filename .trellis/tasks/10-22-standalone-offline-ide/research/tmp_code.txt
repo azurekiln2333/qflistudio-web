@@ -1,0 +1,174 @@
+============================== html-example-145
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>attachShadow 样式作用域</title>
+  <style>badge-chip span { color: red; }</style>
+</head>
+<body>
+  <badge-chip id="chip"><span slot="label">离线</span></badge-chip>
+  <p id="state">等待探测</p>
+  <script>
+    var chip = document.getElementById('chip');
+    var root = chip.attachShadow({ mode: "open" });
+    root.innerHTML = "<style>" +
+      ":host { display: inline-block; border-radius: 999px; padding: 2px 10px; background: #e8f0fe; }" +
+      "::slotted(span) { font-weight: 700; letter-spacing: 1px; }" +
+      "</style><slot name="label"></slot>";
+    var slotted = chip.querySelector('span');
+    var hostStyle = getComputedStyle(chip);
+    var slotStyle = getComputedStyle(slotted);
+    document.getElementById('state').textContent =
+      'mode=' + root.mode +
+      ' / host 背景=' + hostStyle.backgroundColor +
+      ' / host 圆角=' + hostStyle.borderTopLeftRadius +
+      ' / slotted 字重=' + slotStyle.fontWeight +
+      ' / 外部红色样式是否穿透=' + (slotStyle.color === 'rgb(255, 0, 0)') +
+      ' / light DOM 保留=' + (chip.querySelectorAll('span').length === 1);
+  </script>
+  <output id="webforge-check" hidden>ok</output>
+</body>
+</html>
+============================== html-example-160
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>离线工单面板</title>
+  <style>
+    body { font-family: sans-serif; }
+    table { border-collapse: collapse; }
+    th, td { border: 1px solid #c8cdd4; padding: 4px 8px; text-align: left; }
+    #title-error { color: #d93025; }
+    [popover] { border: 1px solid #c8cdd4; border-radius: 8px; padding: 10px 14px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>离线工单面板</h1>
+    <form id="ticket" novalidate>
+      <p>
+        <label for="title">工单标题</label>
+        <input id="title" name="title" required aria-describedby="title-help" aria-errormessage="title-error">
+      </p>
+      <p id="title-help">标题会保存到本地工单表。</p>
+      <p id="title-error" hidden></p>
+      <p><button type="submit" id="add">添加工单</button></p>
+    </form>
+    <p id="status" role="status" aria-live="polite">共 0 条工单</p>
+    <table id="board">
+      <caption>本地工单</caption>
+      <thead><tr><th scope="col">编号</th><th scope="col">标题</th><th scope="col">状态</th></tr></thead>
+      <tbody id="rows"></tbody>
+      <tfoot><tr><th scope="row">合计</th><td id="total" colspan="2">0</td></tr></tfoot>
+    </table>
+    <details name="panel" open>
+      <summary>如何离线保存？</summary>
+      <p>数据只写入本地存储，不会访问网络。</p>
+    </details>
+    <p><button type="button" id="open-help" popovertarget="help">查看帮助</button></p>
+    <div id="help" popover>
+      <p>离线工单面板不会发送任何网络请求。</p>
+      <button type="button" id="close-help" popovertarget="help" popovertargetaction="hide">关闭</button>
+    </div>
+    <p id="state">等待探测</p>
+  </main>
+  <script>
+    var form = document.getElementById('ticket');
+    var title = document.getElementById('title');
+    var error = document.getElementById('title-error');
+    var rows = document.getElementById('rows');
+    var total = document.getElementById('total');
+    var status = document.getElementById('status');
+    var count = 0;
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      var invalid = title.value.trim() === '';
+      title.setAttribute('aria-invalid', String(invalid));
+      error.hidden = !invalid;
+      error.textContent = invalid ? '标题不能为空' : '';
+      if (invalid) {
+        title.focus();
+        document.getElementById('state').textContent = '校验失败，焦点=' + document.activeElement.id;
+        return;
+      }
+      count++;
+      var row = document.createElement('tr');
+      var idCell = document.createElement('td');
+      idCell.textContent = 'T-' + count;
+      var titleCell = document.createElement('td');
+      titleCell.textContent = title.value.trim();
+      var stateCell = document.createElement('td');
+      stateCell.textContent = '待处理';
+      row.appendChild(idCell);
+      row.appendChild(titleCell);
+      row.appendChild(stateCell);
+      rows.appendChild(row);
+      total.textContent = String(count);
+      status.textContent = '共 ' + count + ' 条工单';
+      title.value = '';
+      document.getElementById('state').textContent = '已添加 / 行数=' + rows.children.length + ' / 合计=' + total.textContent;
+    });
+    document.getElementById('state').textContent =
+      '初始行数=' + rows.children.length + ' / 合计=' + total.textContent +
+      ' / 播报区=' + status.getAttribute('role') +
+      ' / 折叠组=' + document.querySelector('details[name='panel']').getAttribute('name');
+  </script>
+  <output id="webforge-check" hidden>ok</output>
+</body>
+</html>
+============================== html-example-119
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>图片提交按钮</title></head>
+<body>
+  <form id="pick" action="#hit">
+    <p>点击下图不同位置提交，坐标会写进表单数据。</p>
+    <input type="image" id="map" name="spot" alt="选择位置" width="160" height="80"
+      src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27160%27 height=%2780%27%3E%3Crect width=%27160%27 height=%2780%27 fill=%27%23e8f0fe%27/%3E%3Ccircle cx=%2780%27 cy=%2740%27 r=%2724%27 fill=%27%231a73e8%27/%3E%3C/svg%3E">
+  </form>
+  <p id="state">尚未提交</p>
+  <script>
+    var form = document.getElementById('pick');
+    var map = document.getElementById('map');
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      document.getElementById('state').textContent =
+        'submitter 是图片按钮=' + (event.submitter === map) +
+        ' / type=' + map.type +
+        ' / name.x 会随提交发送=' + (map.name + '.x');
+    });
+    document.getElementById('meta').textContent =
+      'naturalWidth=' + map.naturalWidth + ' / complete=' + map.complete +
+      ' / form 关联=' + (map.form === form);
+  </script>
+  <p id="meta">等待探测</p>
+  <output id="webforge-check" hidden>ok</output>
+</body>
+</html>
+============================== html-example-102
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>search 地标</title></head>
+<body>
+  <header><h1>我的文档库</h1></header>
+  <search id="site-search">
+    <form action="#results">
+      <label for="q">站内搜索</label>
+      <input id="q" name="q" type="search" value="离线" autocomplete="off">
+      <button type="button" id="run">筛选</button>
+    </form>
+  </search>
+  <p id="status">等待筛选</p>
+  <p id="results">离线优先 · 离线缓存 · 离线包</p>
+  <script>
+    var input = document.getElementById('q');
+    var status = document.getElementById('status');
+    document.getElementById('run').addEventListener('click', function () {
+      status.textContent = input.value ? '关键词：' + input.value : '关键词为空';
+    });
+  </script>
+  <output id="webforge-check" hidden>ok</output>
+</body>
+</html>

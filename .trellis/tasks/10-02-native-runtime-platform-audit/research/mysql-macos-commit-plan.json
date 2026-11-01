@@ -1,0 +1,30 @@
+{
+  "repository": "D:/MyNewProjects/qfli_sql",
+  "message": "feat(mysql): integrate signed Oracle helpers into macOS builds",
+  "ownership": "All 15 paths were clean or absent before this slice. Applied with a checked patch; existing selector/cloud/OHOS changes are excluded.",
+  "status": "Applied, verified on available host paths, uncommitted pending the project-required plan confirmation.",
+  "paths": [
+    ".trellis/spec/backend/index.md",
+    ".trellis/spec/backend/mysql-desktop-runtime.md",
+    "lib/local_mysql_runtime.dart",
+    "macos/Runner.xcodeproj/project.pbxproj",
+    "macos/Runner/DebugProfile.entitlements",
+    "macos/Runner/Release.entitlements",
+    "native/mysql/desktop/CMakeLists.txt",
+    "native/mysql/desktop/README.md",
+    "native/mysql/desktop/runtime_test.dart",
+    "test/mysql_desktop_database_test.dart",
+    "native/mysql/macos/bundle.py",
+    "native/mysql/macos/fixup.cmake",
+    "native/mysql/macos/Helper.entitlements",
+    "native/mysql/macos/test_bundle.py",
+    "native/mysql/macos/README.md"
+  ],
+  "verification": {
+    "packagingValidators": "12/12 portable tests; no Apple execution claim",
+    "windowsOracleLifecycle": "11/11 actual Oracle checks with explicit pluginDirectory injection",
+    "analysis": "Changed owning Dart source has no issues",
+    "owningFlutterTests": "51/51 passed with real Windows Oracle and SQLite libraries; no skips",
+    "apple": "Skipped: no macOS, Xcode or verified Oracle macOS SDK inputs"
+  }
+}

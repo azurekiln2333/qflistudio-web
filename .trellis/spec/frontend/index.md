@@ -13,11 +13,13 @@
 | [Component Guidelines](./component-guidelines.md) | Widget structure, props, async guards, a11y | Implemented |
 | [State Management](./state-management.md) | Store injection, local state, config persistence | Implemented |
 | [Quality Guidelines](./quality-guidelines.md) | Widget-test pattern, forbidden patterns, review checklist | Implemented |
+| [Native Startup](./native-startup.md) | OHOS ArkUI loading layer, progress bridge, first-frame handoff | Implemented |
 | [Content Imports](./content-import.md) | MD3 catalogs, custom filenames, editor and project imports | Implemented |
 | [Offline Web Tools](./offline-web-tools.md) | Inline tools, bounded inspection and semantic formatting | Implemented |
 
 ## Pre-Development Checklist
 
+- Entry point or OHOS startup UI → read [Native Startup](./native-startup.md).
 - New or changed screen → read
   [Directory Structure](./directory-structure.md) and
   [Component Guidelines](./component-guidelines.md).

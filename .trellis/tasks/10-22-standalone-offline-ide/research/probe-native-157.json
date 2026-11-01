@@ -1,0 +1,27 @@
+{
+ "pre": {
+  "docSH": 1990,
+  "bodySH": 1616,
+  "innerH": 1990,
+  "innerW": 980,
+  "scrollY": 0,
+  "outerScrollH": 600,
+  "outerClientH": 200,
+  "tallH": 1600.0001220703125,
+  "bodyMargin": "0px"
+ },
+ "outerBox": {
+  "x": 300,
+  "y": 40,
+  "width": 260,
+  "height": 200.00001525878906
+ },
+ "before": {
+  "y": 0,
+  "top": 400
+ },
+ "after": {
+  "y": 0,
+  "top": 400
+ }
+}

@@ -1,0 +1,922 @@
+﻿[
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\app.dart",
+        "sha256":  "E1763DE75DE969A92FE039719D2846DAA7456F2DD8D171854FF8020D2D19B59F"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\community\\community_widgets.dart",
+        "sha256":  "167D28C1BC42ABC8EDDAF7BB3D1C2BD900F4BBD1635E441E447220E92CE3E021"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\community\\models.dart",
+        "sha256":  "FC4434966754A22D05E4A4B66CCA532D2C1429EB65F41D86BDE6ED8AC04054B1"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\config\\agreement_config.dart",
+        "sha256":  "8B9FB9AB3754C91D4AC36A9EB6180E1C8C048146FFCA63A708A34E6F248ADA7A"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\config\\api_config.dart",
+        "sha256":  "B792FA4A527F81799CF5B22905898A426B7771965D13B46E59555FFDF2BF6A24"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\config\\compliance_config.dart",
+        "sha256":  "D137D991BD91A990E45DF6E363DBA0E793932155A818E4B7C42CFB368488AE83"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\content\\asset_content_repository.dart",
+        "sha256":  "2664C50AE2425F6D4A20AEE695855489597C8B3A53035C36E9F48401D768311A"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\content\\content_repository.dart",
+        "sha256":  "CC76CA9E78795858A20B1F4049F37BB8FB7C8C180F1B901181AADA472F67AB6B"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\content\\content_validator.dart",
+        "sha256":  "52CC58A2384283CECBFDAD4C37627B26D597EF1870C3119A5D4AB6D7AB12AA24"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\content\\java_catalog_audit.dart",
+        "sha256":  "985D81FD95237C4CFE9D7724A1DEECFACADE3D895BA34CC9BF5F48A75DB23B29"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\content\\local_content_adapter.dart",
+        "sha256":  "550F0156A9FA39C9853EEA7C867B3CE53913D0AFA3150655F69C19902C4D8416"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\ai_panel.dart",
+        "sha256":  "CF771223C30311CD8029A327F1EAE04D9EB5C6A17EC17FE304CF2D89500F5FE1"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\code_minimap.dart",
+        "sha256":  "5F888B8811DA014C47B31D3F16F46A6934DAAAE76A4FB6326AA9EAE60D0F38D7"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\editor_analysis_controller.dart",
+        "sha256":  "7B6E83E668C7EB3ABE8B6B2B127BFF39F52F32D5BB0C21FB0CA8F8B0113BE20B"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\editor_controller.dart",
+        "sha256":  "1F5C479936575046F6AF374E1D41538B00C69AF93124B0B0781A2C6D400311F2"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\editor_debug_controller.dart",
+        "sha256":  "4233D340F30AE39C152AF31975E425FAC016F7F4FB63D009C19DDAEA1AE2B0D9"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\editor_debug_widgets.dart",
+        "sha256":  "B14CABF2E93EADA57C011D5935E8D0D531CA0358F6B1281DCBC8B48FA647A521"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\editor_delete_fix.dart",
+        "sha256":  "4603F7E32AF5131F3167D478ADE1517CFBCA247096EF246402866285AA20FA50"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\editor_diagnostics.dart",
+        "sha256":  "0627318DBEB531B3CA3F6EEF60397E41E8E24CE959AEB2F0AA4AC240DF0BDB2D"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\editor_find_panel.dart",
+        "sha256":  "2796AD68FF8B0538E0252C33B6EBBB9FD3F8427AF46882D5BC6ED6A1551CD030"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\editor_fonts.dart",
+        "sha256":  "45289EAF519FF1B1296B938529E4B4EDDAD9A2DCC1FACCD028D18E31B4A36566"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\editor_output_panel.dart",
+        "sha256":  "145D59D02F7A8117A639DF8DB117B8CD7EDCD6ED98528608ABF77BA9A035E2AE"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\editor_page.dart",
+        "sha256":  "8549C7E4D00692C27876636D436811100A231D04CB842F263D50EAAAB7C07CA4"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\editor_page_diag.dart",
+        "sha256":  "30011950D83211432E89E5EA297920C6F7C48CEB64675B43427CCF9DDBC702A3"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\editor_problems_bar.dart",
+        "sha256":  "DAFBFC6AEC077AFB715484861198D269B564A2BF248BB13A78EEA7C184FD470F"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\editor_selection_toolbar.dart",
+        "sha256":  "F8E08255AA2F0BD9FBF5FF0A2DCB6D58E139C433A257C433CD2775C6C898FA98"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\file_explorer.dart",
+        "sha256":  "6B99AD68A789E2A20D4F49F54CCBF9FA193E9ECA852E34A8976BF0B13353A661"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\highlight_import.dart",
+        "sha256":  "C855D07F12629A5F169D4E7BA00A3B608556ECF70CACCCB799CF9F2C96BDF59B"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\highlight_themes.dart",
+        "sha256":  "63D1655D1218FAA739DBC44776AA7E8D8E82230223B0C6822822A1CC6F04BA24"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\new_file_dialog.dart",
+        "sha256":  "A55258542AB1EEBBBBDF609C0F499F5614113478C9BB12C550DA20A8027B8A91"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\open_file.dart",
+        "sha256":  "63A1EC0A81EFBF3A97930E7793E12E6B7AB510D06B77DE7CDC464790C278B4AD"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\open_performance.dart",
+        "sha256":  "26C13DA1335357E37C44A62B16EAEBCC8254745F7A48467DE3344AA7FCFA958D"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\project_history.dart",
+        "sha256":  "D90E00A4A0ED7F92729DC1D19AAC4331ED035CA881AFC6924CE669AAC3337EBA"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\retained_editor_host.dart",
+        "sha256":  "58D91921B177173842222F1D2AECB1261F73633ABE3A8FEFEB4AE33F27E8BA78"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\retained_editor_restore_control.dart",
+        "sha256":  "071F76E9931CAA33F1641B867D9B10A0783B06B6865FBC85D0A3E3D703E87AAE"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\symbols_bar.dart",
+        "sha256":  "76AE9A0DF2622B98C10E986B81418E87A4B1B0DCF9CD9330C7E85A6991245E6A"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\terminal_pane.dart",
+        "sha256":  "023242FD0BB0BA1EA9165C898C9DC799EECA67974E5D993D841A38AA48FC6EFF"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\editor\\textmate_grammar.dart",
+        "sha256":  "A22DD8CE2D2682030CB354F8AB824564FCED68EACD2E0B63D49BC434035E7ABD"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\i18n\\studio_localizations.dart",
+        "sha256":  "C5DC5A1F003F4925BF6B752928DD63577CBC79EE8617E5DC24AA0706BE30B5B0"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\models\\project.dart",
+        "sha256":  "40158E234E8AA7129B87BB8FD7000E6CF67C121A15A994886ADEAA556F15A45C"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\models\\tutorial.dart",
+        "sha256":  "108CD796F1B25E45080CF05424794272D45286B24AE867CF7E985053BF6D5CD1"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\about_page.dart",
+        "sha256":  "8893B2487706A9F5A35B4C92CDB295936B4FA5F232534B35058B8F4E1AAC9489"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\activity_stats_page.dart",
+        "sha256":  "D0F5001D09D55E95132D5FA87C470E299649203BC3F009A5A47B5718397CAF32"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\audit_page.dart",
+        "sha256":  "126A55727BEA0F09142CF7100FC5F30CDB8CACE1F12443071D7203FDE253A8EE"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\auth\\account_login_page.dart",
+        "sha256":  "F488A59B92D19A1265C5A23BC189988679A5F8DB1C7FB0D72D694D18418A1C98"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\auth\\agreement_page.dart",
+        "sha256":  "4D49FC94F9403016E0E348A752BA8DBFFED3E8FD5BAD0048A1E7AC84B8F558B0"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\auth\\captcha_dialog.dart",
+        "sha256":  "D74CACA507CC360CFE70309C98CC0DA7B19077768625CFF709497D6D1B5AC4FA"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\auth\\gateway_captcha_field.dart",
+        "sha256":  "3370602193B9ABCD71D6AE2FF38DBD66AC8A0B492FEBEF5E31122F9A081A834B"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\auth\\huawei_quick_login_view.dart",
+        "sha256":  "50429961BF532C58B5C044EBBAE515114AA7562495113B35E9D74F9571A8B276"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\auth\\login_page.dart",
+        "sha256":  "054E3E702667697E9A1E7D6487FA1D723DDBA05E6554B0C020574E5D6918C08B"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\auth\\register_page.dart",
+        "sha256":  "F9FEAAB675A451D961B9219573467461ABD802187314BB454C3A39C2F8A26BF9"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\auth\\second_factor_dialog.dart",
+        "sha256":  "E5B24FE377B320B1603C2A4A246B536397AD24A8A26F1C1652752ADA9D17D775"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\checkin_calendar_page.dart",
+        "sha256":  "3BABA059E08E46CD939143E1CE05AFC233738CBB87BAC38B0DB6C8E6B852D420"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\community\\post_detail_page.dart",
+        "sha256":  "6A664C908C393CD19CFCA2C623F8DA452CD51C8C5908B2ED79D91F799BB65241"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\community\\post_list_page.dart",
+        "sha256":  "5B7874FD0F15690CE87688FEB9822F0A667E749C5A2973DC0B6415945517B996"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\community\\publish_page.dart",
+        "sha256":  "9B7A911F8BCC7ED6FBDC112671924C93252B1D4383EF1751E9BBAFB2CED2493C"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\content_tools_pages.dart",
+        "sha256":  "A8479EBAE0B41BB80477423A61B043AD7D85513B417C7841AF22DAEA934A6926"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\editor_font_settings_page.dart",
+        "sha256":  "7433C51ABAA62599EBE32B0B0FA2B6F581369FC6FD029AED10A239FF706F45A0"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\file_history_page.dart",
+        "sha256":  "0BFC6C327A1B25C6740F684F2E6DA97A5C605B5435CCD64EACDA005F70FAD667"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\git_page.dart",
+        "sha256":  "8DBC59458CCBB7048CD7489D39F8F2212F03F19C33C877F0B72A94C29E751B20"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\highlight_settings_page.dart",
+        "sha256":  "77C887C8C0F6745559CED3F007E3B78583D97279FC50396E24672C0D44A1BC8C"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\home_page.dart",
+        "sha256":  "84CDFC0F3E6FD16C001E2200B45447A470FE66E7EFF363BBB54773F02085BE3C"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\local_content_pages.dart",
+        "sha256":  "82D0BE20BF537410BD1B37C10372AB9B781A3A4F61708BAF8EA166B1D45652B6"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\local_stats_audit_pages.dart",
+        "sha256":  "72C1611810AF87B31C3D594EB708B7F350B2A7261393F378185A47267048AE15"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\my_posts_page.dart",
+        "sha256":  "D3A32125EFB8AE0F8C8B037196D7C8C8AB833CEF916FA9307F0498BB479DCC75"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\offline_text_tool_pages.dart",
+        "sha256":  "217AC3CDDE8F320604C144BE6D36E9FF315619603920E2B04D7B53D54C8D5ED2"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\offline_tool_pages.dart",
+        "sha256":  "E4573B691D6423D59686C6D08FD0C361B3F144605F6CB95DD7CBA5D4901425F1"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\online_terminal_page.dart",
+        "sha256":  "9B7641428BA32A6D261E0F86F8D2340796F2F6BC7CE7D8F40DD6229DD502219D"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\points_page.dart",
+        "sha256":  "41C0EB63CBD0BBB3F3367E8D5F0478DE1BBB47103C6BE8E360D14930D54E0AB7"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\profile_page.dart",
+        "sha256":  "6A7B66FE8092D77AC7DC11D66CE43D6DBA34B5E3E217316E2BE0135441631E34"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\quick_tools_page.dart",
+        "sha256":  "DDD3FF649D3BF0618422943B021D82798BE0ECEE983B5A30A4B11FEA72390F92"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\recovery_page.dart",
+        "sha256":  "A0581FFEF76A59A2A5E078E141687AE146D2A083940951161D75FB9EE26878EB"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\restore_complete_page.dart",
+        "sha256":  "D7029BB5F8F6347CD95E4B352DFDD46167CBDDE62D737098E10D94657DE3B6D1"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\settings_page.dart",
+        "sha256":  "1D5F8A48A1A87DCA96446C68F21D01E0A2DEBFFD28ACE1A11B5F72C1BC2F3B63"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\task_config_page.dart",
+        "sha256":  "A067F1F8FD07289A4A9552D512891A1CB538E89DCCBE9711686039642F277883"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\tasks_page.dart",
+        "sha256":  "2A65482B0AF228656896CB4C236F5DCCD569115DBFCC67F9BD64F042077FE61F"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\terminax_terminal_page.dart",
+        "sha256":  "BE16B11A500876693ABCA667D905DE46B3DF4F283BC4FF37EA07598EA2CA6E35"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\pages\\tools_grid.dart",
+        "sha256":  "B12C17A4B58E70CBD8165D880249BEF2D969F74F1FFF8B06911A57406C8A89E1"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\runtime\\native_runtime.dart",
+        "sha256":  "3D4DF20174432F9FFB3312BF4C529BE9425BFBBF5EDE50EA579CDC1DA4BA5852"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\ai_service.dart",
+        "sha256":  "829B73CE5AA90577F5B460E5DE6248A5D47F8851222BCAEB2535766D71554BEA"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\api_client.dart",
+        "sha256":  "14B4CFC1B7DBA45B346FF3E88A7596AC52865C80A65E5E380999D58488ABAA45"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\app_backup_codec.dart",
+        "sha256":  "0022ABE8EB2081BDEAF1335C9C7565333013D9FDBBFA868FADFCC5D90E4A4526"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\app_backup_service.dart",
+        "sha256":  "A78D6B32451768A6794946F7FA43AE6C724923B508D14785CEC8EFD301BC9024"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\app_paths.dart",
+        "sha256":  "A16EFF0376123DC467C7CF638BF55AB19E584305174F80D954CA82A7C20EDB69"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\app_private_roots.dart",
+        "sha256":  "8225927534EB562F78258BCFB40019DB1DB60414B22F09B2087D83413E170CC3"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\app_restore_gate.dart",
+        "sha256":  "3E8CD6C60E4D72BC3E8BE7339DD4DDDC3DC7AAD74DB1CA7290D554479CD82E78"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\avatar_cache.dart",
+        "sha256":  "8F2EE0D7D6CE8A0A92286148B6F481580BECAF85D388DE74F1A624C8ECADD9AC"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\cloud_sql.dart",
+        "sha256":  "C10F7196849B1627899801DF5DD21719C32A6B5A5182A9D3920C8DEA15B3FA1B"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\cloud_sync_service.dart",
+        "sha256":  "A74ED7993F381B692B13B5B71695E11982A4ED0D8821AD574048F0BDF67A097E"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\code_analysis.dart",
+        "sha256":  "27A0F58E0F49750559EFE9ADBAAE3A6573BBF05B138F22BCA01B3A37117792E6"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\code_formatter.dart",
+        "sha256":  "ED8969D809B90CC2F4E4F270C542A0C1545CB0B450B00A05CEBEFD368F00CFE3"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\code_import_service.dart",
+        "sha256":  "80DA1DB4AC31A9F56576E9F48FFDC2971D621F852280516157BED0A293D7FE19"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\debug_session.dart",
+        "sha256":  "1A4BD5D1CB83906B7D8D1C9404F2D5C7AEC54A9EE2EA556A93DCC633A80FF81B"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\demo_run_service.dart",
+        "sha256":  "4FF12CDA2FC4CCE396708181999AF4598D1683DDEB69C0CEB9ADF3B476CB9BE0"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\example_code_store.dart",
+        "sha256":  "32108D4EE879C5C0EB0511627270D169BE0EC297E0C470A1F9AD06249F57EFE8"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\example_input_fixtures.dart",
+        "sha256":  "FB60CB6A30B83E34F40AE6E01630AE86CA90AD32B4BB444F142F080C454FE7A6"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\file_backup.dart",
+        "sha256":  "7C05E6D61A307D9CDEA4FA6825DDC1F64EDB5490103D206A29F2AEAA5E7F1044"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\file_encoding.dart",
+        "sha256":  "92C35F2466EF7D446E720CEE2B079BAF1B7A47231F6775A50FF09037A322FE49"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\file_service.dart",
+        "sha256":  "7A56D33D8BF52C7096798BBCAFA16C97C82FB09B3EFE06A813D1A74AC6639A08"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\git_service.dart",
+        "sha256":  "06B9C15A16CE74B473FE21A20ABB46804BB41711C70CDE73313B6D336575E2D9"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\go_source_file_name.dart",
+        "sha256":  "6B07833E080E7A6E18D1F7F568C5D748245E386BBA9250082A40292EC89311B7"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\java_source_renamer.dart",
+        "sha256":  "76F92F985BBFC1C8DDAB9CB092C64ACE3E2807FC1F53B6A09A9F783DF0D556BA"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\local_audit_service.dart",
+        "sha256":  "9D617D9C31917FEA3F1762000D145A60DE563CFDED00BBF7ED67750D51C5873B"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\local_stats_service.dart",
+        "sha256":  "05897DDC16B6E8B566581D0EB178ED88C39B4AACB3BAACF0D1E5A9825619D403"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\local_store_backend.dart",
+        "sha256":  "5FBE5BA71DE776DF1211ABF00FD8454F92926F2E7B4CB67738B2C38A068B953C"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\local_web_server.dart",
+        "sha256":  "CE58DD337F8561CD2025D0D6F800BC237DE11CE32C8E009BBED5F06E11480BFB"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\online_program.dart",
+        "sha256":  "016854CCD2C740B591C7A9A372F154D3A045A6F6B701A390E2B7D9123D94C4A5"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\picker_service.dart",
+        "sha256":  "8B7B489F7A1E0D532C1BD1496702AF6D4D24F926BF7F1912153F50FE51E39FA0"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\points_feed.dart",
+        "sha256":  "3E95BBD7CD114F9ECCFAAAEAEBD2ECFFE35194E96B7984F2858F728DB76873D3"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\process_identity_ffi.dart",
+        "sha256":  "789CECF0158B6E1A6863E7615694D2DB8A1906A0DF1302383C470CF1D548EA48"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\process_identity_stub.dart",
+        "sha256":  "4A47A0970D3764220AA1CCBCA6BC7D0857113279A7EB4A928B32F4DDE975310C"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\process_supervisor.dart",
+        "sha256":  "25BA430CE7C0A6E2740C506CE6B0319EEECD31C90A3DC20B53A005861D8F54A1"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\project_archive_service.dart",
+        "sha256":  "E1D9B9178620FDD1034FF4D24732A6C809AAB7723E733A1707280D5F5C27BC2F"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\project_config.dart",
+        "sha256":  "1B9F38C37F80086A5DC48F05EAD80990B6DD2474B6673F06CA79387554636B4D"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\project_templates.dart",
+        "sha256":  "D0EC981974BBAA559DCA3A3141F7A0967BB1E3162A6C6F498EE508BDFD7E5449"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\project_zip_service.dart",
+        "sha256":  "26E976E1761843CA311021A994E7EFD83C47F20A89F53CE86CEBBC27FF3A6032"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\recovery_service.dart",
+        "sha256":  "77DCEADEAB9B6846088E3D75C60B1FD7B1D05771C41118BB1577C081F753A1CD"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\recycle_bin.dart",
+        "sha256":  "008C460CCC7CECE279C71BA993320F40AD95B282631311231BB6D220D896D3A9"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\resource_import_service.dart",
+        "sha256":  "80AD249FB6C95169814774C3FBD3D5E8FDCE4F693884D7AF5E66644A3ADC8985"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\runner_service.dart",
+        "sha256":  "27CC66E548522AEC67091EF83831C0EA9BFAD63C3CFD30C0DEB42CD419A8A650"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\share_service.dart",
+        "sha256":  "508632329A0CA4E82ED3993E18467985E256737C25869041B36C6AD7EE4BA2B3"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\structured_content_service.dart",
+        "sha256":  "D5FBCE71E76BBF3EC59DDE489D7C692F55D0AC0AC0F3D19BA8935C7A33BF61C2"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\studio_profile.dart",
+        "sha256":  "0368FE6860309229369814DEDD656EC370F47D2DB7F6F3D9E0141CD5CDA9C81C"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\task_activity_service.dart",
+        "sha256":  "D0675696EBA2551360809658BB1A89957EE029BC0FA2F1A989D83F2FB2E18EA7"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\tutorial_service.dart",
+        "sha256":  "3B70CF8CA98B55DD10CC8E02221642C26BEA3FFA320C5A66048BEF86BC8CD19E"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\services\\web_preview_file.dart",
+        "sha256":  "6DB2AA3152DAAC82F2E805A3B146F39E9F8691246E382CCF48AFFA32E38492E6"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\splash_screen.dart",
+        "sha256":  "B179378CAC3E057EC67D6038F60ADDF2C30B35589F958E141EAA6491BFEFCF2B"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\store\\auth_store.dart",
+        "sha256":  "81D3EDFCE6EDA4524FAABE9C76543396343DC016FBCA756389FE6BCCA811BF95"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\store\\project_store.dart",
+        "sha256":  "3C01D88492ACDE965CB12EBBF0C5184670D65507A172F4CDF8F44B25816A047E"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\store\\settings_store.dart",
+        "sha256":  "CD9CE506EBBB9D4140AA158EAFFDC70254999A588BB54EB749287312160F29A5"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\terminal\\models\\terminal_session.dart",
+        "sha256":  "004AC4358A961CEF81E3F5AFE1493981814E839D0C2B4C0AED76DD64E828EC43"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\terminal\\shell\\ansi.dart",
+        "sha256":  "9010A7C92BF73028B383B5BD981B9E8F1AD9995645FA2488D796481D7CD08AF2"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\terminal\\shell\\command_parser.dart",
+        "sha256":  "D33D87EC016734093E3DE3E6A6501FDB075F8123FF63740DBC85FBC673F04CF9"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\terminal\\shell\\local_shell.dart",
+        "sha256":  "5D9ED94AF5C0F5F2392EC1FDDBBEEAFB557AEDCBEDE757928AD380D8721F2D42"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\terminal\\shell\\local_shell_io.dart",
+        "sha256":  "D8D527B6B796AACF5AAC4C6EA7457846BA171A4A06FE1C2533550CEF5F17C3B7"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\terminal\\shell\\local_shell_stub.dart",
+        "sha256":  "3D37B2F80871A12BDCB1747536EFA40B7D6DC3629F209E014AF33991D22EDA81"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\terminal\\shell\\portable_filesystem.dart",
+        "sha256":  "E1108BC392203229327E0EE717E92F15F496F23EFE473CE113968DFEED1BB574"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\terminal\\shell\\sandbox_shell_backend.dart",
+        "sha256":  "BD0E112EC51B6EB7BF0494F2B30FC5D8BCE54A9BA9A94AD74789C8E7D1467081"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\terminal\\shell\\shell_backend.dart",
+        "sha256":  "4220790FC630F24AB557E721FC334F2462A51F854311CFDFDB325C1394B5F68F"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\terminal\\state\\terminal_manager.dart",
+        "sha256":  "F7CE734B23DECF41037BBFC10EA4F19C219D5FE111296749DAE9553E1C8EBFD3"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\terminal\\theme\\app_theme.dart",
+        "sha256":  "4234A51A28DBE8D0AFFBBB3385B9210EF448164A712F8F62789DC659C2096F3B"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\terminal\\widgets\\key_cap.dart",
+        "sha256":  "729E651E1BFA5D1DE5B69AD73ABED1F650AFA7A9916667D9E555281E7098D0B5"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\terminal\\widgets\\shortcut_bar.dart",
+        "sha256":  "0727CA5ACB8A156B3EE1012058D90672F5813A04C4C9381DA49E78913D30AEBB"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\terminal\\widgets\\terminal_input.dart",
+        "sha256":  "77FD7A89E8F6B5B2DC898D27ECD3D7D058034848F16E87BAA1BFD5873C9D2321"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\terminal\\widgets\\terminal_output.dart",
+        "sha256":  "74A5859D66D695AFE2F21E809E71466E4EE07D65DA0C838CF6FF4C8DDC306CEE"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\terminal\\widgets\\terminal_tabs.dart",
+        "sha256":  "E1CC06B3929C17925D5331F6A67ED86AA16F1129235D1812CDFD2F69D6796C3F"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\theme\\app_theme.dart",
+        "sha256":  "064C702EAD6E77368138C7E5223C952D469E545CD7DFD467197333E6AE0EA9AF"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\tools\\offline_text_tools.dart",
+        "sha256":  "DF348963CB872FC310533A773B202EB909FBD8BEC1D05A86ED2BEEDA35D7D7AF"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\tools\\offline_tools.dart",
+        "sha256":  "13EC51E31854BA4D3516F8339E2480C4EA6840CDAF4E4B74D6A953741A8EC4AE"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\widgets\\code_snippet.dart",
+        "sha256":  "88F96F9E62082DA794E672BE5138DA6121DA8538098CC9542236A73CD9F563B6"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\widgets\\language_badge.dart",
+        "sha256":  "2A653EC65D9C39D8AA09DB4017CE717E19CB193BFB559D140EDE6ABF1CB6DAE7"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\widgets\\project_card.dart",
+        "sha256":  "8A186B34F9B9D19A2B1EF6E3F4766C46968616533515D94E3FF1B1A1BFDA7812"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\widgets\\project_dialogs.dart",
+        "sha256":  "A7A1307018C2D6C0560472635DF72A745F70BB1745DF0A0405658F9A358D7CAC"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\widgets\\retained_page.dart",
+        "sha256":  "7F65102EE63BEDFE34FA23D42E0466045E7336DF92C9793106EB97C9249AEF4B"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\widgets\\settings_section.dart",
+        "sha256":  "A1BEF68BBB788A721935EC111E19648577084BB5D431D4E3FEA2BF384ADAA300"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\widgets\\tool_widgets.dart",
+        "sha256":  "A1DD84B89B1E7AA93B5E82E1716D2C921CDB3EAC2DC4298AA6D35205DCD8462F"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\workspace\\editor_workspace.dart",
+        "sha256":  "07E8B0CE9745A2E907434075B75D6684849D8DD605C2134398212A1CD655BDC3"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\workspace\\saved_workspace.dart",
+        "sha256":  "F658B3DDCA9DCF8152282304428523836B4B3B93AB95A1D034B43316F3BC5720"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\workspace\\saved_workspaces_tab.dart",
+        "sha256":  "D63E6E55D4CFADF4982FF841A2C3835D6D7EE727D966682A5A1914494B4536A5"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\workspace\\workspace_dialogs.dart",
+        "sha256":  "A947571B26FB23F513221E2955A5E81123BEB0931D4031CD2CE2C3C424C00481"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\lib\\workspace\\workspace_store.dart",
+        "sha256":  "1C1CD747F3B3C66B92399AA92A6F61703774A6E1754423CA61ACF222A9FECF8D"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\pubspec.yaml",
+        "sha256":  "EB2B2FA84539D43B630F1544D31C71F4CBE1779B3EE87BB8F76360D2C6F3E1FD"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\re_editor.dart",
+        "sha256":  "901A2CE144A0DF4A01ED873995C1C36AF56616D5B223C01A6CEC9DF742CA4912"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\_code_autocomplete.dart",
+        "sha256":  "ED1B6726B4C22A6574AEF4DF3F4EABDA5D3B7E213696A3F7751CBB2A8C68573E"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\_code_editable.dart",
+        "sha256":  "86B12FDA3752ABF0B0DD916F5A167B6C11C262F57E6E1CB489CE6E4D8343B77A"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\_code_extensions.dart",
+        "sha256":  "77D99D0508B849F88BEBBE8F9AA7A7380588688AE3CA92453EEED212820D7CB4"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\_code_field.dart",
+        "sha256":  "F08E19FAC95A6B1B3F52A39ACB78B1252640AF1B864A09466366FD184DB5F480"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\_code_find.dart",
+        "sha256":  "DA8759574E9AB498482195BD7E83F16DCEBD79FFFA662FD7BF8395D81EE30017"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\_code_floating_cursor.dart",
+        "sha256":  "98758DF1CA6023B451498416213C5F39DD12CBD61947CBB113D7431057F9D45E"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\_code_formatter.dart",
+        "sha256":  "1D9B8380265C7F3FCC07E627976F653893FBCD8DD7BD57FDB9A814FD33CA1129"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\_code_highlight.dart",
+        "sha256":  "9A2C5776A465E5B58C00F12D8A41C785393788A68229E60117F03E6174AA9B39"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\_code_indicator.dart",
+        "sha256":  "546C0BDDBB4A996F70B09C89482BA0D2681668C324B2E3A6F049DE3704B19523"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\_code_input.dart",
+        "sha256":  "9F63E5682F460980E6A9F6A55A53B812BBE0B731BF4CE9F79DD4515685809A6F"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\_code_line.dart",
+        "sha256":  "59E9980C13D6465520A391C41F7C0B6189018889963EFD497CFA77A789A24901"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\_code_lines.dart",
+        "sha256":  "6C248720C3C07B9A9F0BCBD6BCE7579AE38839D3BC55FEB15BD6355A6AC628CA"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\_code_paragraph.dart",
+        "sha256":  "688BC96B777C82E3C084CC117C3509F9CC85DA33AA2E09461FA1EF7B2F3892E9"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\_code_scroll.dart",
+        "sha256":  "B0AB38556A00D40441FE8EE2B1FADC4168B9D9DD050B6725B304DEE9E066831E"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\_code_selection.dart",
+        "sha256":  "9065A1E36BFD5B4057A1950171531FE72D640E17CD02D20158CBBE85C64CEA36"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\_code_shortcuts.dart",
+        "sha256":  "1178808B323FB0FB7223D494C048A9EA3347B8F6D16CCF2B90108E747242F074"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\_code_span.dart",
+        "sha256":  "666ABC4877B54B5ED9D4EA936D47783B87CB7E1D0F43E626ED07BFC4106603D0"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\_consts.dart",
+        "sha256":  "2C6F94CC5FBDD71D34B5231F2DE1423E36A640E9AC8FB2066809F979F877C84A"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\_isolate.dart",
+        "sha256":  "6DADC2BD9752D4FCB0B3C3161FE8525340C7D3B653D89D7DCC708C0F852C414B"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\code_autocomplete.dart",
+        "sha256":  "BC9AC61530CE300A2FBDE210332F3C3C81D6BD2FD34D43D93002121A1ED39CD7"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\code_chunk.dart",
+        "sha256":  "25FBE972FB0D3FA4162E58C229C45793B8FEB985B097D628F14F94D402A40BD8"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\code_editor.dart",
+        "sha256":  "D0EA3F243A60BCCB0A80036175DA6EE1CEF05F67ADDA7B98F9CF40C54B5F92F4"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\code_find.dart",
+        "sha256":  "F8692DA97D806953B94B7EFB23B9045BDD7257D3B10AF0DB6B634F8608499B0C"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\code_formatter.dart",
+        "sha256":  "5FC6B3707A62AD071D0CB0461AED6326989D1CF34411808A565ACB8001F10675"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\code_indicator.dart",
+        "sha256":  "E1FE93A7EA7D08764526ED8B98F51BA226FD4F6C62CC1497FA75487E4B726E20"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\code_line.dart",
+        "sha256":  "0F0B61A61502226B176EA9B078FE9CD0218F464629E3D9786AB818FDE61B50A1"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\code_lines.dart",
+        "sha256":  "D3DB603E5F6FD8D27B4BC057AD08BACAEA6F4E499420E143B0C84B41B5AC2D6B"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\code_paragraph.dart",
+        "sha256":  "0360C861BB6CD464D09126D767B999955BC993E44EB5805049929E3478CFBD04"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\code_scroll.dart",
+        "sha256":  "A46991F65499727C57C49E5E064A9097AA5559C85E028C938437FF4FBF434A0A"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\code_shortcuts.dart",
+        "sha256":  "4F04B5E25B96FFBF8ED3012E86F8A369742CF16A66D3A374F515015FE2604D2D"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\code_span.dart",
+        "sha256":  "5E402A1BD4E83719E02ABF35F8D99D42E55B2714872ECBA328B03DD7DF85AF7B"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\code_theme.dart",
+        "sha256":  "4D9C4DDFFF1D25261A191D75EF1F27466C643D80DDAC803EA965CD053D91CC3A"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\code_toolbar.dart",
+        "sha256":  "E739745DD27C4EEFB2F0000F77634F176BCA1D8BCC63A229E966CB25BB58ADD5"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\debug\\_trace.dart",
+        "sha256":  "C36D99329C90841B6C04FFAC68C6A1A0DF5306E3C9EA5F14A9429300F200F98B"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_studio_core\\vendor\\re_editor\\lib\\src\\re_editor.dart",
+        "sha256":  "75C59A18A69BDAD7022363F4289CC0C6A665B94B82B37C6FD601CD19A0C87CC7"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\.dart_tool\\package_config.json",
+        "sha256":  "975624422C4AAD7D18BF32237C0EB5C68DBAB9D91A0AFFE39F628271C402AFAB"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\build\\native\\web_syntax\\windows\\qfli_web_syntax.dll",
+        "sha256":  "11967D444D1CB681B813BC3836DA7E4BE969A6E11320C077D64757EF2A93DCE2"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\content\\webforge_content_repository.dart",
+        "sha256":  "F091F80E180340AEB83CB4F24C73DB116EFD57B9F1DE677AB43B72282671BF50"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\main.dart",
+        "sha256":  "7395A48E7E23FFF17CC55AE23880B1D8FB9CFBB0A29AB34F9A1254C621D8C72B"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\pages\\web_tools_overview.dart",
+        "sha256":  "52762E974B4F91699072FBE7AEA5943F287AAAB713440FB143493ADAF1FFF31D"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\pages\\web_tools_page.dart",
+        "sha256":  "5806AC0508D96DC413DA287926F301C12E45898753DC9923588DEE445D44CA98"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\services\\nginx_host.dart",
+        "sha256":  "83DE5B2C992565F4ACA76B9832B78069B39EB559D7E291A6491BF924262B009C"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\services\\nginx_session.dart",
+        "sha256":  "F6754FA66374AA89A0CF206B04332E1C0E5BF6DEC79733ED96DB1C9A9CEDBE0F"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\services\\web_code_analyzer.dart",
+        "sha256":  "3B7F5DB4F6D8B4BC0D6A7CFCCB70CACFF655C1932CB024893ECC5D7E48E6DEBC"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\services\\web_css_tools.dart",
+        "sha256":  "D0E2DD2B17D342D442B2DBF85C03E5132D05812E258E1A52C7552AB9CB6049C7"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\services\\web_dev_server.dart",
+        "sha256":  "409C5FAB43AA4EA51D8B76244DAFA3E65129081F6593DB04877663C2AA95EA90"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\services\\web_javascript_syntax.dart",
+        "sha256":  "ECA9550A51174BDDCB6DD0CBA6B2AFBEC05DC7D5FBD9AB542A5A2EC068A06E52"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\services\\web_javascript_syntax_native.dart",
+        "sha256":  "1A134E8AC10906549FC5515D69E779D463D1277A0004195C84D14AD3A2FF45F7"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\services\\web_javascript_syntax_stub.dart",
+        "sha256":  "A7C4E5D9F2D4CE5D37BF8A3E6175A7A7327A1773851325B5C37F94ECDF73837C"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\services\\web_markup_inspector.dart",
+        "sha256":  "3606B6CD84D5E41EA69490FFC8FE2DF84681A42E4696B0A7D8726DE0207CFC7A"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\services\\web_project_config.dart",
+        "sha256":  "F992B56A12BBD62A221C483A4ABB0E1A6509E28FD6384FB1DCBE941B85FD26D6"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\services\\web_runtime.dart",
+        "sha256":  "3D353A4C72DFD42CF98C5EF6ABEA5423E9CFB8C2497FE6792E1BBE3286C42ACE"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\services\\web_runtime_session.dart",
+        "sha256":  "5DA8E3CF6C91C5AA4A785C2C8646A5680C925E17982C6CA98D5F1B453F8E9382"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\services\\web_source_scan.dart",
+        "sha256":  "23442951123322A0E8B818E01A55910FCDE3797F5055B8F939F388AFAD7BA294"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\widgets\\web_tools\\web_css_tools_view.dart",
+        "sha256":  "6D13D09ED99D3B4956900406CD1DFF66A113EB1F9AC77E6FAFAC780A8009587B"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\widgets\\web_tools\\web_markup_check_view.dart",
+        "sha256":  "48CEB8630B80127150CB7BC75EF22F1A9BF71CD48678381E343DB69035686144"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\widgets\\web_tools\\web_source_inspector_view.dart",
+        "sha256":  "6DC03B0219F872F0CF00ACA17A7408BC70276EAB62D8CB3639C013C7F8AE6D65"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\lib\\widgets\\web_tools\\web_tools_panel.dart",
+        "sha256":  "84D0CCF18D79F953E9B6EDD074DF2FDAC2200E922CB3673EED820ED6626F4BDF"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\pubspec.lock",
+        "sha256":  "126618772C6CDB437ED072AB701EB1C10C027A94C25FC4CF674731635998C409"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\pubspec.yaml",
+        "sha256":  "F85C0CD770A5C4AEBD9F92EE3744E5A79D970B3606688943BA6CF2C371A15D2C"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\scripts\\test_web_console_bridge.mjs",
+        "sha256":  "021637740694FE3CF39F140E65DE095DB511CFA60237CF0151D614E2D10644ED"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\scripts\\test_web_offline_browser.mjs",
+        "sha256":  "5D25A150922D19F90BF8DC24431AFA11F8F81A3B722B1B1AF8DC62296D88F854"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\test\\web_code_analyzer_test.dart",
+        "sha256":  "84DD5920DAD95C080CA1484C2E65A680786810F944369250DA42CBC30CBCFCC4"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\test\\web_dev_server_test.dart",
+        "sha256":  "F12A9966E1A11A974B0FDE736BF8C9FB9A573A2A3176B993C2D8C7094E0C05CF"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\test\\web_offline_browser_test.dart",
+        "sha256":  "E2F36019590609DB62BB03FB17E100F43F3494B790967D65C9412E5E4F187185"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\test\\web_offline_policy_test.dart",
+        "sha256":  "0AF939862C451884F1B4B3D7D08CB9592BF4BD5AE335CF4FC1D3A2D4898B3114"
+    },
+    {
+        "path":  "D:\\MyNewProjects\\qfli_web\\test\\web_server_tools_lifecycle_test.dart",
+        "sha256":  "801F3453037B77781098AA945CB52D40D83BA71540116B1B97E803E0C6610F83"
+    }
+]

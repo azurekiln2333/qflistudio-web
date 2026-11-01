@@ -1,0 +1,80 @@
+diff --git a/.trellis/spec/backend/mobile-jdk.md b/.trellis/spec/backend/mobile-jdk.md
+index fcf29d3..f5efde3 100644
+--- a/.trellis/spec/backend/mobile-jdk.md
++++ b/.trellis/spec/backend/mobile-jdk.md
+@@ -86,6 +86,21 @@ Correct: inspect every packaged native input, dependency closure, and real
+ in-app execution on a device using that page size. The 2026-10-02 x86_64
+ image passed all eight smoke checks on the API 37, 16 KiB emulator.
+ 
++The 2026-10-02 ARM64 recovery rebuilt the stale 4 KiB package using the current
++recipe. All 71 exported non-debug ELF files and all 44 staged ARM64 native files
++passed. Treat ABI packages independently: a new recipe or x64 pass does not
++refresh a previously staged ARM64 package. Keep the other ABI and OHOS inputs
++unchanged and compare their hashes before and after staging.
++
++For APK provenance checks, reproduce the actual Gradle strip step with the
++configured NDK: `libqfli_*.so` retains its staged hash; other native JDK libraries
++are compared with `llvm-strip --strip-unneeded` output. Verify architecture,
++all LOAD alignments/congruence and dependency closure on the APK's resulting
++files, then compare both ABI manifests and ZIP assets directly with staged
++assets. A direct raw-image hash comparison is insufficient after stripping.
++All 89 JDK native files in the owning dual-ABI APK passed these checks. ARM64
++and API 28 device execution still require a matching available environment.
++
+ Wrong: reuse Android binaries on OHOS or request executable anonymous memory
+ for Zero's entry records.
+ Correct: cross compile for OHOS libc and mark Zero entry storage non-executable.
+diff --git a/native/openjdk/README.md b/native/openjdk/README.md
+index d89c28b..0c81725 100644
+--- a/native/openjdk/README.md
++++ b/native/openjdk/README.md
+@@ -99,3 +99,17 @@ with 16 KiB alignment; the pinned old binary package alone is incompatible.
+ The complete image's 46 native files passed architecture, LOAD alignment and
+ dependency checks. Nineteen Flutter tests passed on Windows, including actual
+ host-JDK execution. Android ARM execution still needs a matching device.
++
++## Android ARM64 Package Recovery On 2026-10-02
++
++The ARM64 generated inputs have now been rebuilt with the current pinned recipe,
++replacing the stale 4 KiB-aligned image. All 71 exported non-debug native files
++passed ABI, 16 KiB LOAD and dependency checks. The owning package's 44 ARM64
++native files match this image; the ordinary dual-ABI APK passed corresponding
++checks for both ABIs and its JDK assets. APK native hashes match staged inputs
++after the standard Gradle strip step. The retained x64 and HarmonyOS generated
++inputs were unchanged. See the [Android details](android/README.md).
++
++This closes the ARM64 package alignment defect. Native ARM device execution and
++API 28 execution remain unavailable on the current host and are not inferred
++from successful builds, packaging or x64 emulator checks.
+diff --git a/native/openjdk/android/README.md b/native/openjdk/android/README.md
+index d2d3dd7..3fd4718 100644
+--- a/native/openjdk/android/README.md
++++ b/native/openjdk/android/README.md
+@@ -85,3 +85,27 @@ before building for the corresponding Flutter target (android-arm64 or
+ android-x64). The app selects data from the installed launcher's ELF machine,
+ using APIs available at the minimum Android version.
+ See the [shared staging instructions](../README.md).
++
++### ARM64 Package Recovery On 2026-10-02
++
++The earlier ARM64 package was stale: its launchers, JVM and other upstream
++libraries still used 4 KiB LOAD alignment. A fresh pinned OpenJDK 17.0.20 build
++completed in a separate ext4 work directory with the current recipe, including
++the rebuilt upstream spawn library. All 71 non-debug ELF files in the exported
++image passed ARM64, 16 KiB LOAD alignment/congruence and API 28 public-system or
++bundled dependency checks. A broader check of the retained x64 image passed all
++72 non-debug ELF files, including tools that are not staged into the app.
++
++The owning ARM64 package now contains 44 native files with hashes matching the
++new image. The ordinary dual-ABI APK contains those 44 ARM64 and the retained
++45 x64 JDK files, plus three Flutter framework libraries. All 92 APK native
++files passed their ABI, dependency and 16 KiB LOAD checks; both JDK data archives
++matched staged assets. APK ZIP alignment also passed. All 215 inspected x64 and
++HarmonyOS generated inputs remained unchanged during ARM64 staging.
++
++APK hash checks must reproduce the owning Gradle transformation: preserve
++`libqfli_*.so` exactly and apply NDK 27 `llvm-strip --strip-unneeded` to other
++JDK libraries. Compare APK hashes with those transformed staged inputs; comparing
++all files directly with the unstripped image incorrectly reports mismatches.
++Generated images and package assets remain outside Git. Native ARM64 device and
++API 28 execution remain unverified; x64 emulation is separate runtime evidence.

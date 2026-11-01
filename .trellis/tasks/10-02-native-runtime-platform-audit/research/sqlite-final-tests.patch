@@ -1,0 +1,24 @@
+diff --git a/integration_test/sql_workbench_test.dart b/integration_test/sql_workbench_test.dart
+--- a/integration_test/sql_workbench_test.dart
++++ b/integration_test/sql_workbench_test.dart
+@@ -60,7 +60,7 @@
+       ['1', 'After'],
+     ]);
+ 
+-    await tester.tap(find.text('SQL'));
++    await tester.tap(find.byTooltip('SQL'));
+     await tester.pumpAndSettle();
+     await tester.enterText(find.byType(TextField), 'SELECT name FROM people');
+     await tester.pump();
+diff --git a/test/sqlite_ffi_test.dart b/test/sqlite_ffi_test.dart
+--- a/test/sqlite_ffi_test.dart
++++ b/test/sqlite_ffi_test.dart
+@@ -45,7 +45,7 @@
+       );
+ 
+       test('script, grid and editor use the same persisted C database', () async {
+-        final engine = const NativeSqliteEngine();
++        final engine = const NativeLocalSqlEngine();
+         final script = await engine.execute(
+           SqliteRequest(
+             projectPath: root.path,

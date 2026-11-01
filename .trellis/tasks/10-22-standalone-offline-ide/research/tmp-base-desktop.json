@@ -1,0 +1,5611 @@
+{
+  "schemaVersion": 1,
+  "runtime": "host-chromium",
+  "device": null,
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "host": {
+    "platform": "win32",
+    "architecture": "x64",
+    "node": "v24.15.0"
+  },
+  "browserVersion": "156.0.8078.4",
+  "startedAt": "2026-10-22T05:42:32.479Z",
+  "completedAt": "2026-10-22T05:43:16.839Z",
+  "catalog": {
+    "examplesSha256": "329a0b1aebafa54b54fe1d7976aa274de4aa1f837d4f06668c63528059800a50",
+    "tutorialsSha256": "fcfaab2e9ba0446dd9ce53ff833d0d6b6008c0c6be24f6b3d1c73f27e046a674",
+    "totalExamples": 481,
+    "totalLessons": 481,
+    "executedExamples": 100,
+    "complete": false
+  },
+  "passed": 100,
+  "failed": 0,
+  "totalChecks": 836,
+  "mappingIssues": [],
+  "results": [
+    {
+      "id": "css-example-001",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "h1 blue",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "p font-size 18px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "p line-height 1.6 (28.8px)",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "h1 text",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "6fac4fb234b47aa1da78af38acae2dafebbe1da66e8daa1a2fa48597e2ce5ff9",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-002",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 9,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "html font-size 16px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "box padding 16px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "inner p font-size 20px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "inner p hsl resolves to its rgb value",
+          "ok": true,
+          "detail": "rgb(19, 104, 241)"
+        },
+        {
+          "name": "box width is about half the viewport",
+          "ok": true,
+          "detail": "632 vs 1280"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "f1a54c77d7bf026cda86617840705135883f3ce616fbe750ff66abb8ea6fcb0f",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-003",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 10,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "box-sizing border-box",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "card width 200px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "card padding 16px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "card margin 12px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "card border 2px solid",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "card background #f5f5f5",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "534621128752ee43747717d5038e412d8a0a2c7bd97271c683d279f14563e953",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-004",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "p justified text",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "p line-height 1.75 (28px)",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "center paragraph centred",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "center text",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "da85a001600307225682a7f4d885c1b2014b494450d957429d0c0728668c2c07",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-005",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "linear-gradient applied",
+          "ok": true,
+          "detail": "linear-gradient(135deg, rgb(26, 115, 232), rgb(52, 168, 83))"
+        },
+        {
+          "name": "hero white text",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "hero centred content",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "hero height 120px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "1fba60fc149e2795da1ed38c5f2e443cbec8204928b4979043f212e94f7c9d14",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-006",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 9,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "row display flex",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "row gap 8px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "items centred horizontally",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "items centred vertically",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "three flex items",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "33fac8ba3a5c8365c83fc6de7b97e3b26a8ab358087076a2f3885ca8fc3caebe",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-007",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "grid display",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "three columns",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "gap 8px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "wide cell spans 2",
+          "ok": true,
+          "detail": "span 2"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "352477e016f2bde69c48f16350cc3f146e064566a6831f1718944c95776f77ca",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-008",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "badge absolutely positioned",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "badge red",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "float button fixed",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "fixed button stays 8px from bottom",
+          "ok": true,
+          "detail": "8px"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "682194017c38660aa8263d5c02af804ca5d99365ce0b6279866994d2c8db0daa",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-009",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "link no underline by default",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "link underlines on hover",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "quote before content",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "quote after content",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "ef867b55d745cc2fe6f6f5b1636bc499fd8d5f191217593c98f13831543558f9",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-010",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "btn inline-block",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "hover translates/scales",
+          "ok": true,
+          "detail": "matrix(1.05, 0, 0, 1.05, 0, -2)"
+        },
+        {
+          "name": "hover background darkens",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "transition ~0.2s",
+          "ok": true,
+          "detail": "0.2s, 0.2s"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "ad54be17908808700d069fc765901438e8df51f0dc4786e01ba1c9b36f1d946e",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-011",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 13,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "gap 8px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "three cells",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "cell background #e8f0fe",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "599px viewport renders 1 column(s)",
+          "ok": true,
+          "detail": "cols=1"
+        },
+        {
+          "name": "600px viewport renders 2 column(s)",
+          "ok": true,
+          "detail": "cols=2"
+        },
+        {
+          "name": "899px viewport renders 2 column(s)",
+          "ok": true,
+          "detail": "cols=2"
+        },
+        {
+          "name": "900px viewport renders 3 column(s)",
+          "ok": true,
+          "detail": "cols=3"
+        },
+        {
+          "name": "columns are equal width (1fr each)",
+          "ok": true,
+          "detail": "416/416/416"
+        },
+        {
+          "name": "3 column(s) lay the 3 cells out over 1 row(s)",
+          "ok": true,
+          "detail": "1 row(s)"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "84a65e872226ac685761af6d67eda361d98645119b95a7be6ddcfc4281a782a4",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-012",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "button background primary blue",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "button white text",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "body background is --bg value",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "primary custom prop declared",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "e04b90f47ad58201ea3115c1d9d3225f9bd7a9edd2bef065ed410e24bdc09ddf",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-013",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "pulse animation applied",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "animation 1s duration",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "animation infinite alternate",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "dot round",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "5ff5f6e0e28b252116140865ae75f8bb2bef988709b579a79a9af435f320d9b9",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-014",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "id wins -> red",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "class wins over tag -> blue",
+          "ok": true,
+          "detail": "rgb(0, 0, 255)"
+        },
+        {
+          "name": "plain p -> green",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "c20373c114585ad9f6cdcccc28c4cdf7025c319b03dbca8ec40f38c0fbdc85d7",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-015",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 15,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "wall is grid",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "card border radius 12px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "card shadow is the authored 1px/3px pair",
+          "ok": true,
+          "detail": "rgba(0, 0, 0, 0.08) 0px 1px 3px 0px"
+        },
+        {
+          "name": "three cards",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "wide viewport fits the three cards in three tracks",
+          "ok": true,
+          "detail": "cols=3"
+        },
+        {
+          "name": "wide viewport puts them on a single row",
+          "ok": true,
+          "detail": "1 row(s)"
+        },
+        {
+          "name": "narrow viewport drops to two tracks",
+          "ok": true,
+          "detail": "cols=2"
+        },
+        {
+          "name": "narrow viewport wraps the third card onto a second row",
+          "ok": true,
+          "detail": "2 row(s)"
+        },
+        {
+          "name": "cards stay at least 160px wide when narrow",
+          "ok": true,
+          "detail": "176/176/176"
+        },
+        {
+          "name": "auto-fit never overflows the page",
+          "ok": true,
+          "detail": "0/0"
+        },
+        {
+          "name": "all cards share the 1fr width",
+          "ok": true,
+          "detail": "402.66/402.67/402.66"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "7c97b925480d24a7e54f83758eac3dc72c6a9ad2f1a2fc4ddf968b14845369cb",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-016",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "one-line ellipsis",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no-wrap",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "clamp hidden overflow",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "clamp actually limits height",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "c1cda38499a7811ad42899098876d6816d7fb2cd0c436a5f4cf8bb1868e2d93c",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-017",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "btn pointer cursor",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "btn not selectable",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "btn blue background",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "6586cdce49d60d0fd5ddc84bfcf78784813554172a3665d5ccf20443b6916a5e",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-018",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "nav list-style none",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "nav is flex",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "table border-collapse",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "even row shaded #f7f7f7",
+          "ok": true,
+          "detail": "rgb(247, 247, 247)"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "5730e45208f8e4db298fc881fcb6be479b11a0e1d55ddab7df3d7548d4899e17",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-019",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "smooth scroll behaviour",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "sticky top bar",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "sticky offset 0",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "top bar blue",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "1edd05019bdb654040591d6f53e7f5bc39d5c5617d56f34be71138515f835f1d",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-020",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "circle radius 50%",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "circle blue",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "triangle clip-path polygon",
+          "ok": true,
+          "detail": "polygon(50% 0px, 100% 100%, 0px 100%)"
+        },
+        {
+          "name": "triangle green",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "71edf84ea9304cbf9450a420cdc05fcf4f3f828d60b421b6e801439f57ab7fa4",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-021",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 9,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "photo filter is grayscale(1) contrast(1.2)",
+          "ok": true,
+          "detail": "grayscale(1) contrast(1.2)"
+        },
+        {
+          "name": "photo keeps its 120px width",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "glass backdrop-filter is blur(6px)",
+          "ok": true,
+          "detail": "blur(6px)"
+        },
+        {
+          "name": "glass is 40% white so the blur shows through",
+          "ok": true,
+          "detail": "rgba(255, 255, 255, 0.4)"
+        },
+        {
+          "name": "photo image really decodes",
+          "ok": true,
+          "detail": "{\"src\":\"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27120%27 height=%2780%27%3E%3Crect width=%27120%27 height=%2780%27 fill=%27%23e8f0fe%27/%3E%3Ccircle cx=%2760%27 cy=%2740%27 r=%2724%27 fill=%27%231a73e8%27/%3E%3C/svg%3E\",\"alt\":\"示例图\",\"isData\":true,\"complete\":true,\"naturalWidth\":120,\"naturalHeight\":80}"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "8734e8bc4112ad06dc81e5e754ba8a580a9013955fe6d9ce9c8f4c90d57e6ad6",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-022",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "glow radial gradient",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "glow round",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "checker layered linear gradients",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "checker tile size 20x20",
+          "ok": true,
+          "detail": "20px 20px, 20px 20px"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "22a68b71cd8471a5051ce76ff4e94beee8ac9e5b6a61aa330403d54bb580cd07",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-023",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "counter reset declared",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "::before uses a counter",
+          "ok": true,
+          "detail": "\"第 \" counter(ch) \" 章：\""
+        },
+        {
+          "name": "list declares counter-increment",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "three chapters",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "f9fbea06014b5ecc28bbc7f50a4be01d64126196dac44f0fc41af9a223af13b2",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-024",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "named areas declared",
+          "ok": true,
+          "detail": "\"head head\" \"side main\" \"foot foot\""
+        },
+        {
+          "name": "header spans head area",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "two grid columns",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "3f0b06519d6b8a106ca53910bb4731dccda05e5396ef73671c102760063822f0",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-025",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "h1 font-size within clamp range",
+          "ok": true,
+          "detail": "48px"
+        },
+        {
+          "name": "p font-size within clamp range",
+          "ok": true,
+          "detail": "17.6"
+        },
+        {
+          "name": "h1 text present",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "1836b54bd09e0368fb0e8ff28e39a68df97de7ab714b930a4668adff4d1692a0",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-026",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 6,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "body background from --bg",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "body colour from --fg",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "8be55283d6143ea971e006a4336b0b3fff5259585e189d89bd7b886366b6951e",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-027",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "accent-color is theme blue",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "text input border radius 6px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "checkbox checked",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "aa9a558bfbfc67ef2596dff0e6988355b544abc43c3c68d4bd6661a2a6eca767",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-028",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "button blue initially",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "button turns red after click",
+          "ok": true,
+          "detail": "rgb(234, 67, 53)"
+        },
+        {
+          "name": "button back to blue",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "f79cad49f7363ae899b563dbab35817efc506e4ec7b962e812a46303e84641de",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-029",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 16,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "nav visible on screen",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "button visible on screen",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "cards keep default break-inside on screen",
+          "ok": true,
+          "detail": "auto"
+        },
+        {
+          "name": "nav is removed when printing",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "button is removed when printing",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "nav display is none under print",
+          "ok": true,
+          "detail": "none"
+        },
+        {
+          "name": "button display is none under print",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "body prints on white paper",
+          "ok": true,
+          "detail": "rgb(255, 255, 255)"
+        },
+        {
+          "name": "body prints in black ink",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "cards avoid breaking across pages",
+          "ok": true,
+          "detail": "avoid"
+        },
+        {
+          "name": "the article heading still prints",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "screen media restores the nav",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "518586161bfd87a2127a5fbf2c619a92617edfaed20b2c5b7c1b91f159dc7e2c",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-030",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "wrap container-type inline-size",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "card light blue at 200px container",
+          "ok": true,
+          "detail": "rgb(232, 240, 254)"
+        },
+        {
+          "name": "wrap resizable",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "f961b55d5beb1452e12cc44afcf26baff018c466e3984c72fcdc4010c2d80034",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-031",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "margin-inline 24px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "padding-block 12px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "box background #e8f0fe",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "6145076eaca3d6c7f0915077872fc28c387d38812d697b66c410a6cb84c91e96",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-032",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 9,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "ball round",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "ball blue",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "transition on transform",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "ball gains .move class on click",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "click applies translateX(160px)",
+          "ok": true,
+          "detail": "matrix(1, 0, 0, 1, 160, 0)"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "b8accaf38b10e6704018af664d2aed3ac5aeb54f97a12cbde5f1f56097afacb1",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-033",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "https link green",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "list item bold",
+          "ok": true,
+          "detail": "700"
+        },
+        {
+          "name": "h2 + p grey #666",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "5ac0b2905e71408ca6c71b6c9252e964c963b77105d479658bc31e104817948d",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-034",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 9,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "not(.done) item blue",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "done item not blue",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "h1 line-height is 1.2x font-size",
+          "ok": true,
+          "detail": "38.4px vs 32"
+        },
+        {
+          "name": "card:has(img) green border",
+          "ok": true,
+          "detail": "rgb(52, 168, 83)"
+        },
+        {
+          "name": "card image really decodes",
+          "ok": true,
+          "detail": "{\"src\":\"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2740%27 height=%2740%27%3E%3Crect width=%2740%27 height=%2740%27 fill=%27%23e6f4ea%27/%3E%3Ccircle cx=%2720%27 cy=%2720%27 r=%2710%27 fill=%27%2334a853%27/%3E%3C/svg%3E\",\"alt\":\"图\",\"isData\":true,\"complete\":true,\"naturalWidth\":40,\"naturalHeight\":40}"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "4618fbc3f76a1df08fa654d291d00bd419f6cc994a842de3a029a4b8eacdadd3",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-035",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 16,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "btn blue",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "btn pointer",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "btn radius 6px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "btn padding 10px 20px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "disabled opacity is exactly 0.5",
+          "ok": true,
+          "detail": "0.5"
+        },
+        {
+          "name": "disabled cursor is not-allowed",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "Tab focuses the first button",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "focus ring is 3px solid #8ab4f8",
+          "ok": true,
+          "detail": "rgb(138, 180, 248)"
+        },
+        {
+          "name": "hover darkens to #1557b0",
+          "ok": true,
+          "detail": "rgb(21, 87, 176)"
+        },
+        {
+          "name": "pressed button matches :active",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "pressed button sinks by 1px",
+          "ok": true,
+          "detail": "matrix(1, 0, 0, 1, 0, 1)"
+        },
+        {
+          "name": "released button returns to rest",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "d33e1541b3ea26c760e903511515b506fc67906b3494ab574786438475ddbf73",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-036",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 11,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "card shadow has two layers",
+          "ok": true,
+          "detail": "rgba(0, 0, 0, 0.08) 0px 1px 2px 0px, rgba(0, 0, 0, 0.08) 0px 4px 12px 0px"
+        },
+        {
+          "name": "card shadow layer 1 is 0 1px 2px",
+          "ok": true,
+          "detail": "rgba(0, 0, 0, 0.08) 0px 1px 2px 0px, rgba(0, 0, 0, 0.08) 0px 4px 12px 0px"
+        },
+        {
+          "name": "card shadow layer 2 is 0 4px 12px",
+          "ok": true,
+          "detail": "rgba(0, 0, 0, 0.08) 0px 1px 2px 0px, rgba(0, 0, 0, 0.08) 0px 4px 12px 0px"
+        },
+        {
+          "name": "both layers are 8% black",
+          "ok": true,
+          "detail": "rgba(0, 0, 0, 0.08) 0px 1px 2px 0px, rgba(0, 0, 0, 0.08) 0px 4px 12px 0px"
+        },
+        {
+          "name": "card radius 8px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "h1 text-shadow is 0 1px 2px 20% black",
+          "ok": true,
+          "detail": "rgba(0, 0, 0, 0.2) 0px 1px 2px"
+        },
+        {
+          "name": "text-shadow is offset downward",
+          "ok": true,
+          "detail": "rgba(0, 0, 0, 0.2) 0px 1px 2px"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "b442aeda7dee0de56c3a75e3753770decb3fdb8b729c6a3e8950c39ec3fb24a4",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-037",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "clip overflow hidden",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "clip fixed height 40px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "scroll overflow auto",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "scroll container actually scrolls",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "5601a660f6b262f7e7f57bd26f4c46dbd63b990d87e48816577f146e2c08becb",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-038",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "columns declared",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "column gap 24px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "column rule solid",
+          "ok": true,
+          "detail": "solid"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "8bd5ed6b884eff7f94a2f5da4517d0730f8c42c4134ca7f578a7121450ca82fd",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-039",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "input border radius 6px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "select border radius 6px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "focused input border blue",
+          "ok": true,
+          "detail": "rgb(26, 115, 232)"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "ddf5c2e238a8719d7c9a858ec6c79f025fad4fdeab2bea57e79fb5133b3e6ce8",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-040",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "h1 gradient background",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "text clip applied",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "text made transparent",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "53c3dd64beba5542ce91c3769b986f42a9c1abc2ef875dccfa49d136a07d28b4",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-041",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 13,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "badge is the positioning context",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "badge background #e8f0fe",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "::after has empty content (pure shape)",
+          "ok": true,
+          "detail": "\"\""
+        },
+        {
+          "name": "::after is absolutely positioned",
+          "ok": true,
+          "detail": "absolute"
+        },
+        {
+          "name": "::after sits at the top-right corner",
+          "ok": true,
+          "detail": "0px/0px"
+        },
+        {
+          "name": "::after borders are 8px solid on all four sides",
+          "ok": true,
+          "detail": "8px/8px/8px/8px solid"
+        },
+        {
+          "name": "::after top and right borders are red #ea4335",
+          "ok": true,
+          "detail": "rgb(234, 67, 53) / rgb(234, 67, 53)"
+        },
+        {
+          "name": "::after bottom and left borders are transparent",
+          "ok": true,
+          "detail": "rgba(0, 0, 0, 0) / rgba(0, 0, 0, 0)"
+        },
+        {
+          "name": "badge box is 128x37",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "646fb40774dd55444b348e2ca2d408178465bff4274bb65c988acb1cd4457011",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-042",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "scrollbar-width thin",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "scrollbar-color blue",
+          "ok": true,
+          "detail": "rgb(26, 115, 232) rgb(238, 238, 238)"
+        },
+        {
+          "name": "box overflow auto",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "ca9b45fb8cb1a3ab9ca3322d5ad1cc584200f85b18ebd36340541b1906011646",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-043",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "header sticky",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "header top 0",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "scrolled class applied",
+          "ok": true,
+          "detail": "scrolled"
+        },
+        {
+          "name": "scrolled shadow present",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "bd65ce6676e9b9bbdc9bf33458344a3b24f3cad389b11ff8b025ad80ca33422f",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-044",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 11,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "max-width really is 65ch",
+          "ok": true,
+          "detail": "609.883 vs 65ch=609.875"
+        },
+        {
+          "name": "65ch is a readable measure (500-700px)",
+          "ok": true,
+          "detail": "609.875"
+        },
+        {
+          "name": "line-height is 1.7 x 16px = 27.2px",
+          "ok": true,
+          "detail": "27.2px"
+        },
+        {
+          "name": "article padding is 16px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "article width is min(65ch, available width)",
+          "ok": true,
+          "detail": "609.875 vs min(609.875, 1232)"
+        },
+        {
+          "name": "article is centred with equal side margins",
+          "ok": true,
+          "detail": "311.062/311.062"
+        },
+        {
+          "name": "article is horizontally centred on the page",
+          "ok": true,
+          "detail": "640"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "e7c2292bf68795972db6dd460dfa4d6406480aa82a04c0465a1c3ce633dcfd0c",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-045",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "marker blue",
+          "ok": true,
+          "detail": "rgb(26, 115, 232)"
+        },
+        {
+          "name": "check list no bullets",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "check list has ✔ before",
+          "ok": true,
+          "detail": "\"✔ \""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "f2641f9511ba3edbaa1eba226970eafec2647fec518d4fe1400c79ca04030bbf",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-046",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 10,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "gallery is grid",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "images square (aspect-ratio 1)",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "images object-fit cover",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "three images",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "both gallery images decode",
+          "ok": true,
+          "detail": "[{\"src\":\"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27200%27 height=%27200%27%3E%3Crect width=%27200%27 height=%27200%27 fill=%27%23e8f0fe%27/%3E%3Ctext x=%27100%27 y=%27110%27 font-size=%2732%27 text-anchor=%27middle%27 fill=%27%231a73e8%27%3E图一%3C/text%3E%3C/svg%3E\",\"alt\":\"图一\",\"isData\":true,\"complete\":true,\"naturalWidth\":200,\"naturalHeight\":200},{\"src\":\"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27200%27 height=%27200%27%3E%3Crect width=%27200%27 height=%27200%27 fill=%27%23fef7e0%27/%3E%3Ctext x=%27100%27 y=%27110%27 font-size=%2732%27 text-anchor=%27middle%27 fill=%27%23f9ab00%27%3E图二%3C/text%3E%3C/svg%3E\",\"alt\":\"图二\",\"isData\":true,\"complete\":true,\"naturalWidth\":200,\"naturalHeight\":200},{\"src\":\"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27200%27 height=%27200%27%3E%3Crect width=%27200%27 height=%27200%27 fill=%27%23e6f4ea%27/%3E%3Ctext x=%27100%27 y=%27110%27 font-size=%2732%27 text-anchor=%27middle%27 fill=%27%2334a853%27%3E图三%3C/text%3E%3C/svg%3E\",\"alt\":\"图三\",\"isData\":true,\"complete\":true,\"naturalWidth\":200,\"naturalHeight\":200}]"
+        },
+        {
+          "name": "all gallery images are inline data URIs",
+          "ok": true,
+          "detail": "[\"data:image/svg+xml,%3Csv\",\"data:image/svg+xml,%3Csv\",\"data:image/svg+xml,%3Csv\"]"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "f2ac690df117efceedd89559d6ef87a3a460a0ac73fdc5a24e5fe754187539ff",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-047",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "link no underline",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "underline offset 3px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "hover underlines",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "hover underline 2px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "c422afb3d83f125341496353552e97a4b3444f934bd2c6512c2848e09e56f891",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-048",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "skeleton shimmer animation",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "skeleton grey",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "three skeleton blocks",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "efcf2a436214b1aeb76a96b76de4e9bd58508033c78fd347ffeeeb1a6ee4dda1",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-049",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "aspect-ratio 16/9",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "box is ~16:9",
+          "ok": true,
+          "detail": "400x225"
+        },
+        {
+          "name": "video centred content",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "ab3c8e4ecfbce83bbe34ee30dd7d709e178726070cdcd448576816beba182c45",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-050",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 16,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "switch relative",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "switch is 48x26",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "slider grey initially",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "slider is a pill (999px)",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "knob starts at the left inset",
+          "ok": true,
+          "detail": "none"
+        },
+        {
+          "name": "clicking the switch checks the box",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "checked slider turns blue",
+          "ok": true,
+          "detail": "rgb(26, 115, 232)"
+        },
+        {
+          "name": "checked knob slides 22px right",
+          "ok": true,
+          "detail": "matrix(1, 0, 0, 1, 22, 0)"
+        },
+        {
+          "name": "second click unchecks the box",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "slider returns to grey",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "knob returns to the left inset",
+          "ok": true,
+          "detail": "none"
+        },
+        {
+          "name": "knob travel keeps the knob inside the track",
+          "ok": true,
+          "detail": "{\"w\":48,\"knob\":20,\"left\":3,\"travel\":22}"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "ec93776960dedf4c4cb63c910574175473a84c0882db5be7c8bc9d47aa04436f",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-051",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 14,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "wide layout has three columns",
+          "ok": true,
+          "detail": "cols=3"
+        },
+        {
+          "name": "wide layout declares head/left/main/right/foot areas",
+          "ok": true,
+          "detail": "\"head head head\" \"left main right\" \"foot foot foot\""
+        },
+        {
+          "name": "left and right sidebars are equally wide",
+          "ok": true,
+          "detail": "249.59375/249.609375"
+        },
+        {
+          "name": "main column is three times a sidebar (3fr)",
+          "ok": true,
+          "detail": "3.000x"
+        },
+        {
+          "name": "header spans the full container width",
+          "ok": true,
+          "detail": "1264 vs 1264"
+        },
+        {
+          "name": "sidebars flank the main column on one row",
+          "ok": true,
+          "detail": "8/265.59375/1022.390625"
+        },
+        {
+          "name": "narrow layout collapses to one column",
+          "ok": true,
+          "detail": "cols=1"
+        },
+        {
+          "name": "narrow areas stack head/left/main/right/foot",
+          "ok": true,
+          "detail": "\"head\" \"left\" \"main\" \"right\" \"foot\""
+        },
+        {
+          "name": "narrow blocks all start at the same x",
+          "ok": true,
+          "detail": "8/8/8"
+        },
+        {
+          "name": "narrow blocks stack downward (left, main, right)",
+          "ok": true,
+          "detail": "53/98/143"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "b05c6762d7736f12a998f0aa1c7c0396491522b1a0463d6c82a1bc9c0f87efd3",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-052",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "acc collapsed (0fr)",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "acc gains .open on click",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "acc opens to a positive height",
+          "ok": true,
+          "detail": "53px"
+        },
+        {
+          "name": "inner div clips overflow",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "0a26d2512106fba9859f1a3d1d36e3e78d37b70ab1a6793b0558b614ebe95e1b",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-053",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "li fadeUp animation",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "second item delayed 0.1s",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "fourth item delayed 0.3s",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "22e22ad817345715957a24c842f3077b8268c7b6d2123b049b88ec7b62fa6767",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-054",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "wrap uses flow-root",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "box floats left",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "wrap contains floated boxes (no collapse)",
+          "ok": true,
+          "detail": "76 vs 60"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "33e20189ce926592876eca23a5051dafc408dffca561e06216883e545ceb064f",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-055",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 6,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "mark yellow-ish background",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "mark text",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "2c8213fb3b165055c4c783855b711d78417dde62854e359bb8222cf8db1d49d1",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-056",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "row gap 12px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "row has padding",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "three items",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "7ab04487c4e0bd9229edb7f788e845270520e9defe2a9bfbe58b8a58127a44af",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-057",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "sr-only is 1px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "sr-only clipped",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "sr-only text present",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "button contains icon",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "1d7008e16cc04f24b155718464ed2da6c9141f0461d118452f3a7a7461d97546",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-058",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "card transition on transform",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "hover lifts card (translateY)",
+          "ok": true,
+          "detail": "matrix(1, 0, 0, 1, 0, 0)"
+        },
+        {
+          "name": "hover shadow deepens",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "19bc9014726bc7a056829130bda1dbdfc14d427c06bea169d0858516848d760d",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-059",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "done step circle green",
+          "ok": true,
+          "detail": "rgb(52, 168, 83)"
+        },
+        {
+          "name": "last step circle blue",
+          "ok": true,
+          "detail": "rgb(26, 115, 232)"
+        },
+        {
+          "name": "step badge uses a counter",
+          "ok": true,
+          "detail": "counter(step)"
+        },
+        {
+          "name": "step list declares counter-increment",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "78a35974be7f756ac903c97f3200081ac0ef7c7cd86d76b7f627e6c69b14eb55",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-060",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "bar fixed",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "bar blue",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "bar starts at width 0",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "bar grows on scroll",
+          "ok": true,
+          "detail": "927.531"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "ccf21a15f7c124be92b8ec1a358eb4e99cb03fc7db1a75f426d76ced2c33bccc",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-061",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "center is grid",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "center place-items center",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "inline text-align center",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "0a18049927c9d271cf83d9126ce0518439b7ff23a86675746afb90633883b1ae",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-062",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 10,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "hero has background image",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "overlay darkens image",
+          "ok": true,
+          "detail": "rgba(0, 0, 0, 0.45)"
+        },
+        {
+          "name": "title above overlay",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "title white",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "hero background is inline data URI",
+          "ok": true,
+          "detail": "{\"url\":\"data:image/svg+xml,%3Csvg xmlns=%27http:\",\"ok\":true,\"isData\":true}"
+        },
+        {
+          "name": "hero background image really decodes",
+          "ok": true,
+          "detail": "{\"url\":\"data:image/svg+xml,%3Csvg xmlns=%27http:\",\"ok\":true,\"isData\":true}"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "0c0fde28972b5fd8b8a19183cebb14b8ca97979f0f0c3f5ea7234b8de660e4fe",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-063",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "conic gradient used",
+          "ok": true,
+          "detail": "conic-gradient(rgb(26, 115, 232) 0deg, rgb(26, 115, 232) 65%, rgb(224, 224, 224) 65%, rgb(224, 224, 224) 100%)"
+        },
+        {
+          "name": "ring round",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "inner hole is 72px",
+          "ok": true,
+          "detail": "72px"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "62c33584365498c4ecaaa8e24cc86341877e4f1c3fcbbc337b818e82ee1bae11",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-064",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 15,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "wide: burger is hidden",
+          "ok": true,
+          "detail": "none"
+        },
+        {
+          "name": "wide: menu is flex",
+          "ok": true,
+          "detail": "flex"
+        },
+        {
+          "name": "wide: menu items sit on one row",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "wide: menu gap 16px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "narrow: burger is shown",
+          "ok": true,
+          "detail": "inline"
+        },
+        {
+          "name": "narrow: menu starts collapsed",
+          "ok": true,
+          "detail": "none"
+        },
+        {
+          "name": "narrow: clicking ☰ checks the toggle",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "narrow: clicking ☰ reveals the menu",
+          "ok": true,
+          "detail": "block"
+        },
+        {
+          "name": "narrow: revealed menu stacks its three items",
+          "ok": true,
+          "detail": "3 items"
+        },
+        {
+          "name": "narrow: clicking ☰ again unchecks the toggle",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "narrow: clicking ☰ again hides the menu",
+          "ok": true,
+          "detail": "none"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "5a6e51522a82b94deac157b5b0761cdcab9ffa81d89ddfab79cfe4fe71290c3b",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-065",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "clamp overflow hidden",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "clamp actually clips content",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "clamp width 200px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "fa96a87c5b2199417f2af6e196baeec629562ee5dd5993e0c87698c4aaf810aa",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-066",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "even row shaded",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "table border-collapse",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "hovered row turns light blue",
+          "ok": true,
+          "detail": "rgb(232, 240, 254)"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "0f036c079629209d14dc692b7961ee655d2ed8011dff61f46dcf1487e628a21b",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-067",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "nav visible on screen",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "button visible on screen",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "print media rule declared",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "article present",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "923fb152599b9a42578fe1275396e6fa6dcf5eb80707e5a557fa074aeb3e68b7",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-068",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 6,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "first letter floats",
+          "ok": true,
+          "detail": "left"
+        },
+        {
+          "name": "first letter enlarged",
+          "ok": true,
+          "detail": "48px"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "b3f6f5512baf3001e801742efbe169edd4a3ffdc6c7b3817eeb396031f03d471",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-069",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "badge pill radius",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "ok badge green fg",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "warn badge amber bg",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "err badge red fg",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "a0e993e81203714e682481d8af17e0fe7ad1016a847a843eeb1f927501fbdc01",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-070",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "label floats up on focus",
+          "ok": true,
+          "detail": "10px -> -8px"
+        },
+        {
+          "name": "label pointer-events none",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "label text",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "2a305a8396f00cd65ef203576e4a2458ce478983447bc8d9135e9d9abd79f673",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-071",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "btn blue background",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "btn white text",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "forced-colors rule declared",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "23daf112196b06ed745a3de9f6d6eefec9d04286e0de24f23e1e8cba8e071c7d",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-072",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "container max-width 1080px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "container padding 16px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "container auto margins",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "7f2e7de8b5b94d87b5bfc072668ceeb7b8c928132ade97f43ad23ba4c8db231f",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-073",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 13,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "body font stack includes MyFont",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "text still rendered with fallback",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "visible ASCII \"WebForge\" sample present",
+          "ok": true,
+          "detail": "这段文字用内联的 WebForge 演示字体：WebForge"
+        },
+        {
+          "name": "font src is an inline data URI (no my.woff2 fetch)",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "@font-face font-display swap declared",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "a @font-face is declared for MyFont",
+          "ok": true,
+          "detail": "[{\"family\":\"MyFont\",\"src\":\"url(\\\"data:font/woff2;bas\"}]"
+        },
+        {
+          "name": "document.fonts.load returns a real face",
+          "ok": true,
+          "detail": "{\"count\":1,\"statuses\":[\"loaded\"],\"check\":true,\"ok\":true}"
+        },
+        {
+          "name": "every FontFace status is loaded",
+          "ok": true,
+          "detail": "{\"count\":1,\"statuses\":[\"loaded\"],\"check\":true,\"ok\":true}"
+        },
+        {
+          "name": "document.fonts.check is true",
+          "ok": true,
+          "detail": "{\"count\":1,\"statuses\":[\"loaded\"],\"check\":true,\"ok\":true}"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "d07d36352300e36f87127e4eca8fffff5c0179ed9618cf4c11657c33bb92ce20",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-074",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 6,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "fast moves via transform",
+          "ok": true,
+          "detail": "matrix(1, 0, 0, 1, 40, 0)"
+        },
+        {
+          "name": "slow moves via left",
+          "ok": true,
+          "detail": "40px"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "86ab09078fd7b31df368040e67a726a1299ef9cc47b9cbf67df36a14d3f63737",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-075",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 6,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "underline starts at width 0",
+          "ok": true,
+          "detail": "0px"
+        },
+        {
+          "name": "underline expands on hover",
+          "ok": true,
+          "detail": "64px"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "405d7269b27adb435645469461d011c4e640a3ed92e1e6ebbbe4f5cb42904580",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-076",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "stack is grid",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "label overlaps the image",
+          "ok": true,
+          "detail": "79 vs 108"
+        },
+        {
+          "name": "label white",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "7d415c204611f14820c64d36ccba104d6664f12df2100576ff3070e924ae0c9c",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-077",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "item blue",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "descendant link no underline",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "link text",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "fd6b4ffbfdc32026cd97bc7a714c86408532a582ec963b266eeb768a0bcbb54d",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-078",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 9,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "icon inline-block",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "icon 24x24",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "second icon shifted by -24px",
+          "ok": true,
+          "detail": "-24px 0px"
+        },
+        {
+          "name": "sprite background is inline data URI",
+          "ok": true,
+          "detail": "{\"url\":\"data:image/svg+xml,%3Csvg xmlns=%27http:\",\"ok\":true,\"isData\":true}"
+        },
+        {
+          "name": "sprite background really decodes",
+          "ok": true,
+          "detail": "{\"url\":\"data:image/svg+xml,%3Csvg xmlns=%27http:\",\"ok\":true,\"isData\":true}"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "2d823c3adf8414cdef5f7aa4d32b415511943daad4850ac96466822902d980aa",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-079",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "section content-visibility auto",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "contain-intrinsic-size keeps 300px",
+          "ok": true,
+          "detail": "auto 300px"
+        },
+        {
+          "name": "three sections",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "6c573e5d15f7e36e97d7b4f9b5bc9836ea677c1b4bacfa294db4f0c8b8c722cd",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-080",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "grid auto-flow dense",
+          "ok": true,
+          "detail": "dense"
+        },
+        {
+          "name": "four columns",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "wide item spans 2",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "six items",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "47ab8ed41d26ddf997ebc1638503aabd1a9c5b0bddadce75060c14364d710f7b",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-081",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "four swatches render as rgb",
+          "ok": true,
+          "detail": "222.40739999999997,157.797,95.82039999999999,55.797"
+        },
+        {
+          "name": "lightness strictly decreases s1>s2>s3>s4",
+          "ok": true,
+          "detail": "222.40739999999997,157.797,95.82039999999999,55.797"
+        },
+        {
+          "name": "swatches equal width",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "c4c9be4bab79714e1f71894e8418f9c30c8ee8514baf9a2855032f0ce5e6940d",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-082",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "typing animation applied",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "cursor blink in animation list",
+          "ok": true,
+          "detail": "typing, blink"
+        },
+        {
+          "name": "no-wrap keeps one line",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "right border is the cursor",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "ab759f64182784abc5105b6ad46c62dd66b48d9240c42eea9d05f497436593e1",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-083",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "box background #e8f0fe",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "@supports (display: grid) declared",
+          "ok": true,
+          "detail": "(display: grid)"
+        },
+        {
+          "name": "box ends up gridded",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "08757d1129279159ebd6907c63197fbceb713e15ce6e59d5fdfb414b45e81681",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-084",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "img object-fit cover",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "default image centred (50% 50%)",
+          "ok": true,
+          "detail": "50% 50%"
+        },
+        {
+          "name": "top image keeps top edge (50% 0%)",
+          "ok": true,
+          "detail": "50% 0%"
+        },
+        {
+          "name": "both crop images decode",
+          "ok": true,
+          "detail": "[{\"src\":\"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27400%27 height=%27200%27%3E%3Crect width=%27400%27 height=%27200%27 fill=%27%23e8f0fe%27/%3E%3Crect width=%27400%27 height=%27100%27 fill=%27%231a73e8%27/%3E%3Ctext x=%27200%27 y=%2765%27 font-size=%2732%27 text-anchor=%27middle%27 fill=%27%23fff%27%3ETOP%3C/text%3E%3Ctext x=%27200%27 y=%27160%27 font-size=%2732%27 text-anchor=%27middle%27 fill=%27%231a73e8%27%3EBOTTOM%3C/text%3E%3C/svg%3E\",\"alt\":\"图一\",\"isData\":true,\"complete\":true,\"naturalWidth\":400,\"naturalHeight\":200},{\"src\":\"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27400%27 height=%27200%27%3E%3Crect width=%27400%27 height=%27200%27 fill=%27%23e8f0fe%27/%3E%3Crect width=%27400%27 height=%27100%27 fill=%27%231a73e8%27/%3E%3Ctext x=%27200%27 y=%2765%27 font-size=%2732%27 text-anchor=%27middle%27 fill=%27%23fff%27%3ETOP%3C/text%3E%3Ctext x=%27200%27 y=%27160%27 font-size=%2732%27 text-anchor=%27middle%27 fill=%27%231a73e8%27%3EBOTTOM%3C/text%3E%3C/svg%3E\",\"alt\":\"图二\",\"isData\":true,\"complete\":true,\"naturalWidth\":400,\"naturalHeight\":200}]"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "5853956bff34762896ea131acef736ab965448fd716fb37cf3aa87a7ef4770a2",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-085",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "th sticky",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "th top 0",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "th blue",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "wrap actually scrolls",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "eb3f8262e5e05142389267b966315f792a1158764b974bddc532e5e18aa1c969",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-086",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "body starts white",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "click applies .dark to body",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "click toggles dark background",
+          "ok": true,
+          "detail": "rgb(32, 33, 36)"
+        },
+        {
+          "name": "transition on background+colour",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "784fa62a271aecb78fb3d574226c86ffb2b8ac95a8a8dce51f8efaeb86e2bb99",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-087",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "grid declares named lines",
+          "ok": true,
+          "detail": "[left] 628px [mid] 628px [right]"
+        },
+        {
+          "name": "blocks are half-width each",
+          "ok": true,
+          "detail": "628 vs 628"
+        },
+        {
+          "name": "a is left half",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "a8a7dd085b0db5ff08fc469c91c8f8223efc002e5773535679807adfd5ffc688",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-088",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 9,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "icon background image layered with colour",
+          "ok": true,
+          "detail": "url(\"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2720%27 height=%2720%27%3E%3Ccircle cx=%2710%27 cy=%2710%27 r=%279%27 fill=%27%231a73e8%27/%3E%3Ctext x=%2710%27 y=%2714%27 font-size=%2712%27 text-anchor=%27middle%27 fill=%27%23fff%27%3Ei%3C/text%3E%3C/svg%3E\"), none"
+        },
+        {
+          "name": "left padding leaves room for icon",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "field text present",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "background icon is inline data URI",
+          "ok": true,
+          "detail": "{\"url\":\"data:image/svg+xml,%3Csvg xmlns=%27http:\",\"ok\":true,\"isData\":true}"
+        },
+        {
+          "name": "background icon really decodes",
+          "ok": true,
+          "detail": "{\"url\":\"data:image/svg+xml,%3Csvg xmlns=%27http:\",\"ok\":true,\"isData\":true}"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "9096f2d8af0c5383931262f817c4abc15c130bc78fb86ca1e3fdd7b049ca827c",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-089",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "footer hidden on screen",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "print media rule declared",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "footer text",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "ec0a8074a8b8ef993111ccd90c2ac7ab1048a3108cdc6398c7a23eb2c98cfb53",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-090",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 16,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "card background #e8f0fe",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "narrow: --space is 8px",
+          "ok": true,
+          "detail": "8px"
+        },
+        {
+          "name": "narrow: --title is 18px",
+          "ok": true,
+          "detail": "18px"
+        },
+        {
+          "name": "narrow: card padding follows --space (8px)",
+          "ok": true,
+          "detail": "8px"
+        },
+        {
+          "name": "narrow: card margin follows --space (8px)",
+          "ok": true,
+          "detail": "8px"
+        },
+        {
+          "name": "narrow: h2 follows --title (18px)",
+          "ok": true,
+          "detail": "18px"
+        },
+        {
+          "name": "wide: --space switches to 16px",
+          "ok": true,
+          "detail": "16px"
+        },
+        {
+          "name": "wide: --title switches to 24px",
+          "ok": true,
+          "detail": "24px"
+        },
+        {
+          "name": "wide: card padding follows --space (16px)",
+          "ok": true,
+          "detail": "16px"
+        },
+        {
+          "name": "wide: h2 follows --title (24px)",
+          "ok": true,
+          "detail": "24px"
+        },
+        {
+          "name": "the breakpoint actually changes the padding",
+          "ok": true,
+          "detail": "8px -> 16px"
+        },
+        {
+          "name": "the breakpoint actually changes the heading size",
+          "ok": true,
+          "detail": "18px -> 24px"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "8a36678230cc029033c857b95dcd85ef7f90c0b1def9bbca0b1f98a472512b47",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-091",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "spinner round",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "spinner spin animation",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "spinner top border blue",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "spinner 20x20",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "86b80a71fcaa3bfbb6f4fb15fe51163b8362747a1674cdf408b2997d0034f81d",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-092",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "good blue bg",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "good white text",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "bad low-contrast grey text",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "bad light grey bg",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "9f67a383e527149a8d799bdacf0803343b090757badb42e5e8a068f3cd4ea0a1",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-093",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "wave clip-path polygon",
+          "ok": true,
+          "detail": "polygon(0px 0px, 100% 0px, 100% 60%, 75% 100%, 50% 60%, 25% 100%, 0px 60%)"
+        },
+        {
+          "name": "wave blue",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "body block light blue",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "ad4a3b797020f0d4842f26b08285b7a0e96380b71f2185d2fe4e2a8d8f2a1c76",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-094",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "autofill rule declares inset box-shadow",
+          "ok": true,
+          "detail": "rgb(232, 240, 254) 0px 0px 0px 1000px inset|rgb(32, 33, 36)"
+        },
+        {
+          "name": "autofill rule declares text fill colour",
+          "ok": true,
+          "detail": "rgb(232, 240, 254) 0px 0px 0px 1000px inset|rgb(32, 33, 36)"
+        },
+        {
+          "name": "input padding 8px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "input radius 6px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "2bc59276211f6a572420bee94f255e586591b74bd219ee7c4a10654754682346",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-095",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "body font-size in clamp range",
+          "ok": true,
+          "detail": "18"
+        },
+        {
+          "name": "h1 font-size in clamp range",
+          "ok": true,
+          "detail": "48"
+        },
+        {
+          "name": "h1 text",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "8abd215d340add889da78fa94cf6275a1a90293185a01372b290340a259eb6b7",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-096",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 6,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "four-direction blue outline",
+          "ok": true,
+          "detail": "rgb(26, 115, 232) -1px 0px 0px, rgb(26, 115, 232) 1px 0px 0px, rgb(26, 115, 232) 0px -1px 0px, rgb(26, 115, 232) 0px 1px 0px"
+        },
+        {
+          "name": "text white",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "bcecba144f44fc849cc530e4c20f3a0dc474ab5ef28b287d1346ea9bfe144a96",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-097",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "first item has bottom border",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "second item has bottom border",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "last item has no bottom border",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "three list items",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "46379407796bdae1463b189dba6a58d5d5c51d8654067acc5fb6b40aa8c9e9a1",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-098",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "first column sized to content (smaller)",
+          "ok": true,
+          "detail": "96px 1160px"
+        },
+        {
+          "name": "second column fills remainder (larger)",
+          "ok": true,
+          "detail": "96px 1160px"
+        },
+        {
+          "name": "two labels",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "3b6e7858a2c9015157e5a710c69593edf76da9e24c6de59ebe3cd7047951d4c9",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-099",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 7,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "empty input not coloured",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "invalid email border red",
+          "ok": true,
+          "detail": "rgb(234, 67, 53)"
+        },
+        {
+          "name": "valid email border green",
+          "ok": true,
+          "detail": "rgb(52, 168, 83)"
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "535bf204729b9f07dd6ead5e6e222b76dfeadf7fa3e4d93c6a3b935cbcf218c4",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    },
+    {
+      "id": "css-example-100",
+      "type": "css",
+      "pass": true,
+      "failed": [],
+      "errors": [],
+      "checks": 8,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "card is grid",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "badge sits top-right",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "badge red",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "badge text",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "985ab8f19e2ea3cafe6a549492dc725003d35d1f9530d62e9d26e9bb5eca5670",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    }
+  ]
+}

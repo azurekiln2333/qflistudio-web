@@ -1,0 +1,4 @@
+Web web-app-c895-20261026 ACCEPT Web-observed-app-20261026-04 to c-coordinator. Window 180s, one wrapper command, including the five granted formatter paths.
+Wrapper pid=82672 created=134374821414952833 wrapperAlive=true outerTerminalClaimed=false.
+The budget clock started at wrapper entry, before this ACCEPT was written. The window covers ACCEPT through relay publish. The wrapper formats only the five granted paths, then launches the frozen supervisor.
+No SDK/browser/native/device run beyond this window. No successor grant.

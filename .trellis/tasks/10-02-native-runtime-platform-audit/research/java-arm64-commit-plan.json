@@ -1,0 +1,43 @@
+{
+  "repository": "D:/MyNewProjects/qfli_java",
+  "baseline": "ea7b4df",
+  "message": "docs(java): record ARM64 Android JDK recovery",
+  "status": "awaiting_confirmation",
+  "files": [
+    {
+      "path": "native/openjdk/README.md",
+      "sha256": "a9cfa1da49da5ea5266b94b5fddb3d86c19851b84286fc53127fcaf267582029"
+    },
+    {
+      "path": "native/openjdk/android/README.md",
+      "sha256": "32f5b0850ec8ca4224c5f7b96350c768cbdb2551468d869c8bc0fa2075ea3122"
+    }
+  ],
+  "excludedDirtyPaths": [
+    "android/app/src/main/res/drawable-v21/launch_background.xml",
+    "android/app/src/main/res/drawable/launch_background.xml",
+    "android/app/src/main/res/values-night/styles.xml",
+    "android/app/src/main/res/values/styles.xml",
+    "lib/main.dart",
+    "ohos/build-profile.json5",
+    "ohos/entry/src/main/ets/entryability/EntryAbility.ets",
+    "ohos/entry/src/main/ets/pages/Index.ets",
+    "ohos/entry/src/main/resources/base/profile/main_pages.json",
+    "pubspec.lock",
+    "pubspec.yaml",
+    ".codex/",
+    ".gitattributes",
+    ".trae/",
+    "AGENTS.md",
+    "android/app/src/main/res/values-night-v31/",
+    "android/app/src/main/res/values-night/colors.xml",
+    "android/app/src/main/res/values-v31/",
+    "android/app/src/main/res/values/colors.xml",
+    "ohos/entry/src/main/ets/pages/AgreementReader.ets",
+    "test/startup_test.dart"
+  ],
+  "localSpec": ".trellis/spec/backend/mobile-jdk.md is updated but remains ignored",
+  "generatedInputs": "native/build/android ARM64 is rebuilt and staged, and remains ignored",
+  "push": false,
+  "amend": false
+}

@@ -1,8 +1,8 @@
 {
   "production": {
     "path": "ohos\\entry\\build\\default\\outputs\\default\\entry-default-unsigned.hap",
-    "bytes": 80682576,
-    "sha256": "7b16610e9efe667eb3c838a204fab1c53441f8d17e4e997c0a13325a455cd346",
+    "bytes": 80688547,
+    "sha256": "b3ac4a805488789565715dc91037b9859da4333accf563d18c03d0ce3b0cb6d6",
     "bundleName": "com.azurekiln.qfli.webforge",
     "moduleName": "entry",
     "abilityName": "EntryAbility",
@@ -12,23 +12,23 @@
     "compileSdkVersion": "26.0.0.105",
     "minAPIVersion": 50100018,
     "targetAPIVersion": 60101024,
-    "bytecodeSha256": "a0c2298197b34f30f7d2e8c39d1734cd358e0e12f2d5a93b0464e3d5e9a5748f",
+    "bytecodeSha256": "3d7e2e4df7c0da74c102094c229fadef6bb04a50f8a862192a78bddbef3843d4",
     "catalogs": {
       "examples.json": {
         "path": "resources/rawfile/flutter_assets/assets/content/examples.json",
-        "bytes": 796590,
-        "sha256": "2d8f8c0aa321f3e861af5f46cd0a9b2b1430010b513d3c3eea106c0eca2eeb1c"
+        "bytes": 798654,
+        "sha256": "50b77850b99e0889a35163d5fb16f9ecc020970f7f0bc8c0e5ef48a77a0dddfc"
       },
       "tutorials.json": {
         "path": "resources/rawfile/flutter_assets/assets/content/tutorials.json",
-        "bytes": 1389546,
-        "sha256": "10e750b7bd8fa8f1cb9d252831bce224248c0075589f5367c4312e37104acb36"
+        "bytes": 1393445,
+        "sha256": "b9fd7227ed11d13d81c0663dd51a84f0b7cfdefb5c3a48cdd64fdcd7674d7424"
       }
     },
     "nativeLibraries": [
       {
         "path": "libs/arm64-v8a/libapp.so",
-        "sha256": "30a2e2031bd288ea01f94a4bde010ad4ecbfc7f1d95cad60194b438c2306a7c5"
+        "sha256": "22a96ee6967ecbfe1862c17cce59c2fa449b8a901b53e3b119d7e0dff8f22051"
       },
       {
         "path": "libs/arm64-v8a/libc++_shared.so",
@@ -48,7 +48,7 @@
       },
       {
         "path": "libs/x86_64/libapp.so",
-        "sha256": "3ccb264d497b839130d62dcd2607e4f07a63cecc695736e012550b9581b3ca43"
+        "sha256": "1dbfe4bef1684d824715fe3027f198d04039e56394047f928c7e5a9ae445fbfd"
       },
       {
         "path": "libs/x86_64/libc++_shared.so",
@@ -72,7 +72,7 @@
       {
         "path": "libs/arm64-v8a/libapp.so",
         "bytes": 14205872,
-        "sha256": "30a2e2031bd288ea01f94a4bde010ad4ecbfc7f1d95cad60194b438c2306a7c5",
+        "sha256": "22a96ee6967ecbfe1862c17cce59c2fa449b8a901b53e3b119d7e0dff8f22051",
         "machine": 183
       },
       {
@@ -84,7 +84,7 @@
       {
         "path": "libs/x86_64/libapp.so",
         "bytes": 13697968,
-        "sha256": "3ccb264d497b839130d62dcd2607e4f07a63cecc695736e012550b9581b3ca43",
+        "sha256": "1dbfe4bef1684d824715fe3027f198d04039e56394047f928c7e5a9ae445fbfd",
         "machine": 62
       },
       {
@@ -141,8 +141,8 @@
   },
   "test": {
     "path": "ohos\\entry\\build\\default\\outputs\\ohosTest\\entry-ohosTest-unsigned.hap",
-    "bytes": 165686366,
-    "sha256": "52629b271a34c598141a075422a246d77f6040a08adcebd59beb909c586afb8d",
+    "bytes": 165793100,
+    "sha256": "c18d88a5ba79abf1a93bd9aec2ac01dc753205eb6ad15a5c23f994d01a74a0f6",
     "bundleName": "com.azurekiln.qfli.webforge",
     "moduleName": "entry_test",
     "abilityName": "TestAbility",
@@ -156,13 +156,13 @@
     "catalogs": {
       "examples.json": {
         "path": "resources/rawfile/ohos_catalog/examples.json",
-        "bytes": 796590,
-        "sha256": "2d8f8c0aa321f3e861af5f46cd0a9b2b1430010b513d3c3eea106c0eca2eeb1c"
+        "bytes": 798654,
+        "sha256": "50b77850b99e0889a35163d5fb16f9ecc020970f7f0bc8c0e5ef48a77a0dddfc"
       },
       "tutorials.json": {
         "path": "resources/rawfile/ohos_catalog/tutorials.json",
-        "bytes": 1389546,
-        "sha256": "10e750b7bd8fa8f1cb9d252831bce224248c0075589f5367c4312e37104acb36"
+        "bytes": 1393445,
+        "sha256": "b9fd7227ed11d13d81c0663dd51a84f0b7cfdefb5c3a48cdd64fdcd7674d7424"
       }
     },
     "nativeLibraries": [

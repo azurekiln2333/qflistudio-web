@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "runtime": "ohos-arkweb",
+  "device": {
+    "runId": "1792669631117",
+    "manifest": {
+      "schemaVersion": 1,
+      "kind": "qfli-ohos-catalog",
+      "files": {
+        "examples": {
+          "path": "ohos_catalog/examples.json",
+          "bytes": 796590,
+          "sha256": "2d8f8c0aa321f3e861af5f46cd0a9b2b1430010b513d3c3eea106c0eca2eeb1c"
+        },
+        "tutorials": {
+          "path": "ohos_catalog/tutorials.json",
+          "bytes": 1389546,
+          "sha256": "10e750b7bd8fa8f1cb9d252831bce224248c0075589f5367c4312e37104acb36"
+        }
+      },
+      "counts": {
+        "examples": 481,
+        "tutorials": 481,
+        "lessons": 481
+      }
+    },
+    "environment": {
+      "bundleName": "com.azurekiln.qfli.webforge",
+      "moduleName": "entry_test",
+      "abilityName": "TestAbility",
+      "osFullName": "OpenHarmony-7.0.0.105",
+      "sdkApiVersion": 26,
+      "deviceType": "phone"
+    }
+  },
+  "viewport": null,
+  "host": {
+    "platform": "win32",
+    "architecture": "x64",
+    "node": "v24.15.0"
+  },
+  "browserVersion": "144.0.7559.59",
+  "startedAt": "2026-10-22T11:52:50.887Z",
+  "completedAt": "2026-10-22T11:52:52.911Z",
+  "catalog": {
+    "examplesSha256": "2d8f8c0aa321f3e861af5f46cd0a9b2b1430010b513d3c3eea106c0eca2eeb1c",
+    "tutorialsSha256": "10e750b7bd8fa8f1cb9d252831bce224248c0075589f5367c4312e37104acb36",
+    "totalExamples": 481,
+    "totalLessons": 481,
+    "executedExamples": 1,
+    "complete": false
+  },
+  "passed": 0,
+  "failed": 1,
+  "totalChecks": 16,
+  "mappingIssues": [],
+  "results": [
+    {
+      "id": "css-example-035",
+      "type": "css",
+      "pass": false,
+      "failed": [
+        {
+          "name": "btn blue",
+          "ok": false,
+          "detail": ""
+        },
+        {
+          "name": "focus ring is 3px solid #8ab4f8",
+          "ok": false,
+          "detail": "rgb(138, 180, 248)"
+        }
+      ],
+      "errors": [],
+      "checks": 16,
+      "assertions": [
+        {
+          "name": "check marker present",
+          "ok": true,
+          "detail": "present=true"
+        },
+        {
+          "name": "exactly one semantic oracle",
+          "ok": true,
+          "detail": "owners=1"
+        },
+        {
+          "name": "btn blue",
+          "ok": false,
+          "detail": ""
+        },
+        {
+          "name": "btn pointer",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "btn radius 6px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "btn padding 10px 20px",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "disabled opacity is exactly 0.5",
+          "ok": true,
+          "detail": "0.5"
+        },
+        {
+          "name": "disabled cursor is not-allowed",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "Tab focuses the first button",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "focus ring is 3px solid #8ab4f8",
+          "ok": false,
+          "detail": "rgb(138, 180, 248)"
+        },
+        {
+          "name": "hover darkens to #1557b0",
+          "ok": true,
+          "detail": "rgb(21, 87, 176)"
+        },
+        {
+          "name": "pressed button matches :active",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "pressed button sinks by 1px",
+          "ok": true,
+          "detail": "matrix(1, 0, 0, 1, 0, 1)"
+        },
+        {
+          "name": "released button returns to rest",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no external requests",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "name": "no broken internal resources",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "codeSha256": "d33e1541b3ea26c760e903511515b506fc67906b3494ab574786438475ddbf73",
+      "console": [],
+      "blockedRequests": [],
+      "resourceErrors": []
+    }
+  ]
+}

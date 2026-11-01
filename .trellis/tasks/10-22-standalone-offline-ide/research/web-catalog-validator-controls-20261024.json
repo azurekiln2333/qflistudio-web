@@ -1,0 +1,14 @@
+{
+  "kind": "Read-only report-validator controls; no browser/job/runtime acceptance",
+  "observedUtcDate": "2026-10-24",
+  "validator": "run-web-catalog-window.py::validate_report",
+  "input": "browser-481-final-desktop.json",
+  "inputTreatment": "Historical report loaded read-only; no old evidence rewritten. The positive control uses that historical report's own hashes solely to test the report schema validator.",
+  "cases": [
+    {"case": "historical-schema-positive", "accepted": true, "passed": 481},
+    {"case": "wrong-viewport", "accepted": false, "error": "Browser report rejected: viewport"},
+    {"case": "stale-hash", "accepted": false, "error": "Browser report rejected: examples hash"},
+    {"case": "full-cannot-be-partial-control", "accepted": false, "error": "Browser report rejected: executed count, complete flag, pass count, row count, exact IDs"}
+  ],
+  "limitation": "Pure Python validation only. No new catalog, browser, Job cleanup, native or device execution occurred. Actual catalog windows still require a new explicit330-second grant."
+}

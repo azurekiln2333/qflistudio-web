@@ -34,6 +34,14 @@ Expansion modules export `COVERED_IDS` and
   style, console values or interactions; a marker or nonempty output is not a
   semantic pass. Every lesson must map to identical example code after stripping
   the known marker. Reject duplicate IDs/bodies and missing mappings.
+- An oracle exporting `SELF_DRIVEN_IDS` owns those entries' real input gestures;
+  the generic JS driver must not pre-click them. Clipboard scenarios use
+  controlled page-local API responses, restored after each case, with real
+  reachable buttons and the authored handler. They prove handler/DOM behavior,
+  not platform clipboard permission or access to the user's actual clipboard.
+  Do not swallow `locator.click()` failures or equate a present selector with a
+  completed gesture. Reject prefilled terminal states, require the authored
+  action's observed result, and preserve exact platform property descriptors.
 - Block every external request. Preserve exact authored documents and missing
   assets; no runner-provided helper fixture may make an incomplete lesson pass.
   Only the exact intentional missing-image teaching path has an exception, with
@@ -70,6 +78,23 @@ Expansion modules export `COVERED_IDS` and
   Native `page.viewportSize()` may be null; use actual `window.innerWidth` for
   responsive expectations. Unsupported transport or platform behavior stays a
   failed/open gate, with no host fallback.
+- Measure rendered geometry with bounded subpixel tolerance (currently 0.5 CSS
+  px for integer dimensions); ArkWeb device-pixel snapping and OS fonts cannot
+  be compared to desktop-only literals. Read text geometry through the same
+  element's Range when the contract depends on its font. Park the reused native
+  pointer outside a control before asserting its non-hover state.
+  Read switch geometry/transform from the rendered element and pseudo-element;
+  comparisons of oracle-supplied constants cannot prove layout behavior. Poll
+  observable checked state after a real hit-tested click before reading an
+  animated style; a missed click must fail within a bounded budget.
+- A capability probe must use an independent control and must not choose an
+  expected outcome from the tested element's own result. Preserve unconditional
+  behavior checks (containment, stable layout, actual internal scrolling) and
+  deliver a source fallback where required. Mutating the relevant lesson rule
+  or fallback must still fail its semantic oracle. Exercise both probe branches.
+- Remove an owned forward using distinct arguments: `hdc -t <target> fport rm
+  <local> <remote>`. A single combined argument is not equivalent; require its
+  absence in a subsequent `fport ls`. Do not remove another owner's forward.
 
 ## 4. Validation & Error Matrix
 
@@ -82,7 +107,7 @@ Expansion modules export `COVERED_IDS` and
 | Missing HDC target, invalid/stale signature/profile | No install/launch/forward |
 | Browser/partial/empty-assertion report supplied as OHOS | Driver rejects |
 | Driver cleanup fails | Failing exit; record remaining resource |
-| Unsigned current HAP builds | Packaging evidence only; installation stays open |
+| Unsigned current HAP builds | Packaging only until actual installation/execution; explicit verified local-emulator mode may prove emulator execution |
 
 ## 5. Good / Base / Bad Cases
 
@@ -103,7 +128,8 @@ wrong identity, external/reused origins, unsigned/stale HAPs, missing live
 targets and host/partial reports; assert no device mutation before preflight
 and targeted teardown after launch failure. Rebuild/stage after catalog edits.
 Inspect current production/test archives, native ABI/exports and source
-separation. Full signed native execution is a separate mandatory gate.
+separation. Exhaustive native execution is a separate mandatory gate; a verified
+unsigned-emulator run proves only that emulator, never physical-device signing.
 
 ## 7. Wrong vs Correct
 

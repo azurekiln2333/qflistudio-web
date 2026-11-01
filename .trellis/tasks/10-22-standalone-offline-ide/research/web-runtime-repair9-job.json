@@ -1,0 +1,43 @@
+{
+  "grant": "Note501-Web504",
+  "nextOwner": "java-offline-1022",
+  "startedUtc": "2026-10-24T03:15:13.911901+00:00",
+  "errors": [],
+  "deadlineReached": false,
+  "root": {
+    "pid": 82044,
+    "threadId": 80112,
+    "createdSuspended": true,
+    "assignedBeforeResume": true,
+    "terminal": true,
+    "creationFiletime100ns": "134372853139225777",
+    "jobActiveProcesses": 0,
+    "exitCode": 1
+  },
+  "terminalConfirmed": true,
+  "status": "RELEASE",
+  "elapsedSeconds": 32.303,
+  "worker": {
+    "formatExit": 0,
+    "testExit": 1,
+    "analyzeExit": 0,
+    "exception": null,
+    "sourceSnapshotsIdentical": true,
+    "startedUtc": "2026-10-24T03:15:14.1982691Z",
+    "finishedUtc": "2026-10-24T03:15:46.1993297Z"
+  },
+  "publication": {
+    "root": {
+      "pid": 36700,
+      "threadId": 57668,
+      "createdSuspended": true,
+      "assignedBeforeResume": true,
+      "terminal": true,
+      "creationFiletime100ns": "134372853462666950",
+      "jobActiveProcesses": 0,
+      "exitCode": 0
+    },
+    "terminal": true,
+    "delivered": true
+  }
+}

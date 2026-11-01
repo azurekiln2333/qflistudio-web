@@ -1,0 +1,24 @@
+{
+  "fixture": "root exits with live child; owned job must stay nonempty until cleanup",
+  "afterRootExit": {
+    "pid": 81344,
+    "threadId": 53820,
+    "createdSuspended": true,
+    "assignedBeforeResume": true,
+    "terminal": true,
+    "creationFiletime100ns": "134372733132563199",
+    "jobActiveProcesses": 2,
+    "exitCode": 0
+  },
+  "afterCleanup": {
+    "pid": 81344,
+    "threadId": 53820,
+    "createdSuspended": true,
+    "assignedBeforeResume": true,
+    "terminal": true,
+    "creationFiletime100ns": "134372733132563199",
+    "jobActiveProcesses": 0,
+    "exitCode": 0
+  },
+  "passed": true
+}

@@ -1,0 +1,38 @@
+{
+ "bootstrapUrl": "http://127.0.0.1:19999/__qfli_catalog/bootstrap",
+ "out": {
+  "css-example-031": {
+   "innerWidth": 980,
+   "innerHeight": 1990,
+   "dpr": 3.5,
+   "scale": 0.37346938252449036,
+   "viewportMeta": null,
+   "body": {
+    "contentW": 964,
+    "scrollW": 980
+   }
+  },
+  "css-example-129": {
+   "innerWidth": 980,
+   "innerHeight": 1990,
+   "dpr": 3.5,
+   "scale": 0.37346938252449036,
+   "viewportMeta": null,
+   "body": {
+    "contentW": 980,
+    "scrollW": 980
+   }
+  },
+  "css-example-147": {
+   "innerWidth": 980,
+   "innerHeight": 1990,
+   "dpr": 3.5,
+   "scale": 0.37346938252449036,
+   "viewportMeta": null,
+   "body": {
+    "contentW": 980,
+    "scrollW": 980
+   }
+  }
+ }
+}

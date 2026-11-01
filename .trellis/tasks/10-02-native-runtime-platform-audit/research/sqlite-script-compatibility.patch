@@ -1,0 +1,2298 @@
+diff --git a/lib/sql_database.dart b/lib/sql_database.dart
+index e786846..de5bebe 100644
+--- a/lib/sql_database.dart
++++ b/lib/sql_database.dart
+@@ -1,219 +1,224 @@
+-import 'dart:io';
+-
+-import 'package:flutter/services.dart';
+-import 'package:path/path.dart' as p;
+-
+-import 'sql_native_channel.dart';
+-
+-class SqlResultColumn {
+-  const SqlResultColumn({
+-    required this.name,
+-    required this.nativeType,
+-    required this.binary,
+-  });
+-
+-  final String name;
+-  final int nativeType;
+-  final bool binary;
+-}
+-
+-class SqlQueryResult {
+-  const SqlQueryResult({
+-    required this.available,
+-    required this.exitCode,
+-    required this.columns,
+-    required this.rows,
+-    required this.affectedRows,
+-    required this.truncated,
+-    this.error,
+-    this.sqlState,
+-    this.columnInfo = const [],
+-  });
+-
+-  factory SqlQueryResult.fromNative(Object? raw) {
+-    if (raw is! Map ||
+-        raw['available'] is! bool ||
+-        raw['exitCode'] is! num ||
+-        raw['columns'] is! List ||
+-        raw['rows'] is! List ||
+-        raw['affectedRows'] is! num ||
+-        raw['truncated'] is! bool ||
+-        raw['error'] is! String) {
+-      throw const FormatException('Invalid native query result');
+-    }
+-    final columns = raw['columns'] as List;
+-    final rows = raw['rows'] as List;
+-    if (columns.any((value) => value is! String) ||
+-        rows.any(
+-          (row) =>
+-              row is! List ||
+-              row.length != columns.length ||
+-              row.any((value) => value != null && value is! String),
+-        )) {
+-      throw const FormatException('Invalid native table data');
+-    }
+-    final metadata = raw['columnInfo'];
+-    final columnInfo = <SqlResultColumn>[];
+-    if (metadata != null) {
+-      if (metadata is! List || metadata.length != columns.length) {
+-        throw const FormatException('Invalid native column metadata');
+-      }
+-      for (var index = 0; index < metadata.length; index++) {
+-        final item = metadata[index];
+-        if (item is! Map ||
+-            item['name'] != columns[index] ||
+-            item['nativeType'] is! num ||
+-            item['binary'] is! bool) {
+-          throw const FormatException('Invalid native column metadata');
+-        }
+-        columnInfo.add(
+-          SqlResultColumn(
+-            name: item['name'] as String,
+-            nativeType: (item['nativeType'] as num).toInt(),
+-            binary: item['binary'] as bool,
+-          ),
+-        );
+-      }
+-    }
+-    final state = raw['sqlState'];
+-    if (state != null && state is! String) {
+-      throw const FormatException('Invalid native SQLSTATE');
+-    }
+-    final error = raw['error'] as String;
+-    return SqlQueryResult(
+-      available: raw['available'] as bool,
+-      exitCode: (raw['exitCode'] as num).toInt(),
+-      columns: List<String>.from(columns),
+-      rows: [for (final row in rows) List<String?>.from(row as List)],
+-      affectedRows: (raw['affectedRows'] as num).toInt(),
+-      truncated: raw['truncated'] as bool,
+-      error: error.isEmpty ? null : error,
+-      sqlState: state is String && state.isNotEmpty ? state : null,
+-      columnInfo: columnInfo,
+-    );
+-  }
+-
+-  factory SqlQueryResult.unavailable(String message) => SqlQueryResult(
+-    available: false,
+-    exitCode: 127,
+-    columns: const [],
+-    rows: const [],
+-    affectedRows: 0,
+-    truncated: false,
+-    error: message,
+-  );
+-
+-  final bool available;
+-  final int exitCode;
+-  final List<String> columns;
+-  final List<List<String?>> rows;
+-  final int affectedRows;
+-  final bool truncated;
+-  final String? error;
+-  final String? sqlState;
+-  final List<SqlResultColumn> columnInfo;
+-
+-  bool get success => available && exitCode == 0 && error == null;
+-}
+-
+-abstract interface class SqlDatabase {
+-  Future<SqlQueryResult> query({
+-    required String databasePath,
+-    required String source,
+-    List<String?> parameters,
+-  });
+-}
+-
+-class SqlScriptResult {
+-  const SqlScriptResult({required this.summary, required this.results});
+-
+-  factory SqlScriptResult.fromNative(Object? raw) {
+-    final summary = SqlQueryResult.fromNative(raw);
+-    if (raw is! Map || raw['results'] is! List) {
+-      throw const FormatException('Invalid native script results');
+-    }
+-    return SqlScriptResult(
+-      summary: summary,
+-      results: [
+-        for (final result in raw['results'] as List)
+-          SqlQueryResult.fromNative(result),
+-      ],
+-    );
+-  }
+-
+-  final SqlQueryResult summary;
+-  final List<SqlQueryResult> results;
+-
+-  bool get success => summary.success;
+-  bool get available => summary.available;
+-  int get exitCode => summary.exitCode;
+-  String? get error => summary.error;
+-  bool get truncated => summary.truncated;
+-}
+-
+-abstract interface class SqlScriptDatabase {
+-  Future<SqlScriptResult> executeScript({
+-    required String databasePath,
+-    required String source,
+-  });
+-}
+-
+-/// Structured, parameterized queries for the local SQLite database workspace.
+-class NativeSqliteDatabase implements SqlDatabase, SqlScriptDatabase {
+-  const NativeSqliteDatabase({this.channel});
+-
+-  final MethodChannel? channel;
+-
+-  @override
+-  Future<SqlScriptResult> executeScript({
+-    required String databasePath,
+-    required String source,
+-  }) async {
+-    try {
+-      if (databasePath != ':memory:') {
+-        await Directory(p.dirname(databasePath)).create(recursive: true);
+-      }
+-      return SqlScriptResult.fromNative(
+-        await invokeSqliteNative('executeScript', {
+-          'source': source,
+-          'databasePath': databasePath,
+-        }, channel: channel),
+-      );
+-    } on Object catch (error) {
+-      return SqlScriptResult(
+-        summary: _failure(error.toString()),
+-        results: const [],
+-      );
+-    }
+-  }
+-
+-  @override
+-  Future<SqlQueryResult> query({
+-    required String databasePath,
+-    required String source,
+-    List<String?> parameters = const [],
+-  }) async {
+-    try {
+-      if (databasePath != ':memory:') {
+-        await Directory(p.dirname(databasePath)).create(recursive: true);
+-      }
+-      final raw = await invokeSqliteNative('query', {
+-        'source': source,
+-        'databasePath': databasePath,
+-        'params': parameters,
+-      }, channel: channel);
+-      return SqlQueryResult.fromNative(raw);
+-    } on FormatException {
+-      return _failure('SQLite 返回了无效的查询结果。');
+-    } on MissingPluginException {
+-      return _failure('当前设备无法连接 SQLite 引擎。');
+-    } on PlatformException catch (error) {
+-      return _failure(error.message ?? error.code);
+-    } on FileSystemException catch (error) {
+-      return _failure('无法创建数据库目录：${error.message}');
+-    }
+-  }
+-
+-  SqlQueryResult _failure(String message) =>
+-      SqlQueryResult.unavailable(message);
+-}
++import 'dart:io';
++
++import 'package:flutter/services.dart';
++import 'package:path/path.dart' as p;
++
++import 'sql_native_channel.dart';
++import 'sqlite_ffi.dart';
++
++class SqlResultColumn {
++  const SqlResultColumn({
++    required this.name,
++    required this.nativeType,
++    required this.binary,
++  });
++
++  final String name;
++  final int nativeType;
++  final bool binary;
++}
++
++class SqlQueryResult {
++  const SqlQueryResult({
++    required this.available,
++    required this.exitCode,
++    required this.columns,
++    required this.rows,
++    required this.affectedRows,
++    required this.truncated,
++    this.error,
++    this.sqlState,
++    this.columnInfo = const [],
++  });
++
++  factory SqlQueryResult.fromNative(Object? raw) {
++    if (raw is! Map ||
++        raw['available'] is! bool ||
++        raw['exitCode'] is! num ||
++        raw['columns'] is! List ||
++        raw['rows'] is! List ||
++        raw['affectedRows'] is! num ||
++        raw['truncated'] is! bool ||
++        raw['error'] is! String) {
++      throw const FormatException('Invalid native query result');
++    }
++    final columns = raw['columns'] as List;
++    final rows = raw['rows'] as List;
++    if (columns.any((value) => value is! String) ||
++        rows.any(
++          (row) =>
++              row is! List ||
++              row.length != columns.length ||
++              row.any((value) => value != null && value is! String),
++        )) {
++      throw const FormatException('Invalid native table data');
++    }
++    final metadata = raw['columnInfo'];
++    final columnInfo = <SqlResultColumn>[];
++    if (metadata != null) {
++      if (metadata is! List || metadata.length != columns.length) {
++        throw const FormatException('Invalid native column metadata');
++      }
++      for (var index = 0; index < metadata.length; index++) {
++        final item = metadata[index];
++        if (item is! Map ||
++            item['name'] != columns[index] ||
++            item['nativeType'] is! num ||
++            item['binary'] is! bool) {
++          throw const FormatException('Invalid native column metadata');
++        }
++        columnInfo.add(
++          SqlResultColumn(
++            name: item['name'] as String,
++            nativeType: (item['nativeType'] as num).toInt(),
++            binary: item['binary'] as bool,
++          ),
++        );
++      }
++    }
++    final state = raw['sqlState'];
++    if (state != null && state is! String) {
++      throw const FormatException('Invalid native SQLSTATE');
++    }
++    final error = raw['error'] as String;
++    return SqlQueryResult(
++      available: raw['available'] as bool,
++      exitCode: (raw['exitCode'] as num).toInt(),
++      columns: List<String>.from(columns),
++      rows: [for (final row in rows) List<String?>.from(row as List)],
++      affectedRows: (raw['affectedRows'] as num).toInt(),
++      truncated: raw['truncated'] as bool,
++      error: error.isEmpty ? null : error,
++      sqlState: state is String && state.isNotEmpty ? state : null,
++      columnInfo: columnInfo,
++    );
++  }
++
++  factory SqlQueryResult.unavailable(String message) => SqlQueryResult(
++    available: false,
++    exitCode: 127,
++    columns: const [],
++    rows: const [],
++    affectedRows: 0,
++    truncated: false,
++    error: message,
++  );
++
++  final bool available;
++  final int exitCode;
++  final List<String> columns;
++  final List<List<String?>> rows;
++  final int affectedRows;
++  final bool truncated;
++  final String? error;
++  final String? sqlState;
++  final List<SqlResultColumn> columnInfo;
++
++  bool get success => available && exitCode == 0 && error == null;
++}
++
++abstract interface class SqlDatabase {
++  Future<SqlQueryResult> query({
++    required String databasePath,
++    required String source,
++    List<String?> parameters,
++  });
++}
++
++class SqlScriptResult {
++  const SqlScriptResult({required this.summary, required this.results});
++
++  factory SqlScriptResult.fromNative(Object? raw) {
++    final summary = SqlQueryResult.fromNative(raw);
++    if (raw is! Map || raw['results'] is! List) {
++      throw const FormatException('Invalid native script results');
++    }
++    return SqlScriptResult(
++      summary: summary,
++      results: [
++        for (final result in raw['results'] as List)
++          SqlQueryResult.fromNative(result),
++      ],
++    );
++  }
++
++  final SqlQueryResult summary;
++  final List<SqlQueryResult> results;
++
++  bool get success => summary.success;
++  bool get available => summary.available;
++  int get exitCode => summary.exitCode;
++  String? get error => summary.error;
++  bool get truncated => summary.truncated;
++}
++
++abstract interface class SqlScriptDatabase {
++  Future<SqlScriptResult> executeScript({
++    required String databasePath,
++    required String source,
++  });
++}
++
++/// Structured, parameterized queries for the local SQLite database workspace.
++class NativeSqliteDatabase implements SqlDatabase, SqlScriptDatabase {
++  const NativeSqliteDatabase({this.channel});
++
++  final MethodChannel? channel;
++
++  @override
++  Future<SqlScriptResult> executeScript({
++    required String databasePath,
++    required String source,
++  }) async {
++    if (!SqliteFfi.supported) {
++      final result = await query(databasePath: databasePath, source: source);
++      return SqlScriptResult(summary: result, results: [result]);
++    }
++    try {
++      if (databasePath != ':memory:') {
++        await Directory(p.dirname(databasePath)).create(recursive: true);
++      }
++      return SqlScriptResult.fromNative(
++        await invokeSqliteNative('executeScript', {
++          'source': source,
++          'databasePath': databasePath,
++        }, channel: channel),
++      );
++    } on Object catch (error) {
++      return SqlScriptResult(
++        summary: _failure(error.toString()),
++        results: const [],
++      );
++    }
++  }
++
++  @override
++  Future<SqlQueryResult> query({
++    required String databasePath,
++    required String source,
++    List<String?> parameters = const [],
++  }) async {
++    try {
++      if (databasePath != ':memory:') {
++        await Directory(p.dirname(databasePath)).create(recursive: true);
++      }
++      final raw = await invokeSqliteNative('query', {
++        'source': source,
++        'databasePath': databasePath,
++        'params': parameters,
++      }, channel: channel);
++      return SqlQueryResult.fromNative(raw);
++    } on FormatException {
++      return _failure('SQLite 返回了无效的查询结果。');
++    } on MissingPluginException {
++      return _failure('当前设备无法连接 SQLite 引擎。');
++    } on PlatformException catch (error) {
++      return _failure(error.message ?? error.code);
++    } on FileSystemException catch (error) {
++      return _failure('无法创建数据库目录：${error.message}');
++    }
++  }
++
++  SqlQueryResult _failure(String message) =>
++      SqlQueryResult.unavailable(message);
++}
+diff --git a/lib/sql_workspace_repository.dart b/lib/sql_workspace_repository.dart
+index 6920e7e..169ca0f 100644
+--- a/lib/sql_workspace_repository.dart
++++ b/lib/sql_workspace_repository.dart
+@@ -1,444 +1,449 @@
+-import 'dart:io';
+-
+-import 'package:path/path.dart' as p;
+-import 'package:qfli_studio_core/services/app_paths.dart';
+-import 'package:qfli_studio_core/services/file_service.dart';
+-
+-import 'sql_database.dart';
+-
+-class SqlColumn {
+-  const SqlColumn({
+-    required this.name,
+-    required this.type,
+-    required this.notNull,
+-    required this.primaryKey,
+-    this.generated = false,
+-    this.autoIncrement = false,
+-  });
+-
+-  final String name;
+-  final String type;
+-  final bool notNull;
+-  final bool primaryKey;
+-  final bool generated;
+-  final bool autoIncrement;
+-}
+-
+-class SqlIndex {
+-  const SqlIndex({
+-    required this.name,
+-    required this.columns,
+-    required this.unique,
+-    this.primary = false,
+-  });
+-
+-  final String name;
+-  final List<String> columns;
+-  final bool unique;
+-  final bool primary;
+-}
+-
+-class SqlColumnDraft {
+-  const SqlColumnDraft({
+-    required this.name,
+-    required this.type,
+-    this.notNull = false,
+-    this.primaryKey = false,
+-  });
+-
+-  final String name;
+-  final String type;
+-  final bool notNull;
+-  final bool primaryKey;
+-}
+-
+-class SqlTablePage {
+-  const SqlTablePage({
+-    required this.columns,
+-    required this.rows,
+-    required this.rowIds,
+-    required this.totalRows,
+-    required this.editable,
+-  });
+-
+-  final List<SqlColumn> columns;
+-  final List<List<String?>> rows;
+-  final List<String> rowIds;
+-  final int totalRows;
+-  final bool editable;
+-}
+-
+-/// Local database files and schema operations for the SQLite workspace.
+-class SqlWorkspaceRepository {
+-  const SqlWorkspaceRepository({
+-    required this.root,
+-    this.database = const NativeSqliteDatabase(),
+-  });
+-
+-  final Directory root;
+-  final SqlDatabase database;
+-
+-  static const int pageSize = 100;
+-  static const types = ['INTEGER', 'TEXT', 'REAL', 'NUMERIC', 'BLOB'];
+-
+-  List<String> get columnTypes => types;
+-
+-  bool get supportsSchemaTools => false;
+-  bool get supportsSqlExport => false;
+-
+-  static Future<SqlWorkspaceRepository> openDefault() async {
+-    final storage = await AppPaths.storageDirectory();
+-    if (storage == null) {
+-      throw const FileSystemException('无法访问应用数据目录');
+-    }
+-    final root = Directory(p.join(storage, 'databases'));
+-    await root.create(recursive: true);
+-    return SqlWorkspaceRepository(root: root);
+-  }
+-
+-  String databasePath(String name) {
+-    _validateName(name);
+-    return p.join(root.path, '$name.sqlite');
+-  }
+-
+-  Future<List<String>> listDatabases() async {
+-    if (!await root.exists()) return [];
+-    final names = <String>[];
+-    await for (final item in root.list(followLinks: false)) {
+-      if (item is File && p.extension(item.path).toLowerCase() == '.sqlite') {
+-        names.add(p.basenameWithoutExtension(item.path));
+-      }
+-    }
+-    names.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+-    return names;
+-  }
+-
+-  Future<void> createDatabase(String name) async {
+-    final file = File(databasePath(name));
+-    await root.create(recursive: true);
+-    if (await file.exists()) throw StateError('数据库已存在：$name');
+-    _require(
+-      await database.query(
+-        databasePath: file.path,
+-        source: 'PRAGMA user_version',
+-      ),
+-    );
+-  }
+-
+-  Future<void> deleteDatabase(String name) async {
+-    final file = File(databasePath(name));
+-    if (!await file.exists()) throw StateError('数据库不存在：$name');
+-    await file.delete();
+-  }
+-
+-  Future<List<String>> listTables(String databaseName) async {
+-    final result = _require(
+-      await database.query(
+-        databasePath: databasePath(databaseName),
+-        source:
+-            "SELECT name FROM sqlite_master WHERE type = 'table' "
+-            "AND name NOT LIKE 'sqlite_%' ORDER BY name",
+-      ),
+-    );
+-    return [for (final row in result.rows) row.first!];
+-  }
+-
+-  Future<List<SqlColumn>> tableColumns(
+-    String databaseName,
+-    String table,
+-  ) async {
+-    final result = _require(
+-      await database.query(
+-        databasePath: databasePath(databaseName),
+-        source: 'PRAGMA table_info(${quoteIdentifier(table)})',
+-      ),
+-    );
+-    if (result.rows.isEmpty) throw StateError('数据表不存在：$table');
+-    return [
+-      for (final row in result.rows)
+-        SqlColumn(
+-          name: row[1]!,
+-          type: row[2] ?? '',
+-          notNull: row[3] == '1',
+-          primaryKey: row[5] != '0',
+-        ),
+-    ];
+-  }
+-
+-  Future<SqlTablePage> loadTable(
+-    String databaseName,
+-    String table, {
+-    int page = 0,
+-    String? filterColumn,
+-    String filter = '',
+-    String? sortColumn,
+-    bool descending = false,
+-  }) async {
+-    if (page < 0) throw ArgumentError.value(page, 'page');
+-    final columns = await tableColumns(databaseName, table);
+-    final names = columns.map((column) => column.name).toSet();
+-    if (filterColumn != null && !names.contains(filterColumn)) {
+-      throw ArgumentError.value(filterColumn, 'filterColumn');
+-    }
+-    if (sortColumn != null && !names.contains(sortColumn)) {
+-      throw ArgumentError.value(sortColumn, 'sortColumn');
+-    }
+-    final where = filterColumn == null || filter.isEmpty
+-        ? ''
+-        : ' WHERE CAST(${quoteIdentifier(filterColumn)} AS TEXT) LIKE ?';
+-    final filters = filterColumn == null || filter.isEmpty
+-        ? <String?>[]
+-        : <String?>['%$filter%'];
+-    final path = databasePath(databaseName);
+-    final count = _require(
+-      await database.query(
+-        databasePath: path,
+-        source: 'SELECT COUNT(*) FROM ${quoteIdentifier(table)}$where',
+-        parameters: filters,
+-      ),
+-    );
+-    final total = int.parse(count.rows.single.single!);
+-    final order = sortColumn == null
+-        ? ''
+-        : ' ORDER BY ${quoteIdentifier(sortColumn)} ${descending ? 'DESC' : 'ASC'}';
+-    final suffix = '$where$order LIMIT ? OFFSET ?';
+-    final parameters = [...filters, '$pageSize', '${page * pageSize}'];
+-    final identity = await _tableRowIdentity(databaseName, table, columns);
+-    final editable = identity != null;
+-    final result = await database.query(
+-      databasePath: path,
+-      source:
+-          'SELECT ${identity == null ? '' : '${quoteIdentifier(identity)}, '}'
+-          '* FROM ${quoteIdentifier(table)}$suffix',
+-      parameters: parameters,
+-    );
+-    _require(result);
+-    if (result.truncated) {
+-      throw StateError('该页数据超过显示上限，请缩小查询范围');
+-    }
+-    return SqlTablePage(
+-      columns: columns,
+-      rows: [for (final row in result.rows) editable ? row.sublist(1) : row],
+-      rowIds: editable ? [for (final row in result.rows) row.first!] : const [],
+-      totalRows: total,
+-      editable: editable,
+-    );
+-  }
+-
+-  Future<void> createTable(
+-    String databaseName,
+-    String table,
+-    List<SqlColumnDraft> columns,
+-  ) async {
+-    _validateName(table);
+-    if (columns.isEmpty) throw ArgumentError('至少需要一列');
+-    final seen = <String>{};
+-    var primaryKeys = 0;
+-    final definitions = <String>[];
+-    for (final column in columns) {
+-      _validateName(column.name);
+-      if (!seen.add(column.name.toLowerCase())) {
+-        throw ArgumentError('列名重复：${column.name}');
+-      }
+-      if (!types.contains(column.type)) {
+-        throw ArgumentError('不支持的列类型：${column.type}');
+-      }
+-      if (column.primaryKey) {
+-        primaryKeys++;
+-        if (column.type != 'INTEGER') {
+-          throw ArgumentError('主键列必须使用 INTEGER 类型');
+-        }
+-      }
+-      definitions.add(
+-        '${quoteIdentifier(column.name)} ${column.type}'
+-        '${column.primaryKey ? ' PRIMARY KEY' : ''}'
+-        '${column.notNull && !column.primaryKey ? ' NOT NULL' : ''}',
+-      );
+-    }
+-    if (primaryKeys > 1) throw ArgumentError('只能设置一个主键');
+-    _require(
+-      await database.query(
+-        databasePath: databasePath(databaseName),
+-        source:
+-            'CREATE TABLE ${quoteIdentifier(table)} (${definitions.join(', ')})',
+-      ),
+-    );
+-  }
+-
+-  Future<void> deleteTable(String databaseName, String table) async {
+-    _require(
+-      await database.query(
+-        databasePath: databasePath(databaseName),
+-        source: 'DROP TABLE ${quoteIdentifier(table)}',
+-      ),
+-    );
+-  }
+-
+-  Future<void> insertRow(
+-    String databaseName,
+-    String table,
+-    Map<String, String?> values,
+-  ) async {
+-    final columns = await tableColumns(databaseName, table);
+-    _validateColumns(values.keys, columns);
+-    final names = values.keys.toList();
+-    final source = names.isEmpty
+-        ? 'INSERT INTO ${quoteIdentifier(table)} DEFAULT VALUES'
+-        : 'INSERT INTO ${quoteIdentifier(table)} '
+-              '(${names.map(quoteIdentifier).join(', ')}) '
+-              'VALUES (${List.filled(names.length, '?').join(', ')})';
+-    _require(
+-      await database.query(
+-        databasePath: databasePath(databaseName),
+-        source: source,
+-        parameters: [for (final name in names) values[name]],
+-      ),
+-    );
+-  }
+-
+-  Future<void> updateCell(
+-    String databaseName,
+-    String table,
+-    String rowId,
+-    String column,
+-    String? value,
+-  ) async {
+-    final columns = await tableColumns(databaseName, table);
+-    _validateColumns([column], columns);
+-    final identity = await _tableRowIdentity(databaseName, table, columns);
+-    if (identity == null) throw StateError('该表没有可用的行标识');
+-    final result = _require(
+-      await database.query(
+-        databasePath: databasePath(databaseName),
+-        source:
+-            'UPDATE ${quoteIdentifier(table)} '
+-            'SET ${quoteIdentifier(column)} = ? '
+-            'WHERE ${quoteIdentifier(identity)} = ?',
+-        parameters: [value, rowId],
+-      ),
+-    );
+-    if (result.affectedRows != 1) throw StateError('该行已发生变化，请刷新后重试');
+-  }
+-
+-  Future<void> deleteRow(
+-    String databaseName,
+-    String table,
+-    String rowId,
+-  ) async {
+-    final columns = await tableColumns(databaseName, table);
+-    final identity = await _tableRowIdentity(databaseName, table, columns);
+-    if (identity == null) throw StateError('该表没有可用的行标识');
+-    final result = _require(
+-      await database.query(
+-        databasePath: databasePath(databaseName),
+-        source:
+-            'DELETE FROM ${quoteIdentifier(table)} '
+-            'WHERE ${quoteIdentifier(identity)} = ?',
+-        parameters: [rowId],
+-      ),
+-    );
+-    if (result.affectedRows != 1) throw StateError('该行已发生变化，请刷新后重试');
+-  }
+-
+-  Future<SqlQueryResult> runQuery(String databaseName, String source) =>
+-      database.query(databasePath: databasePath(databaseName), source: source);
+-
+-  Future<SqlScriptResult> runScript(String databaseName, String source) async {
+-    final engine = database;
+-    if (engine is SqlScriptDatabase) {
+-      return (engine as SqlScriptDatabase).executeScript(
+-        databasePath: databasePath(databaseName),
+-        source: source,
+-      );
+-    }
+-    final result = await runQuery(databaseName, source);
+-    return SqlScriptResult(summary: result, results: [result]);
+-  }
+-
+-  Future<void> renameTable(String databaseName, String table, String name) =>
+-      throw UnsupportedError('当前数据库引擎不支持此结构操作');
+-
+-  Future<void> addColumn(
+-    String databaseName,
+-    String table,
+-    SqlColumnDraft column,
+-  ) => throw UnsupportedError('当前数据库引擎不支持此结构操作');
+-
+-  Future<void> renameColumn(
+-    String databaseName,
+-    String table,
+-    String column,
+-    String name,
+-  ) => throw UnsupportedError('当前数据库引擎不支持此结构操作');
+-
+-  Future<void> deleteColumn(String databaseName, String table, String column) =>
+-      throw UnsupportedError('当前数据库引擎不支持此结构操作');
+-
+-  Future<List<SqlIndex>> tableIndexes(String databaseName, String table) =>
+-      throw UnsupportedError('当前数据库引擎不支持索引操作');
+-
+-  Future<void> createIndex(
+-    String databaseName,
+-    String table,
+-    String name,
+-    List<String> columns, {
+-    bool unique = false,
+-  }) => throw UnsupportedError('当前数据库引擎不支持索引操作');
+-
+-  Future<void> deleteIndex(String databaseName, String table, String name) =>
+-      throw UnsupportedError('当前数据库引擎不支持索引操作');
+-
+-  Future<String> exportTableSql(String databaseName, String table) =>
+-      throw UnsupportedError('当前数据库引擎不支持 SQL 导出');
+-
+-  static String quoteIdentifier(String name) {
+-    _validateName(name);
+-    return '"${name.replaceAll('"', '""')}"';
+-  }
+-
+-  static void _validateName(String name) {
+-    if (!FileService.isValidEntryName(name) ||
+-        name != name.trim() ||
+-        name.contains('\u0000')) {
+-      throw ArgumentError.value(name, 'name', '名称无效');
+-    }
+-  }
+-
+-  static void _validateColumns(
+-    Iterable<String> names,
+-    List<SqlColumn> columns,
+-  ) {
+-    final known = columns.map((column) => column.name).toSet();
+-    for (final name in names) {
+-      if (!known.contains(name)) throw ArgumentError('列不存在：$name');
+-    }
+-  }
+-
+-  Future<String?> _tableRowIdentity(
+-    String databaseName,
+-    String table,
+-    List<SqlColumn> columns,
+-  ) async {
+-    final metadata = _require(
+-      await database.query(
+-        databasePath: databasePath(databaseName),
+-        source: 'PRAGMA main.table_list(${quoteIdentifier(table)})',
+-      ),
+-    );
+-    if (metadata.rows.isEmpty || metadata.rows.any((row) => row[4] == '1')) {
+-      return null;
+-    }
+-    final names = columns.map((column) => column.name.toLowerCase()).toSet();
+-    for (final alias in const ['rowid', '_rowid_', 'oid']) {
+-      if (!names.contains(alias)) return alias;
+-    }
+-    return null;
+-  }
+-
+-  static SqlQueryResult _require(SqlQueryResult result) {
+-    if (!result.success) {
+-      throw StateError(result.error ?? 'SQL 执行失败（${result.exitCode}）');
+-    }
+-    return result;
+-  }
+-}
++import 'dart:io';
++
++import 'package:path/path.dart' as p;
++import 'package:qfli_studio_core/services/app_paths.dart';
++import 'package:qfli_studio_core/services/file_service.dart';
++
++import 'sql_database.dart';
++
++class SqlColumn {
++  const SqlColumn({
++    required this.name,
++    required this.type,
++    required this.notNull,
++    required this.primaryKey,
++    this.generated = false,
++    this.autoIncrement = false,
++  });
++
++  final String name;
++  final String type;
++  final bool notNull;
++  final bool primaryKey;
++  final bool generated;
++  final bool autoIncrement;
++}
++
++class SqlIndex {
++  const SqlIndex({
++    required this.name,
++    required this.columns,
++    required this.unique,
++    this.primary = false,
++  });
++
++  final String name;
++  final List<String> columns;
++  final bool unique;
++  final bool primary;
++}
++
++class SqlColumnDraft {
++  const SqlColumnDraft({
++    required this.name,
++    required this.type,
++    this.notNull = false,
++    this.primaryKey = false,
++  });
++
++  final String name;
++  final String type;
++  final bool notNull;
++  final bool primaryKey;
++}
++
++class SqlTablePage {
++  const SqlTablePage({
++    required this.columns,
++    required this.rows,
++    required this.rowIds,
++    required this.totalRows,
++    required this.editable,
++  });
++
++  final List<SqlColumn> columns;
++  final List<List<String?>> rows;
++  final List<String> rowIds;
++  final int totalRows;
++  final bool editable;
++}
++
++/// Local database files and schema operations for the SQLite workspace.
++class SqlWorkspaceRepository {
++  const SqlWorkspaceRepository({
++    required this.root,
++    this.database = const NativeSqliteDatabase(),
++    this.scriptDatabase,
++  });
++
++  final Directory root;
++  final SqlDatabase database;
++  final SqlScriptDatabase? scriptDatabase;
++
++  static const int pageSize = 100;
++  static const types = ['INTEGER', 'TEXT', 'REAL', 'NUMERIC', 'BLOB'];
++
++  List<String> get columnTypes => types;
++
++  bool get supportsSchemaTools => false;
++  bool get supportsSqlExport => false;
++
++  static Future<SqlWorkspaceRepository> openDefault() async {
++    final storage = await AppPaths.storageDirectory();
++    if (storage == null) {
++      throw const FileSystemException('无法访问应用数据目录');
++    }
++    final root = Directory(p.join(storage, 'databases'));
++    await root.create(recursive: true);
++    return SqlWorkspaceRepository(
++      root: root,
++      scriptDatabase: const NativeSqliteDatabase(),
++    );
++  }
++
++  String databasePath(String name) {
++    _validateName(name);
++    return p.join(root.path, '$name.sqlite');
++  }
++
++  Future<List<String>> listDatabases() async {
++    if (!await root.exists()) return [];
++    final names = <String>[];
++    await for (final item in root.list(followLinks: false)) {
++      if (item is File && p.extension(item.path).toLowerCase() == '.sqlite') {
++        names.add(p.basenameWithoutExtension(item.path));
++      }
++    }
++    names.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
++    return names;
++  }
++
++  Future<void> createDatabase(String name) async {
++    final file = File(databasePath(name));
++    await root.create(recursive: true);
++    if (await file.exists()) throw StateError('数据库已存在：$name');
++    _require(
++      await database.query(
++        databasePath: file.path,
++        source: 'PRAGMA user_version',
++      ),
++    );
++  }
++
++  Future<void> deleteDatabase(String name) async {
++    final file = File(databasePath(name));
++    if (!await file.exists()) throw StateError('数据库不存在：$name');
++    await file.delete();
++  }
++
++  Future<List<String>> listTables(String databaseName) async {
++    final result = _require(
++      await database.query(
++        databasePath: databasePath(databaseName),
++        source:
++            "SELECT name FROM sqlite_master WHERE type = 'table' "
++            "AND name NOT LIKE 'sqlite_%' ORDER BY name",
++      ),
++    );
++    return [for (final row in result.rows) row.first!];
++  }
++
++  Future<List<SqlColumn>> tableColumns(
++    String databaseName,
++    String table,
++  ) async {
++    final result = _require(
++      await database.query(
++        databasePath: databasePath(databaseName),
++        source: 'PRAGMA table_info(${quoteIdentifier(table)})',
++      ),
++    );
++    if (result.rows.isEmpty) throw StateError('数据表不存在：$table');
++    return [
++      for (final row in result.rows)
++        SqlColumn(
++          name: row[1]!,
++          type: row[2] ?? '',
++          notNull: row[3] == '1',
++          primaryKey: row[5] != '0',
++        ),
++    ];
++  }
++
++  Future<SqlTablePage> loadTable(
++    String databaseName,
++    String table, {
++    int page = 0,
++    String? filterColumn,
++    String filter = '',
++    String? sortColumn,
++    bool descending = false,
++  }) async {
++    if (page < 0) throw ArgumentError.value(page, 'page');
++    final columns = await tableColumns(databaseName, table);
++    final names = columns.map((column) => column.name).toSet();
++    if (filterColumn != null && !names.contains(filterColumn)) {
++      throw ArgumentError.value(filterColumn, 'filterColumn');
++    }
++    if (sortColumn != null && !names.contains(sortColumn)) {
++      throw ArgumentError.value(sortColumn, 'sortColumn');
++    }
++    final where = filterColumn == null || filter.isEmpty
++        ? ''
++        : ' WHERE CAST(${quoteIdentifier(filterColumn)} AS TEXT) LIKE ?';
++    final filters = filterColumn == null || filter.isEmpty
++        ? <String?>[]
++        : <String?>['%$filter%'];
++    final path = databasePath(databaseName);
++    final count = _require(
++      await database.query(
++        databasePath: path,
++        source: 'SELECT COUNT(*) FROM ${quoteIdentifier(table)}$where',
++        parameters: filters,
++      ),
++    );
++    final total = int.parse(count.rows.single.single!);
++    final order = sortColumn == null
++        ? ''
++        : ' ORDER BY ${quoteIdentifier(sortColumn)} ${descending ? 'DESC' : 'ASC'}';
++    final suffix = '$where$order LIMIT ? OFFSET ?';
++    final parameters = [...filters, '$pageSize', '${page * pageSize}'];
++    final identity = await _tableRowIdentity(databaseName, table, columns);
++    final editable = identity != null;
++    final result = await database.query(
++      databasePath: path,
++      source:
++          'SELECT ${identity == null ? '' : '${quoteIdentifier(identity)}, '}'
++          '* FROM ${quoteIdentifier(table)}$suffix',
++      parameters: parameters,
++    );
++    _require(result);
++    if (result.truncated) {
++      throw StateError('该页数据超过显示上限，请缩小查询范围');
++    }
++    return SqlTablePage(
++      columns: columns,
++      rows: [for (final row in result.rows) editable ? row.sublist(1) : row],
++      rowIds: editable ? [for (final row in result.rows) row.first!] : const [],
++      totalRows: total,
++      editable: editable,
++    );
++  }
++
++  Future<void> createTable(
++    String databaseName,
++    String table,
++    List<SqlColumnDraft> columns,
++  ) async {
++    _validateName(table);
++    if (columns.isEmpty) throw ArgumentError('至少需要一列');
++    final seen = <String>{};
++    var primaryKeys = 0;
++    final definitions = <String>[];
++    for (final column in columns) {
++      _validateName(column.name);
++      if (!seen.add(column.name.toLowerCase())) {
++        throw ArgumentError('列名重复：${column.name}');
++      }
++      if (!types.contains(column.type)) {
++        throw ArgumentError('不支持的列类型：${column.type}');
++      }
++      if (column.primaryKey) {
++        primaryKeys++;
++        if (column.type != 'INTEGER') {
++          throw ArgumentError('主键列必须使用 INTEGER 类型');
++        }
++      }
++      definitions.add(
++        '${quoteIdentifier(column.name)} ${column.type}'
++        '${column.primaryKey ? ' PRIMARY KEY' : ''}'
++        '${column.notNull && !column.primaryKey ? ' NOT NULL' : ''}',
++      );
++    }
++    if (primaryKeys > 1) throw ArgumentError('只能设置一个主键');
++    _require(
++      await database.query(
++        databasePath: databasePath(databaseName),
++        source:
++            'CREATE TABLE ${quoteIdentifier(table)} (${definitions.join(', ')})',
++      ),
++    );
++  }
++
++  Future<void> deleteTable(String databaseName, String table) async {
++    _require(
++      await database.query(
++        databasePath: databasePath(databaseName),
++        source: 'DROP TABLE ${quoteIdentifier(table)}',
++      ),
++    );
++  }
++
++  Future<void> insertRow(
++    String databaseName,
++    String table,
++    Map<String, String?> values,
++  ) async {
++    final columns = await tableColumns(databaseName, table);
++    _validateColumns(values.keys, columns);
++    final names = values.keys.toList();
++    final source = names.isEmpty
++        ? 'INSERT INTO ${quoteIdentifier(table)} DEFAULT VALUES'
++        : 'INSERT INTO ${quoteIdentifier(table)} '
++              '(${names.map(quoteIdentifier).join(', ')}) '
++              'VALUES (${List.filled(names.length, '?').join(', ')})';
++    _require(
++      await database.query(
++        databasePath: databasePath(databaseName),
++        source: source,
++        parameters: [for (final name in names) values[name]],
++      ),
++    );
++  }
++
++  Future<void> updateCell(
++    String databaseName,
++    String table,
++    String rowId,
++    String column,
++    String? value,
++  ) async {
++    final columns = await tableColumns(databaseName, table);
++    _validateColumns([column], columns);
++    final identity = await _tableRowIdentity(databaseName, table, columns);
++    if (identity == null) throw StateError('该表没有可用的行标识');
++    final result = _require(
++      await database.query(
++        databasePath: databasePath(databaseName),
++        source:
++            'UPDATE ${quoteIdentifier(table)} '
++            'SET ${quoteIdentifier(column)} = ? '
++            'WHERE ${quoteIdentifier(identity)} = ?',
++        parameters: [value, rowId],
++      ),
++    );
++    if (result.affectedRows != 1) throw StateError('该行已发生变化，请刷新后重试');
++  }
++
++  Future<void> deleteRow(
++    String databaseName,
++    String table,
++    String rowId,
++  ) async {
++    final columns = await tableColumns(databaseName, table);
++    final identity = await _tableRowIdentity(databaseName, table, columns);
++    if (identity == null) throw StateError('该表没有可用的行标识');
++    final result = _require(
++      await database.query(
++        databasePath: databasePath(databaseName),
++        source:
++            'DELETE FROM ${quoteIdentifier(table)} '
++            'WHERE ${quoteIdentifier(identity)} = ?',
++        parameters: [rowId],
++      ),
++    );
++    if (result.affectedRows != 1) throw StateError('该行已发生变化，请刷新后重试');
++  }
++
++  Future<SqlQueryResult> runQuery(String databaseName, String source) =>
++      database.query(databasePath: databasePath(databaseName), source: source);
++
++  Future<SqlScriptResult> runScript(String databaseName, String source) async {
++    final engine = scriptDatabase;
++    if (engine != null) {
++      return engine.executeScript(
++        databasePath: databasePath(databaseName),
++        source: source,
++      );
++    }
++    final result = await runQuery(databaseName, source);
++    return SqlScriptResult(summary: result, results: [result]);
++  }
++
++  Future<void> renameTable(String databaseName, String table, String name) =>
++      throw UnsupportedError('当前数据库引擎不支持此结构操作');
++
++  Future<void> addColumn(
++    String databaseName,
++    String table,
++    SqlColumnDraft column,
++  ) => throw UnsupportedError('当前数据库引擎不支持此结构操作');
++
++  Future<void> renameColumn(
++    String databaseName,
++    String table,
++    String column,
++    String name,
++  ) => throw UnsupportedError('当前数据库引擎不支持此结构操作');
++
++  Future<void> deleteColumn(String databaseName, String table, String column) =>
++      throw UnsupportedError('当前数据库引擎不支持此结构操作');
++
++  Future<List<SqlIndex>> tableIndexes(String databaseName, String table) =>
++      throw UnsupportedError('当前数据库引擎不支持索引操作');
++
++  Future<void> createIndex(
++    String databaseName,
++    String table,
++    String name,
++    List<String> columns, {
++    bool unique = false,
++  }) => throw UnsupportedError('当前数据库引擎不支持索引操作');
++
++  Future<void> deleteIndex(String databaseName, String table, String name) =>
++      throw UnsupportedError('当前数据库引擎不支持索引操作');
++
++  Future<String> exportTableSql(String databaseName, String table) =>
++      throw UnsupportedError('当前数据库引擎不支持 SQL 导出');
++
++  static String quoteIdentifier(String name) {
++    _validateName(name);
++    return '"${name.replaceAll('"', '""')}"';
++  }
++
++  static void _validateName(String name) {
++    if (!FileService.isValidEntryName(name) ||
++        name != name.trim() ||
++        name.contains('\u0000')) {
++      throw ArgumentError.value(name, 'name', '名称无效');
++    }
++  }
++
++  static void _validateColumns(
++    Iterable<String> names,
++    List<SqlColumn> columns,
++  ) {
++    final known = columns.map((column) => column.name).toSet();
++    for (final name in names) {
++      if (!known.contains(name)) throw ArgumentError('列不存在：$name');
++    }
++  }
++
++  Future<String?> _tableRowIdentity(
++    String databaseName,
++    String table,
++    List<SqlColumn> columns,
++  ) async {
++    final metadata = _require(
++      await database.query(
++        databasePath: databasePath(databaseName),
++        source: 'PRAGMA main.table_list(${quoteIdentifier(table)})',
++      ),
++    );
++    if (metadata.rows.isEmpty || metadata.rows.any((row) => row[4] == '1')) {
++      return null;
++    }
++    final names = columns.map((column) => column.name.toLowerCase()).toSet();
++    for (final alias in const ['rowid', '_rowid_', 'oid']) {
++      if (!names.contains(alias)) return alias;
++    }
++    return null;
++  }
++
++  static SqlQueryResult _require(SqlQueryResult result) {
++    if (!result.success) {
++      throw StateError(result.error ?? 'SQL 执行失败（${result.exitCode}）');
++    }
++    return result;
++  }
++}
+diff --git a/lib/sqlite_ffi.dart b/lib/sqlite_ffi.dart
+index 41ef72f..b8cf55a 100644
+--- a/lib/sqlite_ffi.dart
++++ b/lib/sqlite_ffi.dart
+@@ -1,470 +1,477 @@
+-import 'dart:convert';
+-import 'dart:ffi';
+-import 'dart:io';
+-import 'dart:isolate';
+-
+-import 'package:ffi/ffi.dart';
+-import 'package:path/path.dart' as p;
+-
+-final class _ScriptResult extends Struct {
+-  @Int32()
+-  external int available;
+-  @Int32()
+-  external int exitCode;
+-  @Int32()
+-  external int truncated;
+-  external Pointer<Utf8> output;
+-  external Pointer<Utf8> error;
+-}
+-
+-/// Invokes the retained SQLite C engine on a worker isolate.
+-class SqliteFfi {
+-  static bool get supported =>
+-      Platform.isAndroid ||
+-      Platform.isIOS ||
+-      Platform.isWindows ||
+-      Platform.isLinux ||
+-      Platform.isMacOS;
+-
+-  static Future<Map<String, Object?>> invoke(
+-    String method,
+-    Map<String, Object?> arguments, {
+-    String? libraryPath,
+-  }) => Isolate.run(() {
+-    final bindings = _Bindings(_openLibrary(libraryPath));
+-    final source = arguments['source'] as String;
+-    final databasePath = arguments['databasePath'] as String;
+-    if (source.contains('\x00') || databasePath.contains('\x00')) {
+-      throw const FormatException(
+-        'SQL source and database path cannot contain NUL.',
+-      );
+-    }
+-    return using((arena) {
+-      final sql = source.toNativeUtf8(allocator: arena);
+-      final path = databasePath.toNativeUtf8(allocator: arena);
+-      if (method == 'execute') {
+-        final result = arena<_ScriptResult>();
+-        try {
+-          if (bindings.execute(sql, path, 1024 * 1024, result) == 0) {
+-            throw StateError('SQLite script invocation failed.');
+-          }
+-          return <String, Object?>{
+-            'available': result.ref.available != 0,
+-            'exitCode': result.ref.exitCode,
+-            'output': _text(result.ref.output),
+-            'error': _text(result.ref.error),
+-            'truncated': result.ref.truncated != 0,
+-          };
+-        } finally {
+-          bindings.freeResult(result);
+-        }
+-      }
+-      if (method == 'executeScript') return bindings.script(arena, path, sql);
+-      if (method != 'query') throw ArgumentError.value(method, 'method');
+-      return bindings.query(
+-        arena,
+-        path,
+-        sql,
+-        (arguments['params'] as List?)?.cast<String?>() ?? const [],
+-      );
+-    });
+-  });
+-
+-  static String _text(Pointer<Utf8> value, {int? length}) =>
+-      value == nullptr ? '' : value.toDartString(length: length);
+-}
+-
+-DynamicLibrary _openLibrary(String? explicitPath) {
+-  final configured =
+-      explicitPath ?? Platform.environment['QFLI_SQLITE_LIBRARY'];
+-  if (configured != null) return DynamicLibrary.open(configured);
+-  if (Platform.isIOS || Platform.isMacOS) return DynamicLibrary.process();
+-  final name = Platform.isWindows ? 'qfli_sqlite.dll' : 'libqfli_sqlite.so';
+-  if (Platform.isAndroid) return DynamicLibrary.open(name);
+-  final app = p.dirname(Platform.resolvedExecutable);
+-  for (final path in [
+-    p.join(app, name),
+-    p.join(app, 'lib', name),
+-    p.join(
+-      Directory.current.path,
+-      'native',
+-      'build',
+-      Platform.operatingSystem,
+-      name,
+-    ),
+-  ]) {
+-    if (File(path).existsSync()) return DynamicLibrary.open(path);
+-  }
+-  throw StateError('The bundled SQLite C library was not found.');
+-}
+-
+-class _Bindings {
+-  _Bindings(DynamicLibrary library)
+-    : execute = library
+-          .lookupFunction<
+-            Int32 Function(
+-              Pointer<Utf8>,
+-              Pointer<Utf8>,
+-              Size,
+-              Pointer<_ScriptResult>,
+-            ),
+-            int Function(
+-              Pointer<Utf8>,
+-              Pointer<Utf8>,
+-              int,
+-              Pointer<_ScriptResult>,
+-            )
+-          >('qfli_sql_execute'),
+-      freeResult = library
+-          .lookupFunction<
+-            Void Function(Pointer<_ScriptResult>),
+-            void Function(Pointer<_ScriptResult>)
+-          >('qfli_sql_result_free'),
+-      open = library
+-          .lookupFunction<
+-            Int32 Function(
+-              Pointer<Utf8>,
+-              Pointer<Pointer<Void>>,
+-              Int32,
+-              Pointer<Utf8>,
+-            ),
+-            int Function(
+-              Pointer<Utf8>,
+-              Pointer<Pointer<Void>>,
+-              int,
+-              Pointer<Utf8>,
+-            )
+-          >('sqlite3_open_v2'),
+-      close = library
+-          .lookupFunction<
+-            Int32 Function(Pointer<Void>),
+-            int Function(Pointer<Void>)
+-          >('sqlite3_close'),
+-      busyTimeout = library
+-          .lookupFunction<
+-            Int32 Function(Pointer<Void>, Int32),
+-            int Function(Pointer<Void>, int)
+-          >('sqlite3_busy_timeout'),
+-      prepare = library
+-          .lookupFunction<
+-            Int32 Function(
+-              Pointer<Void>,
+-              Pointer<Utf8>,
+-              Int32,
+-              Pointer<Pointer<Void>>,
+-              Pointer<Pointer<Utf8>>,
+-            ),
+-            int Function(
+-              Pointer<Void>,
+-              Pointer<Utf8>,
+-              int,
+-              Pointer<Pointer<Void>>,
+-              Pointer<Pointer<Utf8>>,
+-            )
+-          >('sqlite3_prepare_v2'),
+-      step = library
+-          .lookupFunction<
+-            Int32 Function(Pointer<Void>),
+-            int Function(Pointer<Void>)
+-          >('sqlite3_step'),
+-      finalize = library
+-          .lookupFunction<
+-            Int32 Function(Pointer<Void>),
+-            int Function(Pointer<Void>)
+-          >('sqlite3_finalize'),
+-      parameterCount = library
+-          .lookupFunction<
+-            Int32 Function(Pointer<Void>),
+-            int Function(Pointer<Void>)
+-          >('sqlite3_bind_parameter_count'),
+-      bindNull = library
+-          .lookupFunction<
+-            Int32 Function(Pointer<Void>, Int32),
+-            int Function(Pointer<Void>, int)
+-          >('sqlite3_bind_null'),
+-      bindText = library
+-          .lookupFunction<
+-            Int32 Function(
+-              Pointer<Void>,
+-              Int32,
+-              Pointer<Utf8>,
+-              Int32,
+-              Pointer<Void>,
+-            ),
+-            int Function(Pointer<Void>, int, Pointer<Utf8>, int, Pointer<Void>)
+-          >('sqlite3_bind_text'),
+-      columnCount = library
+-          .lookupFunction<
+-            Int32 Function(Pointer<Void>),
+-            int Function(Pointer<Void>)
+-          >('sqlite3_column_count'),
+-      columnName = library
+-          .lookupFunction<
+-            Pointer<Utf8> Function(Pointer<Void>, Int32),
+-            Pointer<Utf8> Function(Pointer<Void>, int)
+-          >('sqlite3_column_name'),
+-      columnType = library
+-          .lookupFunction<
+-            Int32 Function(Pointer<Void>, Int32),
+-            int Function(Pointer<Void>, int)
+-          >('sqlite3_column_type'),
+-      columnText = library
+-          .lookupFunction<
+-            Pointer<Utf8> Function(Pointer<Void>, Int32),
+-            Pointer<Utf8> Function(Pointer<Void>, int)
+-          >('sqlite3_column_text'),
+-      columnBytes = library
+-          .lookupFunction<
+-            Int32 Function(Pointer<Void>, Int32),
+-            int Function(Pointer<Void>, int)
+-          >('sqlite3_column_bytes'),
+-      changes = library
+-          .lookupFunction<
+-            Int32 Function(Pointer<Void>),
+-            int Function(Pointer<Void>)
+-          >('sqlite3_changes'),
+-      errorMessage = library
+-          .lookupFunction<
+-            Pointer<Utf8> Function(Pointer<Void>),
+-            Pointer<Utf8> Function(Pointer<Void>)
+-          >('sqlite3_errmsg');
+-
+-  final int Function(Pointer<Utf8>, Pointer<Utf8>, int, Pointer<_ScriptResult>)
+-  execute;
+-  final void Function(Pointer<_ScriptResult>) freeResult;
+-  final int Function(Pointer<Utf8>, Pointer<Pointer<Void>>, int, Pointer<Utf8>)
+-  open;
+-  final int Function(Pointer<Void>) close,
+-      step,
+-      finalize,
+-      parameterCount,
+-      columnCount,
+-      changes;
+-  final int Function(Pointer<Void>, int) busyTimeout,
+-      bindNull,
+-      columnType,
+-      columnBytes;
+-  final int Function(
+-    Pointer<Void>,
+-    Pointer<Utf8>,
+-    int,
+-    Pointer<Pointer<Void>>,
+-    Pointer<Pointer<Utf8>>,
+-  )
+-  prepare;
+-  final int Function(Pointer<Void>, int, Pointer<Utf8>, int, Pointer<Void>)
+-  bindText;
+-  final Pointer<Utf8> Function(Pointer<Void>, int) columnName, columnText;
+-  final Pointer<Utf8> Function(Pointer<Void>) errorMessage;
+-
+-  Map<String, Object?> query(
+-    Arena arena,
+-    Pointer<Utf8> path,
+-    Pointer<Utf8> source,
+-    List<String?> parameters,
+-  ) {
+-    final database = arena<Pointer<Void>>();
+-    try {
+-      final failure = _open(path, database);
+-      if (failure != null) return failure;
+-      return _statement(
+-        arena,
+-        database.value,
+-        source,
+-        parameters,
+-        _Budget(),
+-      ).result;
+-    } finally {
+-      if (database.value != nullptr) close(database.value);
+-    }
+-  }
+-
+-  Map<String, Object?> script(
+-    Arena arena,
+-    Pointer<Utf8> path,
+-    Pointer<Utf8> source,
+-  ) {
+-    final database = arena<Pointer<Void>>();
+-    final results = <Map<String, Object?>>[];
+-    var summary = _emptyResult();
+-    try {
+-      final failure = _open(path, database);
+-      if (failure != null) return {...failure, 'results': results};
+-      var remaining = source;
+-      final budget = _Budget();
+-      while (SqliteFfi._text(remaining).trim().isNotEmpty) {
+-        if (results.length >= 512) {
+-          summary = {
+-            ...summary,
+-            'exitCode': 1,
+-            'error': 'SQL script exceeds the 512 statement limit.',
+-          };
+-          break;
+-        }
+-        final item = _statement(
+-          arena,
+-          database.value,
+-          remaining,
+-          const [],
+-          budget,
+-          allowTrailing: true,
+-        );
+-        summary = item.result;
+-        if (item.hasStatement) results.add(summary);
+-        if (summary['exitCode'] != 0 ||
+-            summary['truncated'] == true ||
+-            item.tail == nullptr ||
+-            item.tail.address <= remaining.address) {
+-          break;
+-        }
+-        remaining = item.tail;
+-      }
+-      return {...summary, 'results': results};
+-    } finally {
+-      if (database.value != nullptr) close(database.value);
+-    }
+-  }
+-
+-  Map<String, Object?>? _open(
+-    Pointer<Utf8> path,
+-    Pointer<Pointer<Void>> database,
+-  ) {
+-    if (open(path, database, 6, nullptr) != 0) {
+-      return {
+-        ..._emptyResult(),
+-        'exitCode': 1,
+-        'error': database.value == nullptr
+-            ? 'SQLite database open failed.'
+-            : SqliteFfi._text(errorMessage(database.value)),
+-      };
+-    }
+-    busyTimeout(database.value, 3000);
+-    return null;
+-  }
+-
+-  ({Map<String, Object?> result, Pointer<Utf8> tail, bool hasStatement})
+-  _statement(
+-    Arena arena,
+-    Pointer<Void> database,
+-    Pointer<Utf8> source,
+-    List<String?> parameters,
+-    _Budget budget, {
+-    bool allowTrailing = false,
+-  }) {
+-    final statement = arena<Pointer<Void>>();
+-    final tail = arena<Pointer<Utf8>>();
+-    final columns = <String>[];
+-    final rows = <List<String?>>[];
+-    var affectedRows = 0;
+-    var truncated = false;
+-    var error = '';
+-    var hasStatement = false;
+-    try {
+-      do {
+-        if (prepare(database, source, -1, statement, tail) != 0) {
+-          error = SqliteFfi._text(errorMessage(database));
+-          break;
+-        }
+-        hasStatement = statement.value != nullptr;
+-        if (!allowTrailing && SqliteFfi._text(tail.value).trim().isNotEmpty) {
+-          error = 'Only one SQL statement is allowed in a grid query.';
+-          break;
+-        }
+-        if (statement.value == nullptr) {
+-          if (parameters.isNotEmpty) {
+-            error = 'SQL parameter count does not match the supplied values.';
+-          }
+-          break;
+-        }
+-        if (parameters.length != parameterCount(statement.value)) {
+-          error = 'SQL parameter count does not match the supplied values.';
+-          break;
+-        }
+-        for (var index = 0; index < parameters.length; index++) {
+-          final value = parameters[index];
+-          final code = value == null
+-              ? bindNull(statement.value, index + 1)
+-              : bindText(
+-                  statement.value,
+-                  index + 1,
+-                  value.toNativeUtf8(allocator: arena),
+-                  utf8.encode(value).length,
+-                  Pointer<Void>.fromAddress(-1),
+-                );
+-          if (code != 0) {
+-            error = SqliteFfi._text(errorMessage(database));
+-            break;
+-          }
+-        }
+-        if (error.isNotEmpty) break;
+-        final count = columnCount(statement.value);
+-        for (var index = 0; index < count; index++) {
+-          columns.add(SqliteFfi._text(columnName(statement.value, index)));
+-        }
+-        while (true) {
+-          final code = step(statement.value);
+-          if (code == 101) {
+-            affectedRows = count == 0 ? changes(database) : 0;
+-            break;
+-          }
+-          if (code != 100) {
+-            error = SqliteFfi._text(errorMessage(database));
+-            break;
+-          }
+-          if (budget.rows >= 500) {
+-            truncated = true;
+-            break;
+-          }
+-          final row = <String?>[];
+-          for (var index = 0; index < count; index++) {
+-            if (columnType(statement.value, index) == 5) {
+-              row.add(null);
+-              continue;
+-            }
+-            final text = columnText(statement.value, index);
+-            final length = columnBytes(statement.value, index);
+-            if (text == nullptr || budget.bytes + length > 1024 * 1024) {
+-              truncated = true;
+-              break;
+-            }
+-            budget.bytes += length;
+-            row.add(SqliteFfi._text(text, length: length));
+-          }
+-          if (truncated) break;
+-          rows.add(row);
+-          budget.rows++;
+-        }
+-      } while (false);
+-    } finally {
+-      if (statement.value != nullptr) finalize(statement.value);
+-    }
+-    return (
+-      tail: tail.value,
+-      hasStatement: hasStatement,
+-      result: {
+-        'available': true,
+-        'exitCode': error.isEmpty ? 0 : 1,
+-        'error': error,
+-        'columns': columns,
+-        'rows': rows,
+-        'affectedRows': affectedRows,
+-        'truncated': truncated,
+-      },
+-    );
+-  }
+-}
+-
+-Map<String, Object?> _emptyResult() => {
+-  'available': true,
+-  'exitCode': 0,
+-  'error': '',
+-  'columns': <String>[],
+-  'rows': <List<String?>>[],
+-  'affectedRows': 0,
+-  'truncated': false,
+-};
+-
+-class _Budget {
+-  int rows = 0;
+-  int bytes = 0;
+-}
++import 'dart:convert';
++import 'dart:ffi';
++import 'dart:io';
++import 'dart:isolate';
++
++import 'package:ffi/ffi.dart';
++import 'package:path/path.dart' as p;
++
++final class _ScriptResult extends Struct {
++  @Int32()
++  external int available;
++  @Int32()
++  external int exitCode;
++  @Int32()
++  external int truncated;
++  external Pointer<Utf8> output;
++  external Pointer<Utf8> error;
++}
++
++/// Invokes the retained SQLite C engine on a worker isolate.
++class SqliteFfi {
++  static bool get supported =>
++      Platform.isAndroid ||
++      Platform.isIOS ||
++      Platform.isWindows ||
++      Platform.isLinux ||
++      Platform.isMacOS;
++
++  static Future<Map<String, Object?>> invoke(
++    String method,
++    Map<String, Object?> arguments, {
++    String? libraryPath,
++  }) => Isolate.run(() {
++    final bindings = _Bindings(_openLibrary(libraryPath));
++    final source = arguments['source'] as String;
++    final databasePath = arguments['databasePath'] as String;
++    if (source.contains('\x00') || databasePath.contains('\x00')) {
++      throw const FormatException(
++        'SQL source and database path cannot contain NUL.',
++      );
++    }
++    return using((arena) {
++      final sql = source.toNativeUtf8(allocator: arena);
++      final path = databasePath.toNativeUtf8(allocator: arena);
++      if (method == 'execute') {
++        final result = arena<_ScriptResult>();
++        try {
++          if (bindings.execute(sql, path, 1024 * 1024, result) == 0) {
++            throw StateError('SQLite script invocation failed.');
++          }
++          return <String, Object?>{
++            'available': result.ref.available != 0,
++            'exitCode': result.ref.exitCode,
++            'output': _text(result.ref.output),
++            'error': _text(result.ref.error),
++            'truncated': result.ref.truncated != 0,
++          };
++        } finally {
++          bindings.freeResult(result);
++        }
++      }
++      if (method == 'executeScript') return bindings.script(arena, path, sql);
++      if (method != 'query') throw ArgumentError.value(method, 'method');
++      return bindings.query(
++        arena,
++        path,
++        sql,
++        (arguments['params'] as List?)?.cast<String?>() ?? const [],
++      );
++    });
++  });
++
++  static String _text(Pointer<Utf8> value, {int? length}) =>
++      value == nullptr ? '' : value.toDartString(length: length);
++}
++
++DynamicLibrary _openLibrary(String? explicitPath) {
++  final configured =
++      explicitPath ?? Platform.environment['QFLI_SQLITE_LIBRARY'];
++  if (configured != null) return DynamicLibrary.open(configured);
++  if (Platform.isIOS || Platform.isMacOS) return DynamicLibrary.process();
++  final name = Platform.isWindows ? 'qfli_sqlite.dll' : 'libqfli_sqlite.so';
++  if (Platform.isAndroid) return DynamicLibrary.open(name);
++  final app = p.dirname(Platform.resolvedExecutable);
++  for (final path in [
++    p.join(app, name),
++    p.join(app, 'lib', name),
++    p.join(
++      Directory.current.path,
++      'native',
++      'build',
++      Platform.operatingSystem,
++      name,
++    ),
++  ]) {
++    if (File(path).existsSync()) return DynamicLibrary.open(path);
++  }
++  throw StateError('The bundled SQLite C library was not found.');
++}
++
++class _Bindings {
++  _Bindings(DynamicLibrary library)
++    : execute = library
++          .lookupFunction<
++            Int32 Function(
++              Pointer<Utf8>,
++              Pointer<Utf8>,
++              Size,
++              Pointer<_ScriptResult>,
++            ),
++            int Function(
++              Pointer<Utf8>,
++              Pointer<Utf8>,
++              int,
++              Pointer<_ScriptResult>,
++            )
++          >('qfli_sql_execute'),
++      freeResult = library
++          .lookupFunction<
++            Void Function(Pointer<_ScriptResult>),
++            void Function(Pointer<_ScriptResult>)
++          >('qfli_sql_result_free'),
++      open = library
++          .lookupFunction<
++            Int32 Function(
++              Pointer<Utf8>,
++              Pointer<Pointer<Void>>,
++              Int32,
++              Pointer<Utf8>,
++            ),
++            int Function(
++              Pointer<Utf8>,
++              Pointer<Pointer<Void>>,
++              int,
++              Pointer<Utf8>,
++            )
++          >('sqlite3_open_v2'),
++      close = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>),
++            int Function(Pointer<Void>)
++          >('sqlite3_close'),
++      busyTimeout = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>, Int32),
++            int Function(Pointer<Void>, int)
++          >('sqlite3_busy_timeout'),
++      prepare = library
++          .lookupFunction<
++            Int32 Function(
++              Pointer<Void>,
++              Pointer<Utf8>,
++              Int32,
++              Pointer<Pointer<Void>>,
++              Pointer<Pointer<Utf8>>,
++            ),
++            int Function(
++              Pointer<Void>,
++              Pointer<Utf8>,
++              int,
++              Pointer<Pointer<Void>>,
++              Pointer<Pointer<Utf8>>,
++            )
++          >('sqlite3_prepare_v2'),
++      step = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>),
++            int Function(Pointer<Void>)
++          >('sqlite3_step'),
++      finalize = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>),
++            int Function(Pointer<Void>)
++          >('sqlite3_finalize'),
++      parameterCount = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>),
++            int Function(Pointer<Void>)
++          >('sqlite3_bind_parameter_count'),
++      bindNull = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>, Int32),
++            int Function(Pointer<Void>, int)
++          >('sqlite3_bind_null'),
++      bindText = library
++          .lookupFunction<
++            Int32 Function(
++              Pointer<Void>,
++              Int32,
++              Pointer<Utf8>,
++              Int32,
++              Pointer<Void>,
++            ),
++            int Function(Pointer<Void>, int, Pointer<Utf8>, int, Pointer<Void>)
++          >('sqlite3_bind_text'),
++      columnCount = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>),
++            int Function(Pointer<Void>)
++          >('sqlite3_column_count'),
++      columnName = library
++          .lookupFunction<
++            Pointer<Utf8> Function(Pointer<Void>, Int32),
++            Pointer<Utf8> Function(Pointer<Void>, int)
++          >('sqlite3_column_name'),
++      columnType = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>, Int32),
++            int Function(Pointer<Void>, int)
++          >('sqlite3_column_type'),
++      columnText = library
++          .lookupFunction<
++            Pointer<Utf8> Function(Pointer<Void>, Int32),
++            Pointer<Utf8> Function(Pointer<Void>, int)
++          >('sqlite3_column_text'),
++      columnBytes = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>, Int32),
++            int Function(Pointer<Void>, int)
++          >('sqlite3_column_bytes'),
++      changes = library
++          .lookupFunction<
++            Int32 Function(Pointer<Void>),
++            int Function(Pointer<Void>)
++          >('sqlite3_changes'),
++      errorMessage = library
++          .lookupFunction<
++            Pointer<Utf8> Function(Pointer<Void>),
++            Pointer<Utf8> Function(Pointer<Void>)
++          >('sqlite3_errmsg');
++
++  final int Function(Pointer<Utf8>, Pointer<Utf8>, int, Pointer<_ScriptResult>)
++  execute;
++  final void Function(Pointer<_ScriptResult>) freeResult;
++  final int Function(Pointer<Utf8>, Pointer<Pointer<Void>>, int, Pointer<Utf8>)
++  open;
++  final int Function(Pointer<Void>) close,
++      step,
++      finalize,
++      parameterCount,
++      columnCount,
++      changes;
++  final int Function(Pointer<Void>, int) busyTimeout,
++      bindNull,
++      columnType,
++      columnBytes;
++  final int Function(
++    Pointer<Void>,
++    Pointer<Utf8>,
++    int,
++    Pointer<Pointer<Void>>,
++    Pointer<Pointer<Utf8>>,
++  )
++  prepare;
++  final int Function(Pointer<Void>, int, Pointer<Utf8>, int, Pointer<Void>)
++  bindText;
++  final Pointer<Utf8> Function(Pointer<Void>, int) columnName, columnText;
++  final Pointer<Utf8> Function(Pointer<Void>) errorMessage;
++
++  Map<String, Object?> query(
++    Arena arena,
++    Pointer<Utf8> path,
++    Pointer<Utf8> source,
++    List<String?> parameters,
++  ) {
++    final database = arena<Pointer<Void>>();
++    try {
++      final failure = _open(path, database);
++      if (failure != null) return failure;
++      return _statement(
++        arena,
++        database.value,
++        source,
++        parameters,
++        _Budget(),
++      ).result;
++    } finally {
++      if (database.value != nullptr) close(database.value);
++    }
++  }
++
++  Map<String, Object?> script(
++    Arena arena,
++    Pointer<Utf8> path,
++    Pointer<Utf8> source,
++  ) {
++    final database = arena<Pointer<Void>>();
++    final results = <Map<String, Object?>>[];
++    var summary = _emptyResult();
++    try {
++      final failure = _open(path, database);
++      if (failure != null) return {...failure, 'results': results};
++      var remaining = source;
++      final budget = _Budget();
++      while (SqliteFfi._text(remaining).trim().isNotEmpty) {
++        if (results.length >= 512) {
++          summary = {
++            ...summary,
++            'exitCode': 1,
++            'error': 'SQL script exceeds the 512 statement limit.',
++          };
++          break;
++        }
++        final item = _statement(
++          arena,
++          database.value,
++          remaining,
++          const [],
++          budget,
++          allowTrailing: true,
++        );
++        summary = item.result;
++        if (item.hasStatement) results.add(summary);
++        if (summary['truncated'] == true) {
++          summary = {
++            ...summary,
++            'exitCode': 1,
++            'error': 'SQL script output exceeds the display limits.',
++          };
++        }
++        if (summary['exitCode'] != 0 ||
++            summary['truncated'] == true ||
++            item.tail == nullptr ||
++            item.tail.address <= remaining.address) {
++          break;
++        }
++        remaining = item.tail;
++      }
++      return {...summary, 'results': results};
++    } finally {
++      if (database.value != nullptr) close(database.value);
++    }
++  }
++
++  Map<String, Object?>? _open(
++    Pointer<Utf8> path,
++    Pointer<Pointer<Void>> database,
++  ) {
++    if (open(path, database, 6, nullptr) != 0) {
++      return {
++        ..._emptyResult(),
++        'exitCode': 1,
++        'error': database.value == nullptr
++            ? 'SQLite database open failed.'
++            : SqliteFfi._text(errorMessage(database.value)),
++      };
++    }
++    busyTimeout(database.value, 3000);
++    return null;
++  }
++
++  ({Map<String, Object?> result, Pointer<Utf8> tail, bool hasStatement})
++  _statement(
++    Arena arena,
++    Pointer<Void> database,
++    Pointer<Utf8> source,
++    List<String?> parameters,
++    _Budget budget, {
++    bool allowTrailing = false,
++  }) {
++    final statement = arena<Pointer<Void>>();
++    final tail = arena<Pointer<Utf8>>();
++    final columns = <String>[];
++    final rows = <List<String?>>[];
++    var affectedRows = 0;
++    var truncated = false;
++    var error = '';
++    var hasStatement = false;
++    try {
++      do {
++        if (prepare(database, source, -1, statement, tail) != 0) {
++          error = SqliteFfi._text(errorMessage(database));
++          break;
++        }
++        hasStatement = statement.value != nullptr;
++        if (!allowTrailing && SqliteFfi._text(tail.value).trim().isNotEmpty) {
++          error = 'Only one SQL statement is allowed in a grid query.';
++          break;
++        }
++        if (statement.value == nullptr) {
++          if (parameters.isNotEmpty) {
++            error = 'SQL parameter count does not match the supplied values.';
++          }
++          break;
++        }
++        if (parameters.length != parameterCount(statement.value)) {
++          error = 'SQL parameter count does not match the supplied values.';
++          break;
++        }
++        for (var index = 0; index < parameters.length; index++) {
++          final value = parameters[index];
++          final code = value == null
++              ? bindNull(statement.value, index + 1)
++              : bindText(
++                  statement.value,
++                  index + 1,
++                  value.toNativeUtf8(allocator: arena),
++                  utf8.encode(value).length,
++                  Pointer<Void>.fromAddress(-1),
++                );
++          if (code != 0) {
++            error = SqliteFfi._text(errorMessage(database));
++            break;
++          }
++        }
++        if (error.isNotEmpty) break;
++        final count = columnCount(statement.value);
++        for (var index = 0; index < count; index++) {
++          columns.add(SqliteFfi._text(columnName(statement.value, index)));
++        }
++        while (true) {
++          final code = step(statement.value);
++          if (code == 101) {
++            affectedRows = count == 0 ? changes(database) : 0;
++            break;
++          }
++          if (code != 100) {
++            error = SqliteFfi._text(errorMessage(database));
++            break;
++          }
++          if (budget.rows >= 500) {
++            truncated = true;
++            break;
++          }
++          final row = <String?>[];
++          for (var index = 0; index < count; index++) {
++            if (columnType(statement.value, index) == 5) {
++              row.add(null);
++              continue;
++            }
++            final text = columnText(statement.value, index);
++            final length = columnBytes(statement.value, index);
++            if (text == nullptr || budget.bytes + length > 1024 * 1024) {
++              truncated = true;
++              break;
++            }
++            budget.bytes += length;
++            row.add(SqliteFfi._text(text, length: length));
++          }
++          if (truncated) break;
++          rows.add(row);
++          budget.rows++;
++        }
++      } while (false);
++    } finally {
++      if (statement.value != nullptr) finalize(statement.value);
++    }
++    return (
++      tail: tail.value,
++      hasStatement: hasStatement,
++      result: {
++        'available': true,
++        'exitCode': error.isEmpty ? 0 : 1,
++        'error': error,
++        'columns': columns,
++        'rows': rows,
++        'affectedRows': affectedRows,
++        'truncated': truncated,
++      },
++    );
++  }
++}
++
++Map<String, Object?> _emptyResult() => {
++  'available': true,
++  'exitCode': 0,
++  'error': '',
++  'columns': <String>[],
++  'rows': <List<String?>>[],
++  'affectedRows': 0,
++  'truncated': false,
++};
++
++class _Budget {
++  int rows = 0;
++  int bytes = 0;
++}

@@ -1,0 +1,40 @@
+diff --git a/native/src/qfli_py_reader.c b/native/src/qfli_py_reader.c
+--- a/native/src/qfli_py_reader.c
++++ b/native/src/qfli_py_reader.c
+@@ -4,6 +4,7 @@
+ 
+ #include "qfli_py_file.h"
+ #include "qfli_py_platform.h"
++#include "py/lexer.h"
+ #include "py/reader.h"
+ #include "py/runtime.h"
+ 
+@@ -68,4 +69,11 @@
+     mp_reader_new_file_from_fd(reader, fd, true);
+ }
+ 
++mp_lexer_t *mp_lexer_new_from_file(qstr filename)
++{
++    mp_reader_t reader;
++    mp_reader_new_file(&reader, filename);
++    return mp_lexer_new(filename, reader);
++}
++
+ #endif
+diff --git a/native/desktop/CMakeLists.txt b/native/desktop/CMakeLists.txt
+--- a/native/desktop/CMakeLists.txt
++++ b/native/desktop/CMakeLists.txt
+@@ -30,7 +30,11 @@
+     "${QFLI_PY_EMBED_DIR}/port"
+     "${QFLI_PY_NATIVE_DIR}/src")
+-target_compile_definitions(qfli_py_ffi PRIVATE
+-    NDEBUG MICROPY_GCREGS_SETJMP=1 MICROPY_NLR_SETJMP=1)
++target_compile_definitions(qfli_py_ffi PRIVATE NDEBUG)
++if(NOT WIN32)
++    target_compile_definitions(qfli_py_ffi PRIVATE
++        MICROPY_GCREGS_SETJMP=1 MICROPY_NLR_SETJMP=1)
++endif()
++
+ set_target_properties(qfli_py_ffi PROPERTIES
+     OUTPUT_NAME "qfli_py_ffi"
+     C_STANDARD 99

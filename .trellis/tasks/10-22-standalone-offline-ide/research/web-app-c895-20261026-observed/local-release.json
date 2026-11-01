@@ -1,0 +1,26 @@
+{
+  "validationRoot": {
+    "pid": 82672,
+    "threadId": 83464,
+    "createdSuspended": true,
+    "assignedBeforeResume": true,
+    "terminal": true,
+    "creationFiletime100ns": "134374821414952833",
+    "jobActiveProcesses": 0,
+    "exitCode": 0
+  },
+  "validationTerminalAndJob0": true,
+  "assessment": {
+    "releaseEligible": true,
+    "gate": "PASS",
+    "errors": []
+  },
+  "grant": "Web-observed-app-20261026-04",
+  "runName": "web-app-c895-20261026",
+  "nextOwner": "c-coordinator",
+  "recordedUtc": "2026-10-26T09:57:23.753968+00:00",
+  "delivered": false,
+  "successorGrant": false,
+  "handoff": "LOCAL_RELEASE_REQUIRES_COORDINATOR_RELAY",
+  "requireParentActualExitBeforeRelay": true
+}

@@ -102,6 +102,11 @@ set `QFLI_WEB_SYNTAX_LIBRARY` to a real bridge path.
 - `unavailableReason == null` with no diagnostics means actual parsing finished
   for the covered grammar. Missing library, unsupported language/grammar,
   resource limits or parser failure must never masquerade as clean source.
+- Core currently routes `.jsx` as JavaScript. For that language, reject the
+  case-insensitive `.jsx` extension explicitly with the JSX unavailable reason
+  before isolate/native parsing; QuickJS supports ordinary JavaScript, not JSX.
+  This extension-specific limit does not prohibit explicit language overrides
+  such as CSS in `notes.txt`.
 
 Native delivery is required by the shipping platform build:
 
@@ -127,6 +132,7 @@ JavaScript support. Runtime availability still reports missing delivery honestly
 | Genuine syntax error | Parser-owned message, source name and validated exact range |
 | Outside/duplicate/unnormalized path or stale active revision | Unavailable; no foreign or fabricated diagnostic |
 | Unsupported language, oversized source, native stack/OOM | Explicit unavailable; no clean-source claim |
+| `.jsx`/`.JSX` routed as JavaScript | JSX-specific unavailable, no ordinary-JS diagnostic or native-library fallback |
 | Native library absent | QuickJS unavailable; independently checked HTML/CSS errors may remain |
 | Valid CSS rejected because grammar is known unsupported | csslib unavailable for that stylesheet; no false source underline |
 | Unsupported-marker text only inside CSS string/comment | Ignore marker; preserve real parser errors elsewhere |
@@ -157,7 +163,18 @@ flutter build hap --release --target tool/web_ohos_acceptance.dart --target-plat
 Assert actual HTML/CSS errors, clean supported input, modern CSS capability
 boundaries and string/comment exclusion, embedded CSS/JS offsets, CRLF/emoji/EOF,
 unsaved-over-disk behavior/no writes, root/revision/size rejection, unavailable
-native status and real classic/module/import grammar. Compile throw/infinite-loop,
+native status and real classic/module/import grammar.
+Require JSX-specific unavailable for both legal JSX and ordinary JS in uppercase
+`.JSX`, even with a deliberately missing native library; retain a supported
+explicit-language override. The coordinated repair8 host run on 2026-10-24
+passed all20 analyzer cases, including this regression. Its five-file gate
+still failed two unrelated Tools lifecycle cases; the scoped analyzer reported
+only two `avoid_print` infos in other browser tests. See the active task's
+`research/web-runtime-repair8-tests.log` and `web-runtime-repair8-analysis.log`.
+Repair10 subsequently passes the same20 analyzer cases inside a57/57 six-file
+gate with clean11-file scoped analysis and234 stable raw input hashes. This
+does not replace full app analysis or fresh platform-specific evidence.
+Compile throw/infinite-loop,
 fetch and filesystem statements without executing them. Exercise resource limits
 and repeated fresh native contexts. An isolated mutated source fixture must fail
 CMake's pin gate. Inspect ELF machine, DYN/entry zero, exports/imports, 16 KiB LOAD

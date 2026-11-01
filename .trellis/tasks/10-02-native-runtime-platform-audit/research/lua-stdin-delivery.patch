@@ -1,0 +1,333 @@
+diff --git a/native/src/qfli_lua.c b/native/src/qfli_lua.c
+index 4d88ab4..a301417 100644
+--- a/native/src/qfli_lua.c
++++ b/native/src/qfli_lua.c
+@@ -4,9 +4,11 @@
+ 
+ #include "qfli_lua.h"
+ 
++#include <errno.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <sys/stat.h>
+ #include <time.h>
+ 
+ #if defined(_WIN32)
+@@ -339,6 +341,64 @@ static void set_project_path(lua_State *state, const char *project_dir) {
+   lua_pop(state, 2);
+ }
+ 
++static int close_run_input(lua_State *state) {
++  luaL_Stream *stream = (luaL_Stream *)luaL_checkudata(state, 1, LUA_FILEHANDLE);
++  return luaL_fileresult(state, fclose(stream->f) == 0, NULL);
++}
++
++static int install_run_input(lua_State *state, const char *project_dir,
++                             QfliLuaResult *result) {
++  push_project_file(state, "input.txt", project_dir);
++  const char *path = lua_tostring(state, -1);
++  int regular;
++#if defined(_WIN32)
++  regular = qfli_utf8_regular_file(path);
++#else
++  struct stat info;
++  regular = stat(path, &info) == 0 ? (S_ISREG(info.st_mode) ? 1 : 0) : -1;
++#endif
++  if (regular != 1 && !(regular < 0 && errno == ENOENT)) {
++    set_error(result, regular == 0
++                          ? "Lua project input.txt must be a regular file"
++                          : "Cannot inspect Lua project input.txt");
++    lua_pop(state, 1);
++    return 0;
++  }
++  int missing = regular < 0;
++  lua_getglobal(state, "io");
++  luaL_Stream *stream = (luaL_Stream *)lua_newuserdatauv(state, sizeof(*stream), 0);
++  stream->f = NULL;
++  stream->closef = NULL;
++  luaL_setmetatable(state, LUA_FILEHANDLE);
++  FILE *input;
++  if (missing) {
++#if defined(_WIN32)
++    input = fopen("NUL", "rb");
++#else
++    input = fopen("/dev/null", "rb");
++#endif
++  } else {
++    input = fopen(path, "rb");
++  }
++  if (!input) {
++    set_error(result, "Cannot open Lua project input stream");
++    lua_pop(state, 3);
++    return 0;
++  }
++
++  // This state owns its input descriptor; host stdin remains untouched.
++  stream->f = input;
++  stream->closef = close_run_input;
++  lua_remove(state, -3);
++  lua_pushvalue(state, -1);
++  lua_setfield(state, -3, "stdin");
++  lua_getfield(state, -2, "input");
++  lua_pushvalue(state, -2);
++  lua_call(state, 1, 0);
++  lua_pop(state, 2);
++  return 1;
++}
++
+ const char *qfli_lua_version(void) { return LUA_RELEASE; }
+ 
+ QfliLuaCancelToken *qfli_lua_token_new(void) {
+@@ -398,6 +458,10 @@ QfliLuaResult *qfli_lua_run_with_token(const char *file,
+   luaL_openlibs(state);
+   set_project_path(state, project_dir);
+   install_project_files(state, project_dir);
++  if (!install_run_input(state, project_dir, result)) {
++    lua_close(state);
++    return result;
++  }
+   lua_pushlightuserdata(state, &context);
+   lua_pushcclosure(state, capture_print, 1);
+   lua_setglobal(state, "print");
+diff --git a/native/src/qfli_lua_windows.c b/native/src/qfli_lua_windows.c
+index 3a5030b..cbf6593 100644
+--- a/native/src/qfli_lua_windows.c
++++ b/native/src/qfli_lua_windows.c
+@@ -2,6 +2,7 @@
+ 
+ #include <errno.h>
+ #include <stdlib.h>
++#include <sys/stat.h>
+ #include <wchar.h>
+ #include <windows.h>
+ 
+@@ -75,3 +76,14 @@ int qfli_utf8_rename(const char *source, const char *destination) {
+   errno = saved_errno;
+   return result;
+ }
++
++int qfli_utf8_regular_file(const char *filename) {
++  wchar_t *wide_filename = wide_path(filename);
++  if (!wide_filename) return -1;
++  struct _stat64 info;
++  int result = _wstat64(wide_filename, &info);
++  int saved_errno = errno;
++  free(wide_filename);
++  errno = saved_errno;
++  return result < 0 ? -1 : ((info.st_mode & _S_IFMT) == _S_IFREG);
++}
+diff --git a/native/src/qfli_lua_windows.h b/native/src/qfli_lua_windows.h
+index 9b01e85..bd411a2 100644
+--- a/native/src/qfli_lua_windows.h
++++ b/native/src/qfli_lua_windows.h
+@@ -7,6 +7,7 @@ FILE *qfli_utf8_fopen(const char *filename, const char *mode);
+ FILE *qfli_utf8_freopen(const char *filename, const char *mode, FILE *stream);
+ int qfli_utf8_remove(const char *filename);
+ int qfli_utf8_rename(const char *source, const char *destination);
++int qfli_utf8_regular_file(const char *filename);
+ 
+ #define fopen qfli_utf8_fopen
+ #define freopen qfli_utf8_freopen
+diff --git a/native/test/qfli_lua_test.c b/native/test/qfli_lua_test.c
+index da186f0..617d9b3 100644
+--- a/native/test/qfli_lua_test.c
++++ b/native/test/qfli_lua_test.c
+@@ -174,6 +174,42 @@ int main(void) {
+   if (project_files && project_files->status != 0)
+     fprintf(stderr, "Project file operations failed: %s\n", project_files->error);
+   qfli_lua_free(project_files);
++  okay &= write_source("qfli_lua_host_input.txt", "host input must stay unread\n");
++  okay &= freopen("qfli_lua_host_input.txt", "rb", stdin) != NULL;
++  okay &= write_source("qfli_lua_project/input.txt", "first\nsecond\n");
++  okay &= write_source("qfli_lua_project/main.lua",
++                       "print(io.read('l'))\n"
++                       "print(io.stdin:read('l'))\n"
++                       "assert(io.read('l') == nil)\n");
++  QfliLuaResult *project_input = qfli_lua_run("main.lua", "qfli_lua_project", 2000);
++  okay &= project_input && project_input->status == 0 &&
++          strcmp(project_input->output, "first\nsecond\n") == 0;
++  qfli_lua_free(project_input);
++  okay &= fgetc(stdin) == 'h';
++  remove("qfli_lua_project/input.txt");
++  okay &= write_source("qfli_lua_project/main.lua",
++                       "assert(io.read('a') == '')\n"
++                       "assert(io.stdin:read('l') == nil)\n"
++                       "print('EOF')\n");
++  QfliLuaResult *missing_input = qfli_lua_run("main.lua", "qfli_lua_project", 2000);
++  okay &= missing_input && missing_input->status == 0 &&
++          strcmp(missing_input->output, "EOF\n") == 0;
++  qfli_lua_free(missing_input);
++#if defined(_WIN32)
++  okay &= _mkdir("qfli_lua_project/input.txt") == 0;
++#else
++  okay &= mkdir("qfli_lua_project/input.txt", 0700) == 0;
++#endif
++  QfliLuaResult *invalid_input = qfli_lua_run("main.lua", "qfli_lua_project", 2000);
++  okay &= invalid_input && invalid_input->status != 0 &&
++          strstr(invalid_input->error, "regular file") != NULL &&
++          strcmp(invalid_input->output, "") == 0;
++  qfli_lua_free(invalid_input);
++#if defined(_WIN32)
++  _rmdir("qfli_lua_project/input.txt");
++#else
++  rmdir("qfli_lua_project/input.txt");
++#endif
+   remove("qfli_lua_project/main.lua");
+   remove("qfli_lua_project/module.lua");
+   remove("qfli_lua_project/env.lua");
+@@ -236,5 +272,7 @@ int main(void) {
+   if (!okay) fprintf(stderr, "Lua runtime behavior test failed\n");
+   remove(source);
+   remove(bytecode);
++  fclose(stdin);
++  remove("qfli_lua_host_input.txt");
+   return okay ? 0 : 1;
+ }
+diff --git a/native/README.md b/native/README.md
+index 8d6a34e..f293e2a 100644
+--- a/native/README.md
++++ b/native/README.md
+@@ -22,6 +22,13 @@ On iOS, shell subprocesses are unavailable: upstream Lua prevents
+ `os.execute` from starting commands, and the iOS build makes `io.popen`
+ report an unsupported operation.
+ 
++Each run's default `io.stdin` / `io.read` opens the project's regular
++`input.txt`. A missing file supplies immediate EOF through an owned null-device
++stream. Other metadata/open errors and non-regular paths fail before execution.
++The Lua state closes its input descriptor without reading, redirecting or
++closing the application's stdin. Explicit `io.input` selections keep upstream
++semantics. All platforms use the same native implementation and unchanged ABI.
++
+ Captured `print`, `io.write`, file writes to stdout/stderr, and enabled Lua
+ warnings remain local to each run. Native result buffers carry explicit byte
+ lengths, including embedded NUL bytes. Dart decodes malformed UTF-8 with
+diff --git a/tools/lua_stdin_smoke.dart b/tools/lua_stdin_smoke.dart
+new file mode 100644
+index 0000000..56f5dcc
+--- /dev/null
++++ b/tools/lua_stdin_smoke.dart
+@@ -0,0 +1,81 @@
++import 'dart:convert';
++import 'dart:io';
++
++import 'package:path/path.dart' as p;
++import 'package:qfli_lua/lua_toolchain.dart';
++
++Future<void> main(List<String> arguments) async {
++  final engine = LuaToolchain(
++    libraryPath: arguments.isEmpty ? null : arguments.single,
++  );
++  final root = await Directory.systemTemp.createTemp('qfli_lua_stdin_');
++  final project = Directory(p.join(root.path, '\u6d4b\u8bd5\u8f93\u5165'));
++  await project.create();
++  final source = File(p.join(project.path, 'main.lua'));
++  final input = File(p.join(project.path, 'input.txt'));
++  final checks = <String>[];
++  void check(bool condition, String name) {
++    if (!condition) throw StateError(name);
++    checks.add(name);
++  }
++
++  try {
++    await source.writeAsString(
++      "print(io.read('l'))\nprint(io.stdin:read('l'))\n"
++      "assert(io.read('l') == nil)\n",
++    );
++    await input.writeAsString('first\nsecond');
++    final run = await engine
++        .run(file: source.path, projectDirectory: project.path)
++        .timeout(const Duration(seconds: 10));
++    check(run.success && run.output == 'first\nsecond\n', 'project-input');
++
++    final artifact = p.join(project.path, 'main.luac');
++    final compile = await engine.compile(source.path, artifact);
++    check(compile.success && await File(artifact).exists(), 'compile');
++    await source.delete();
++    final bytecode = await engine
++        .run(file: artifact, projectDirectory: project.path)
++        .timeout(const Duration(seconds: 10));
++    check(
++      bytecode.success && bytecode.output == 'first\nsecond\n',
++      'source-free-bytecode-input',
++    );
++
++    await input.delete();
++    await source.writeAsString(
++      "assert(io.read('a') == '')\nassert(io.stdin:read('l') == nil)\n"
++      "print('EOF')\n",
++    );
++    final empty = await engine
++        .run(file: source.path, projectDirectory: project.path)
++        .timeout(const Duration(seconds: 10));
++    check(empty.success && empty.output == 'EOF\n', 'missing-input-eof');
++
++    await Directory(input.path).create();
++    final invalid = await engine
++        .run(file: source.path, projectDirectory: project.path)
++        .timeout(const Duration(seconds: 10));
++    check(
++      !invalid.success &&
++          invalid.output.isEmpty &&
++          invalid.error.contains('regular file'),
++      'non-regular-input-rejected',
++    );
++    await Directory(input.path).delete();
++    final fresh = await engine
++        .run(file: source.path, projectDirectory: project.path)
++        .timeout(const Duration(seconds: 10));
++    check(fresh.success && fresh.output == 'EOF\n', 'recovery');
++    print(
++      '[LUA_STDIN_SMOKE] ${jsonEncode({'ok': true, 'engine': engine.version(), 'checks': checks})}',
++    );
++  } catch (error, stack) {
++    print(
++      '[LUA_STDIN_SMOKE] ${jsonEncode({'ok': false, 'checks': checks, 'error': '$error', 'stack': '$stack'})}',
++    );
++    rethrow;
++  } finally {
++    await root.delete(recursive: true);
++  }
++}
+diff --git a/.trellis/spec/backend/lua-toolchain.md b/.trellis/spec/backend/lua-toolchain.md
+index 4902721..e6ab59d 100644
+--- a/.trellis/spec/backend/lua-toolchain.md
++++ b/.trellis/spec/backend/lua-toolchain.md
+@@ -19,6 +19,14 @@ belongs in `native/src/qfli_lua.c` and `lib/lua_toolchain.dart`.
+ 
+ ## Contracts
+ 
++Default stdin is per Lua state: read the project's regular input.txt through
++both io.stdin and io.read. Missing input means immediate EOF via an owned null
++device stream. Reject non-regular input and report metadata/open failures before
++loading the entry. The state closes its descriptor; never redirect or close host
++stdin. Keep explicit io.input selections and the existing public C ABI intact.
++Windows metadata lookup must convert UTF-8 paths using the same wide-path helper
++as source/file loading, otherwise input fails under non-ASCII project directories.
++
+ `QfliLuaResult` stores `int status`, `char *output`, `char *error`, followed by
+ `size_t output_length` and `size_t error_length`. Dart mirrors pointer-sized
+ lengths with `@UintPtr()`. Decode exact byte lengths with UTF-8 replacement for
+@@ -82,6 +90,8 @@ compile failure.
+ | Cancellation observed by VM hook | Status 130 |
+ | Embedded NUL / malformed UTF-8 | Preserve NUL; replace malformed bytes without losing the result |
+ | Project relative file | Resolve through per-state project path, without process-wide `chdir` |
++| Missing input.txt | Empty reads / EOF, without touching host stdin |
++| input.txt is a directory or another non-regular path | Nonzero status and diagnostic, no entry execution |
+ 
+ Cancellation is cooperative. Lua VM hooks cannot interrupt native I/O, external
+ commands, finalizers with disabled hooks, or programs that replace/catch the
+@@ -109,6 +119,13 @@ output, malformed output bytes, syntax errors, timeout, cancellation, and
+ Windows non-ASCII file paths. Verify a desktop standalone command beside its
+ packaged native library to exercise executable-relative loading.
+ 
++Native CTest also checks shared io.read/io.stdin position, missing-input EOF,
++host stdin preservation and non-regular input rejection. tools/lua_stdin_smoke.dart
++requires six real-library checks, including a non-ASCII project directory,
++source-free bytecode input and recovery. Run it through Dart on Windows with the
++actual DLL, and through the application on each available mobile ABI. Apple
++builds and ARM execution remain separate gates; host tests do not establish them.
++
+ Source/configuration inspection is not platform compilation or runtime
+ evidence. Skip unavailable platform tests and record the missing environment:
+ Visual Studio for a full Windows Flutter app, macOS/Xcode for Apple, and an

@@ -14,6 +14,7 @@
 | [Error Handling](./error-handling.md) | Error types, validation gate, diagnostics, HTTP status contract | Implemented |
 | [Quality Guidelines](./quality-guidelines.md) | Required checks, forbidden patterns, review checklist | Implemented |
 | [Native Nginx Runtime](./native-runtime.md) | Multi-platform engine build/packaging and platform limits | Implemented |
+| [Web CDP Transport](./web-cdp-transport.md) | Self-only Unix C/NAPI contract, test proof and native/security acceptance gates | Source; compile/runtime pending |
 | [Web Runtime](./web-runtime.md) | Preview, project settings, proxies, diagnostics, lifecycle contracts | Implemented |
 | [Release Verification](./release-verification.md) | Build modes, native test failures, signing and device evidence | Implemented |
 | [Web Code Analysis](./web-code-analysis.md) | Unsaved source parsers, native delivery and availability | Implemented |
@@ -25,6 +26,8 @@
   [Web Runtime](./web-runtime.md).
 - Native engine, packaging or platform-runner change → read
   [Native Nginx Runtime](./native-runtime.md).
+- Native Web CDP, NAPI/protocol client or test-debugging lease change → read
+  [Web CDP Transport](./web-cdp-transport.md).
 - Any runtime change → read [Error Handling](./error-handling.md) and
   [Quality Guidelines](./quality-guidelines.md).
 - Editor syntax backends → read [Web Code Analysis](./web-code-analysis.md).

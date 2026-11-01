@@ -1,0 +1,42 @@
+{
+  "delivered": true,
+  "phase": {
+    "name": "root-final-sender",
+    "status": "PASS",
+    "command": [
+      "D:\\ProgramFiles\\nodejs\\node.exe",
+      "D:\\AppData\\Roaming\\npm\\node_modules\\@mindfoldhq\\trellis\\bin\\trellis.js",
+      "channel",
+      "send",
+      "qfli-core-release-sync",
+      "--scope",
+      "global",
+      "--as",
+      "web-offline-1022",
+      "--to",
+      "c-coordinator",
+      "--text-file",
+      "D:\\MyNewProjects\\qfli_web\\.trellis\\tasks\\10-22-standalone-offline-ide\\research\\web-app-c782-20261026-relay\\root-final-release.txt"
+    ],
+    "startedUtc": "2026-10-26T02:46:00.101573+00:00",
+    "errors": [],
+    "deadlineReached": false,
+    "forcedCleanup": false,
+    "root": {
+      "pid": 82644,
+      "threadId": 82636,
+      "createdSuspended": true,
+      "assignedBeforeResume": true,
+      "terminal": true,
+      "creationFiletime100ns": "134374563601042473",
+      "jobActiveProcesses": 0,
+      "exitCode": 0
+    },
+    "terminalConfirmed": true,
+    "finishedUtc": "2026-10-26T02:46:00.686156+00:00"
+  },
+  "remainingHeldJobs": 0,
+  "controlPlaneOnly": true,
+  "selfTerminalClaim": false,
+  "finishedUtc": "2026-10-26T02:46:00.686184+00:00"
+}

@@ -1,0 +1,1943 @@
+diff --git a/.trellis/spec/backend/index.md b/.trellis/spec/backend/index.md
+index 515a1d4..82203d3 100644
+--- a/.trellis/spec/backend/index.md
++++ b/.trellis/spec/backend/index.md
+@@ -23,17 +23,21 @@ This directory contains guidelines for backend development. Fill in each file wi
+ | [SQLite Workspace](./sql-workspace.md) | Stable grid identity and fixed-offset paging | Documented |
+ | [SQLite Native Runtime](./sqlite-native-runtime.md) | Multi-platform C packaging, FFI, queries and real runtime evidence | Implemented |
+ | [Oracle MySQL Workspace](./mysql-workspace.md) | Oracle metadata, primary keys, binary values, and native client | Documented |
++| [Oracle Desktop Runtime](./mysql-desktop-runtime.md) | Windows/Linux private server lifecycle, FFI and bundle contract | Implemented |
+ 
+ ---
+ 
+ ## Pre-Development Checklist
+ 
+ - Read SQLite Native Runtime for SQLite engine, FFI and packaging changes.
++- Read Oracle Desktop Runtime for local MySQL client, lifecycle or desktop packaging changes.
+ 
+ ## Quality Check
+ 
+ - Run the native engine and existing SQL tests; see SQLite Native Runtime for
+   platform verification requirements and explicit environment skips.
++- For local Oracle changes, run the real lifecycle checks and typed adapter tests
++  described in Oracle Desktop Runtime. Preserve OHOS C++ symbols.
+ 
+ ## How to Fill These Guidelines
+ 
+diff --git a/.trellis/spec/backend/mysql-desktop-runtime.md b/.trellis/spec/backend/mysql-desktop-runtime.md
+new file mode 100644
+index 0000000..5dc46d2
+--- /dev/null
++++ b/.trellis/spec/backend/mysql-desktop-runtime.md
+@@ -0,0 +1,93 @@
++# Oracle Desktop Runtime
++
++## Scope
++
++Windows/Linux local Oracle MySQL backend and packaging. The default product
++engine preference currently remains SQLite/cloud; selection of this local
++backend is a subsequent integration requirement. macOS bundle/signing, Android
++server integration and native iOS hosting remain implementation gaps. Never
++report those platforms as delivered based on portable source or desktop tests.
++
++## Interfaces And Transport
++
++- `NativeMySqlDatabase({MethodChannel? channel, LocalMySqlRuntime? runtime})`:
++  an explicit channel wins. Otherwise desktop calls use the injected/shared
++  runtime; Android/OHOS/iOS retain their existing channel path for now.
++- `LocalMySqlRuntime.invoke(method, arguments)` accepts `query` and
++  `executeScript`. `schema` is a schema name, including empty server scope;
++  `source` is SQL, `params` is nullable strings for prepared queries.
++- `MySqlFfi.invoke(libraryPath, request)` runs the real C client on an isolate.
++  `qfli_mysql_invoke(const char*, size_t)` returns allocated UTF-8 JSON, freed
++  only with `qfli_mysql_free`. Request fields add `method`, `socket`, `password`.
++- `query`, `executeScript`, `shutdown` share the existing typed result shape.
++  Script summary fields occupy the outer object; `results` are ordered results.
++  No double conversion of BIGINT/DECIMAL; binary fields are hex; NULL stays null.
++- Default display limits are 1,000 rows/1 MiB; optional `rowLimit` and `byteLimit`
++  can only lower them. Scripts drain every Oracle result, retaining at most 128.
++- New credentialed C++ overloads retain all existing OHOS signatures and symbols.
++  Windows fixes `MYSQL_PROTOCOL_PIPE` and enables
++  `MYSQL_OPT_GET_SERVER_PUBLIC_KEY` for Oracle caching_sha2_password RSA exchange.
++  Linux/macOS use `MYSQL_PROTOCOL_SOCKET`. Neither can fall back to TCP.
++
++## Lifecycle And Files
++
++Default data is `<local-application-data>/qfli_sql/mysql`; Windows uses
++LOCALAPPDATA, Linux XDG_DATA_HOME or ~/.local/share, macOS Application Support.
++`QFLI_MYSQL_BUNDLE` overrides installed bundle discovery. The explicit constructor
++supports isolated fixtures. Production must not set the test `serverUser=root`.
++
++`runtime.lock` is held for the server lifetime; a canonical directory registry
++rejects duplicate owners in the same isolate. Initialization creates a private
++staging directory, invokes upstream `--initialize-insecure`, and moves only a
++successful datadir to `data`. `initialized.json` stores the exact Oracle version
++and random 256-bit credential. `root.sql` sets it before readiness checks.
++Missing metadata beside existing data, malformed metadata or a changed version
++returns unavailable; `--upgrade=NONE` prevents implicit upgrades. Recovery of
++such metadata is a separate explicit operation, never deletion of user data.
++
++Unix directories are 700, credential files 600 and sockets use a short private
++temporary parent. Windows storage inherits the user's local application ACL;
++pipe names are unpredictable and queries require the stored credential. Server
++startup disables TCP, mysqlx, LOCAL INFILE and filesystem import/export. It uses
++bundled plugin/message paths and modest embedded-service memory settings.
++
++`invoke` and `stop()` serialize. Graceful stop uses Oracle shutdown, bounded
++wait, then owned-process termination. Cleanup releases directory ownership even
++if socket cleanup fails. Linux launcher validates the app parent then sets
++PDEATHSIG; Windows uses a creation-time Job Object and waits on the app handle.
++Normal exit and application death leave data for upstream InnoDB recovery.
++
++## Packaging
++
++`native/mysql/desktop/CMakeLists.txt` builds the client bridge and launcher.
++Windows/Linux FFI plugin builds include it and install `qfli_mysql/{bin,lib,share}`
++beside the app. Missing server/source inputs fail desktop packaging. Windows
++Oracle/OpenSSL DLLs are resolved from bridge directory through LoadLibraryExW;
++Linux client uses $ORIGIN RPATH and the child uses its bundled lib directory.
++
++Use the hash-verified 8.4.6 official Windows ZIP and its retained licenses/docs.
++Linux staging copies installed Oracle packages, complete dependency resolution,
++resources/plugins and license inputs. Keep provenance and host libc prerequisites
++explicit. CMake requires verified Oracle source RapidJSON headers; no ad hoc JSON
++serializer or replacement SQL engine is allowed.
++
++## Verification
++
++- Standalone lifecycle test: actual upstream initialization/version/private
++  transport, ownership, exact prepared values, metadata/NULL/binary, diagnostics,
++  transactions/partial scripts, caps/result draining, credentials/no fallback,
++  persistence/stop/restart, version rejection, app death and crash recovery.
++- Typed adapter tests: set `QFLI_MYSQL_TEST_BUNDLE` to a built bundle; assert exact
++  data, script results/errors and missing-runtime behavior. No mock establishes
++  real native functionality. Existing explicit-channel tests must keep passing.
++- Available evidence: Windows 8.4.6, Linux 8.0.46, complete installed runtime
++  bundles, Windows Flutter tests. MSVC/full desktop GUIs and Apple execution
++  are not established by these checks.
++
++## Wrong Vs Correct
++
++Wrong: enable TCP when a socket/pipe login fails, split scripts by semicolons,
++replace a version-mismatched datadir, or change the old OHOS C++ ABI.
++
++Correct: return the real error, use Oracle's prepared/multi-statement client,
++keep persistent data and retain old symbols alongside credentialed overloads.
+diff --git a/lib/local_mysql_runtime.dart b/lib/local_mysql_runtime.dart
+new file mode 100644
+index 0000000..ac96803
+--- /dev/null
++++ b/lib/local_mysql_runtime.dart
+@@ -0,0 +1,451 @@
++import 'dart:async';
++import 'dart:convert';
++import 'dart:io';
++import 'dart:math';
++
++import 'package:path/path.dart' as p;
++
++import 'mysql_ffi.dart';
++
++/// Owns one app-private Oracle server; the launcher handles application death.
++class LocalMySqlRuntime {
++  LocalMySqlRuntime({
++    required this.bundleDirectory,
++    required this.dataDirectory,
++    required this.libraryPath,
++    required this.launcherPath,
++    this.serverPath,
++    this.serverUser,
++    this.readinessTimeout = const Duration(seconds: 45),
++  });
++
++  static bool get supported =>
++      Platform.isWindows || Platform.isLinux || Platform.isMacOS;
++
++  static final LocalMySqlRuntime shared = _discover();
++  static final Set<String> _ownedDirectories = {};
++
++  final Directory bundleDirectory;
++  final Directory dataDirectory;
++  final String libraryPath;
++  final String launcherPath;
++  final String? serverPath;
++  // Only explicit host fixtures may ask mysqld to run as root.
++  final String? serverUser;
++  final Duration readinessTimeout;
++  Future<void> _tail = Future<void>.value();
++  Process? _server;
++  Future<int>? _serverExit;
++  int? _exitCode;
++  Directory? _ipcDirectory;
++  RandomAccessFile? _lock;
++  String? _ownedDirectory;
++  String? _socket;
++  String? _password;
++  String _diagnostics = '';
++
++  Future<Map<String, Object?>> invoke(
++    String method,
++    Map<String, Object?> arguments,
++  ) => _serialize(() async {
++    if (method != 'query' && method != 'executeScript') {
++      throw ArgumentError.value(method, 'method');
++    }
++    try {
++      await _ensureReady();
++      return await _call(method, arguments);
++    } on Object catch (error) {
++      return _failure(error.toString(), script: method == 'executeScript');
++    }
++  });
++
++  Future<void> stop() => _serialize(_stop);
++
++  Future<T> _serialize<T>(Future<T> Function() action) {
++    final result = _tail.then((_) => action());
++    _tail = result.then<void>((_) {}, onError: (Object _, StackTrace _) {});
++    return result;
++  }
++
++  Future<Map<String, Object?>> _call(
++    String method,
++    Map<String, Object?> arguments,
++  ) => MySqlFfi.invoke(libraryPath, {
++    ...arguments,
++    'method': method,
++    'socket': _socket,
++    'password': _password,
++  });
++
++  Future<void> _ensureReady() async {
++    if (_server != null && _exitCode == null) return;
++    await _stop();
++    if (!supported) {
++      throw UnsupportedError('Local Oracle MySQL requires a desktop host.');
++    }
++    final server =
++        serverPath ??
++        p.join(
++          bundleDirectory.path,
++          'bin',
++          Platform.isWindows ? 'mysqld.exe' : 'mysqld',
++        );
++    for (final path in [server, launcherPath, libraryPath]) {
++      if (!await File(path).exists()) {
++        throw StateError('Missing bundled MySQL file: $path');
++      }
++    }
++    await dataDirectory.create(recursive: true);
++    await _makePrivate(dataDirectory.path);
++    final resolved = await dataDirectory.resolveSymbolicLinks();
++    final owned = Platform.isWindows ? resolved.toLowerCase() : resolved;
++    if (!_ownedDirectories.add(owned)) {
++      throw StateError('The local MySQL data directory is already in use.');
++    }
++    _ownedDirectory = owned;
++    RandomAccessFile? lock;
++    try {
++      lock = await File(
++        p.join(dataDirectory.path, 'runtime.lock'),
++      ).open(mode: FileMode.append);
++      await lock.lock(FileLock.exclusive);
++      _lock = lock;
++    } on Object {
++      await lock?.close();
++      _ownedDirectories.remove(owned);
++      _ownedDirectory = null;
++      throw StateError('The local MySQL data directory is already in use.');
++    }
++    try {
++      final versionResult = await _run(server, ['--no-defaults', '--version']);
++      final version = RegExp(
++        r'\bVer\s+(8\.\d+\.\d+[^\s]*)',
++      ).firstMatch(versionResult)?.group(1);
++      if (version == null || versionResult.contains('MariaDB')) {
++        throw StateError(
++          'The bundled server must be Oracle MySQL 8.x: $versionResult',
++        );
++      }
++      final data = Directory(p.join(dataDirectory.path, 'data'));
++      final marker = File(p.join(dataDirectory.path, 'initialized.json'));
++      if (await marker.exists()) {
++        final raw = jsonDecode(await marker.readAsString());
++        if (raw is! Map ||
++            raw['version'] != version ||
++            raw['password'] is! String ||
++            !RegExp(r'^[a-f0-9]{64}$').hasMatch(raw['password'] as String) ||
++            !await data.exists()) {
++          throw StateError(
++            'MySQL initialization metadata or server version does not match. Automatic upgrade is disabled.',
++          );
++        }
++        _password = raw['password'] as String;
++      } else {
++        if (await data.exists()) {
++          throw StateError(
++            'MySQL data exists without successful initialization metadata.',
++          );
++        }
++        final staging = await dataDirectory.createTemp('initializing-');
++        await _makePrivate(staging.path);
++        try {
++          await _run(server, [
++            '--no-defaults',
++            '--initialize-insecure',
++            '--basedir=${bundleDirectory.path}',
++            '--datadir=${staging.path}',
++            '--performance-schema=OFF',
++            '--innodb-buffer-pool-size=32M',
++            '--innodb-redo-log-capacity=16M',
++            if (serverUser != null) '--user=$serverUser',
++          ], timeout: const Duration(minutes: 3));
++          _password = _randomHex(32);
++          final pending = File(
++            p.join(dataDirectory.path, 'initialized.pending.json'),
++          );
++          await pending.writeAsString(
++            jsonEncode({'version': version, 'password': _password}),
++            flush: true,
++          );
++          await _makePrivate(pending.path, directory: false);
++          await staging.rename(data.path);
++          await pending.rename(marker.path);
++        } finally {
++          if (await staging.exists()) await staging.delete(recursive: true);
++        }
++      }
++      // A per-datadir lock stays held for the server's lifetime. Unix sockets
++      // use a short private temporary directory to fit sockaddr_un on macOS.
++      if (Platform.isWindows) {
++        _socket = 'qfli_mysql_${_randomHex(16)}';
++      } else {
++        _ipcDirectory = await Directory.systemTemp.createTemp('qfli-mysql-');
++        await _makePrivate(_ipcDirectory!.path);
++        _socket = p.join(_ipcDirectory!.path, 'mysql.sock');
++      }
++      final init = File(p.join(dataDirectory.path, 'root.sql'));
++      await init.writeAsString(
++        "ALTER USER 'root'@'localhost' IDENTIFIED BY '$_password';\n",
++        flush: true,
++      );
++      await _makePrivate(init.path, directory: false);
++      final process = await _start(server, [
++        '--no-defaults',
++        '--basedir=${bundleDirectory.path}',
++        '--datadir=${data.path}',
++        '--plugin-dir=${p.join(bundleDirectory.path, 'lib', 'plugin')}',
++        '--lc-messages-dir=${p.join(bundleDirectory.path, 'share')}',
++        '--socket=$_socket',
++        '--skip-networking',
++        '--mysqlx=0',
++        '--skip-log-bin',
++        '--performance-schema=OFF',
++        '--max-connections=20',
++        '--table-open-cache=64',
++        if (Platform.isWindows) '--named-pipe',
++        if (serverUser != null) '--user=$serverUser',
++        '--upgrade=NONE',
++        '--local-infile=0',
++        '--secure-file-priv=NULL',
++        '--max-allowed-packet=8M',
++        '--innodb-buffer-pool-size=32M',
++        '--innodb-redo-log-capacity=16M',
++        '--init-file=${init.path}',
++        '--pid-file=${p.join(dataDirectory.path, 'mysqld.pid')}',
++        '--log-error=${p.join(dataDirectory.path, 'mysqld.log')}',
++      ]);
++      _server = process;
++      _exitCode = null;
++      _serverExit = process.exitCode.then((code) {
++        _exitCode = code;
++        return code;
++      });
++      _drain(process);
++      final deadline = DateTime.now().add(readinessTimeout);
++      Object? readinessError;
++      while (_exitCode == null && DateTime.now().isBefore(deadline)) {
++        final ready = await _call('query', {
++          'schema': '',
++          'source': 'SELECT VERSION(), @@version_comment',
++          'params': <String?>[],
++        });
++        readinessError = ready['error'];
++        if (ready['available'] == true && ready['exitCode'] == 0) {
++          final rows = ready['rows'] as List;
++          if ((rows.first as List).first != version ||
++              rows.toString().contains('MariaDB')) {
++            throw StateError(
++              'The private MySQL server version does not match its bundle.',
++            );
++          }
++          return;
++        }
++        await Future<void>.delayed(const Duration(milliseconds: 100));
++      }
++      final log = File(p.join(dataDirectory.path, 'mysqld.log'));
++      final details = await log.exists()
++          ? await log.readAsString()
++          : _diagnostics;
++      throw StateError(
++        'Oracle MySQL did not become ready (exit $_exitCode, $readinessError): ${details.length > 8192 ? details.substring(details.length - 8192) : details}',
++      );
++    } on Object {
++      await _stop();
++      rethrow;
++    }
++  }
++
++  Future<Process> _start(
++    String server,
++    List<String> arguments,
++  ) => Process.start(
++    launcherPath,
++    ['$pid', server, ...arguments],
++    workingDirectory: bundleDirectory.path,
++    environment: {
++      if (Platform.isWindows)
++        'PATH':
++            '${p.join(bundleDirectory.path, 'bin')};${p.join(bundleDirectory.path, 'lib')};${Platform.environment['PATH'] ?? ''}',
++      if (Platform.isLinux)
++        'LD_LIBRARY_PATH':
++            '${p.join(bundleDirectory.path, 'lib')}:${Platform.environment['LD_LIBRARY_PATH'] ?? ''}',
++    },
++  );
++
++  Future<String> _run(
++    String server,
++    List<String> arguments, {
++    Duration timeout = const Duration(seconds: 15),
++  }) async {
++    final process = await _start(server, arguments);
++    final output = StringBuffer();
++    void collect(String value) {
++      if (output.length < 8192) output.write(value);
++    }
++
++    final stdoutDone = process.stdout
++        .transform(const Utf8Decoder(allowMalformed: true))
++        .forEach(collect);
++    final stderrDone = process.stderr
++        .transform(const Utf8Decoder(allowMalformed: true))
++        .forEach(collect);
++    int status;
++    try {
++      status = await process.exitCode.timeout(timeout);
++    } on Object {
++      process.kill(ProcessSignal.sigkill);
++      await process.exitCode;
++      rethrow;
++    } finally {
++      await Future.wait([stdoutDone, stderrDone]);
++    }
++    if (status != 0) {
++      throw StateError('MySQL command failed ($status): $output');
++    }
++    return output.toString();
++  }
++
++  void _drain(Process process) {
++    _diagnostics = '';
++    void collect(String value) {
++      _diagnostics += value;
++      if (_diagnostics.length > 8192) {
++        _diagnostics = _diagnostics.substring(_diagnostics.length - 8192);
++      }
++    }
++
++    process.stdout
++        .transform(const Utf8Decoder(allowMalformed: true))
++        .listen(collect);
++    process.stderr
++        .transform(const Utf8Decoder(allowMalformed: true))
++        .listen(collect);
++  }
++
++  Future<void> _stop() async {
++    final process = _server;
++    try {
++      if (process != null) {
++        if (_exitCode == null) {
++          try {
++            await _call('shutdown', {});
++          } on Object {
++            process.kill();
++          }
++        }
++        try {
++          await _serverExit!.timeout(const Duration(seconds: 10));
++        } on TimeoutException {
++          process.kill(ProcessSignal.sigkill);
++          await _serverExit;
++        }
++      }
++    } finally {
++      _server = null;
++      _serverExit = null;
++      _exitCode = null;
++      _socket = null;
++      _password = null;
++      final ipc = _ipcDirectory;
++      _ipcDirectory = null;
++      final lock = _lock;
++      _lock = null;
++      final owned = _ownedDirectory;
++      _ownedDirectory = null;
++      try {
++        if (ipc != null && await ipc.exists()) {
++          await ipc.delete(recursive: true);
++        }
++      } finally {
++        try {
++          if (lock != null) {
++            try {
++              await lock.unlock();
++            } finally {
++              await lock.close();
++            }
++          }
++        } finally {
++          if (owned != null) _ownedDirectories.remove(owned);
++        }
++      }
++    }
++  }
++
++  static Future<void> _makePrivate(String path, {bool directory = true}) async {
++    if (Platform.isWindows) return;
++    final result = await Process.run('/bin/chmod', [
++      directory ? '700' : '600',
++      path,
++    ]);
++    if (result.exitCode != 0) {
++      throw FileSystemException('Cannot make MySQL storage private.', path);
++    }
++  }
++
++  static String _randomHex(int bytes) {
++    final random = Random.secure();
++    return List.generate(
++      bytes,
++      (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
++    ).join();
++  }
++
++  static Map<String, Object?> _failure(String error, {required bool script}) =>
++      {
++        'available': false,
++        'exitCode': 127,
++        'error': error,
++        'sqlState': '',
++        'columns': <String>[],
++        'columnInfo': <Object>[],
++        'rows': <Object>[],
++        'affectedRows': 0,
++        'truncated': false,
++        if (script) 'results': <Object>[],
++      };
++
++  static LocalMySqlRuntime _discover() {
++    final app = p.dirname(Platform.resolvedExecutable);
++    final configured = Platform.environment['QFLI_MYSQL_BUNDLE'];
++    final bundle = Directory(
++      configured ??
++          (Platform.isMacOS
++              ? p.normalize(p.join(app, '..', 'Resources', 'qfli_mysql'))
++              : p.join(app, 'qfli_mysql')),
++    );
++    final home =
++        Platform.environment[Platform.isWindows ? 'USERPROFILE' : 'HOME'];
++    if (home == null) {
++      throw StateError('Cannot locate application-private MySQL storage.');
++    }
++    final String root;
++    if (Platform.isWindows) {
++      root =
++          Platform.environment['LOCALAPPDATA'] ??
++          p.join(home, 'AppData', 'Local');
++    } else if (Platform.isMacOS) {
++      root = p.join(home, 'Library', 'Application Support');
++    } else {
++      root =
++          Platform.environment['XDG_DATA_HOME'] ??
++          p.join(home, '.local', 'share');
++    }
++    return LocalMySqlRuntime(
++      bundleDirectory: bundle,
++      dataDirectory: Directory(p.join(root, 'qfli_sql', 'mysql')),
++      launcherPath: p.join(
++        bundle.path,
++        'bin',
++        Platform.isWindows ? 'qfli_mysql_launcher.exe' : 'qfli_mysql_launcher',
++      ),
++      libraryPath: p.join(
++        bundle.path,
++        Platform.isWindows ? 'bin' : 'lib',
++        Platform.isWindows
++            ? 'qfli_mysql_bridge.dll'
++            : 'libqfli_mysql_bridge.${Platform.isMacOS ? 'dylib' : 'so'}',
++      ),
++    );
++  }
++}
+diff --git a/lib/mysql_database.dart b/lib/mysql_database.dart
+index f823dd6..7f07e65 100644
+--- a/lib/mysql_database.dart
++++ b/lib/mysql_database.dart
+@@ -2,12 +2,24 @@ import 'package:flutter/services.dart';
+ 
+ import 'sql_database.dart';
+ import 'sql_native_channel.dart';
++import 'local_mysql_runtime.dart';
+ 
+-/// The platform channel owns readiness and the private socket connection.
++/// Desktop FFI and the OHOS channel both own a real private Oracle runtime.
+ class NativeMySqlDatabase implements SqlDatabase, SqlScriptDatabase {
+-  const NativeMySqlDatabase({this.channel = mysqlNativeChannel});
++  const NativeMySqlDatabase({this.channel, this.runtime});
+ 
+-  final MethodChannel channel;
++  final MethodChannel? channel;
++  final LocalMySqlRuntime? runtime;
++
++  Future<Object?> _invoke(String method, Map<String, Object?> arguments) {
++    if (channel == null && (runtime != null || LocalMySqlRuntime.supported)) {
++      return (runtime ?? LocalMySqlRuntime.shared).invoke(method, arguments);
++    }
++    return (channel ?? mysqlNativeChannel).invokeMethod<Object?>(
++      method,
++      arguments,
++    );
++  }
+ 
+   @override
+   Future<SqlScriptResult> executeScript({
+@@ -15,7 +27,7 @@ class NativeMySqlDatabase implements SqlDatabase, SqlScriptDatabase {
+     required String source,
+   }) async {
+     try {
+-      final raw = await channel.invokeMethod<Object?>('executeScript', {
++      final raw = await _invoke('executeScript', {
+         'schema': databasePath,
+         'source': source,
+       });
+@@ -41,7 +53,7 @@ class NativeMySqlDatabase implements SqlDatabase, SqlScriptDatabase {
+     List<String?> parameters = const [],
+   }) async {
+     try {
+-      final raw = await channel.invokeMethod<Object?>('query', {
++      final raw = await _invoke('query', {
+         'schema': databasePath,
+         'source': source,
+         'params': parameters,
+diff --git a/lib/mysql_ffi.dart b/lib/mysql_ffi.dart
+new file mode 100644
+index 0000000..ec6e240
+--- /dev/null
++++ b/lib/mysql_ffi.dart
+@@ -0,0 +1,81 @@
++import 'dart:convert';
++import 'dart:ffi';
++import 'dart:isolate';
++import 'dart:io';
++
++import 'package:ffi/ffi.dart';
++import 'package:path/path.dart' as p;
++
++/// Executes the Oracle C API on a worker and frees JSON in the allocating DLL.
++class MySqlFfi {
++  static Future<Map<String, Object?>> invoke(
++    String libraryPath,
++    Map<String, Object?> request,
++  ) => Isolate.run(() {
++    final library = _openLibrary(libraryPath);
++    final invoke = library
++        .lookupFunction<
++          Pointer<Utf8> Function(Pointer<Utf8>, Size),
++          Pointer<Utf8> Function(Pointer<Utf8>, int)
++        >('qfli_mysql_invoke');
++    final release = library
++        .lookupFunction<
++          Void Function(Pointer<Utf8>),
++          void Function(Pointer<Utf8>)
++        >('qfli_mysql_free');
++    final encoded = jsonEncode(request);
++    final input = encoded.toNativeUtf8();
++    Pointer<Utf8> result = nullptr;
++    try {
++      result = invoke(input, utf8.encode(encoded).length);
++      if (result == nullptr) {
++        throw StateError('Oracle MySQL invocation failed.');
++      }
++      final raw = jsonDecode(result.toDartString());
++      if (raw is! Map<String, dynamic>) {
++        throw const FormatException('Invalid Oracle MySQL result.');
++      }
++      return Map<String, Object?>.from(raw);
++    } finally {
++      if (result != nullptr) release(result);
++      malloc.free(input);
++    }
++  });
++}
++
++DynamicLibrary _openLibrary(String path) {
++  if (!Platform.isWindows) return DynamicLibrary.open(path);
++  final kernel = DynamicLibrary.open('kernel32.dll');
++  final load = kernel
++      .lookupFunction<
++        Pointer<Void> Function(Pointer<Utf16>, Pointer<Void>, Uint32),
++        Pointer<Void> Function(Pointer<Utf16>, Pointer<Void>, int)
++      >('LoadLibraryExW');
++  final free = kernel
++      .lookupFunction<
++        Int32 Function(Pointer<Void>),
++        int Function(Pointer<Void>)
++      >('FreeLibrary');
++  final lastError = kernel.lookupFunction<Uint32 Function(), int Function()>(
++    'GetLastError',
++  );
++  return using((arena) {
++    // Resolve Oracle/OpenSSL dependencies beside the bridge, including paths
++    // with spaces and non-ASCII characters, without changing process PATH.
++    final handle = load(
++      p.normalize(p.absolute(path)).toNativeUtf16(allocator: arena),
++      nullptr,
++      0x1100,
++    );
++    if (handle == nullptr) {
++      throw StateError(
++        'Cannot load bundled Oracle client (${lastError()}): $path',
++      );
++    }
++    try {
++      return DynamicLibrary.open(path);
++    } finally {
++      free(handle);
++    }
++  });
++}
+diff --git a/native/linux/CMakeLists.txt b/native/linux/CMakeLists.txt
+index 0a4fd90..975be51 100644
+--- a/native/linux/CMakeLists.txt
++++ b/native/linux/CMakeLists.txt
+@@ -1,5 +1,9 @@
+ cmake_minimum_required(VERSION 3.15)
+-project(qfli_sqlite_native LANGUAGES C)
++project(qfli_sqlite_native LANGUAGES C CXX)
+ add_subdirectory(../runtime ${CMAKE_CURRENT_BINARY_DIR}/engine)
+ set(qfli_sqlite_native_bundled_libraries
+   $<TARGET_FILE:qfli_sqlite> PARENT_SCOPE)
++if(NOT QFLI_ORACLE_HOME AND NOT DEFINED ENV{QFLI_ORACLE_HOME})
++  set(QFLI_ORACLE_HOME "${CMAKE_CURRENT_SOURCE_DIR}/../build/mysql/linux" CACHE PATH "Oracle server bundle")
++endif()
++add_subdirectory(../mysql/desktop ${CMAKE_CURRENT_BINARY_DIR}/mysql)
+diff --git a/native/mysql/desktop/CMakeLists.txt b/native/mysql/desktop/CMakeLists.txt
+new file mode 100644
+index 0000000..5949aa5
+--- /dev/null
++++ b/native/mysql/desktop/CMakeLists.txt
+@@ -0,0 +1,70 @@
++cmake_minimum_required(VERSION 3.20)
++project(qfli_mysql_desktop LANGUAGES CXX)
++
++set(QFLI_MYSQL_SOURCE "$ENV{QFLI_MYSQL_SOURCE}" CACHE PATH "Pinned Oracle source tree (RapidJSON headers)")
++if(NOT QFLI_MYSQL_SOURCE)
++  set(QFLI_MYSQL_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/../../../build/mysql-port/mysql-8.4.6")
++endif()
++set(QFLI_ORACLE_HOME "$ENV{QFLI_ORACLE_HOME}" CACHE PATH "Official Oracle MySQL server distribution")
++find_path(RAPIDJSON_INCLUDE_DIR rapidjson/document.h
++  HINTS "${QFLI_MYSQL_SOURCE}/extra/rapidjson/include" REQUIRED)
++if(WIN32 OR APPLE)
++  find_path(ORACLE_INCLUDE mysql.h HINTS "${QFLI_ORACLE_HOME}/include" NO_DEFAULT_PATH REQUIRED)
++  find_library(ORACLE_LIBRARY NAMES libmysql mysqlclient
++    HINTS "${QFLI_ORACLE_HOME}/lib" NO_DEFAULT_PATH REQUIRED)
++else()
++  find_package(PkgConfig REQUIRED)
++  pkg_check_modules(ORACLE REQUIRED IMPORTED_TARGET mysqlclient)
++  set(ORACLE_LIBRARY PkgConfig::ORACLE)
++endif()
++
++add_library(qfli_mysql_bridge SHARED ../../src/qfli_mysql_client.cpp ../../src/qfli_mysql_ffi.cpp)
++target_include_directories(qfli_mysql_bridge PRIVATE ../../src)
++if(ORACLE_INCLUDE)
++  target_include_directories(qfli_mysql_bridge SYSTEM PRIVATE "${ORACLE_INCLUDE}")
++endif()
++target_include_directories(qfli_mysql_bridge SYSTEM PRIVATE "${RAPIDJSON_INCLUDE_DIR}")
++target_link_libraries(qfli_mysql_bridge PRIVATE ${ORACLE_LIBRARY})
++target_compile_features(qfli_mysql_bridge PRIVATE cxx_std_17)
++set_target_properties(qfli_mysql_bridge PROPERTIES CXX_VISIBILITY_PRESET hidden)
++if(WIN32)
++  set_target_properties(qfli_mysql_bridge PROPERTIES PREFIX "")
++elseif(UNIX AND NOT APPLE)
++  set_target_properties(qfli_mysql_bridge PROPERTIES INSTALL_RPATH "$ORIGIN")
++endif()
++add_executable(qfli_mysql_launcher launcher.cpp)
++target_compile_features(qfli_mysql_launcher PRIVATE cxx_std_17)
++if(MINGW)
++  target_link_options(qfli_mysql_bridge PRIVATE -static)
++  target_link_options(qfli_mysql_launcher PRIVATE -static -municode)
++endif()
++foreach(target qfli_mysql_bridge qfli_mysql_launcher)
++  if(MSVC)
++    target_compile_options(${target} PRIVATE /W4 /EHsc)
++  else()
++    target_compile_options(${target} PRIVATE -Wall -Wextra -Werror)
++  endif()
++endforeach()
++install(TARGETS qfli_mysql_bridge qfli_mysql_launcher
++  RUNTIME DESTINATION qfli_mysql/bin LIBRARY DESTINATION qfli_mysql/lib)
++if(QFLI_ORACLE_HOME)
++  if(NOT EXISTS "${QFLI_ORACLE_HOME}/bin/mysqld${CMAKE_EXECUTABLE_SUFFIX}")
++    message(FATAL_ERROR "Stage the full Oracle server distribution before packaging: ${QFLI_ORACLE_HOME}")
++  endif()
++  foreach(directory bin lib share docs licenses)
++    if(EXISTS "${QFLI_ORACLE_HOME}/${directory}")
++      install(DIRECTORY "${QFLI_ORACLE_HOME}/${directory}/"
++        DESTINATION "qfli_mysql/${directory}" COMPONENT Runtime
++        PATTERN "*.pdb" EXCLUDE PATTERN "*-debug.*" EXCLUDE
++        PATTERN "*.a" EXCLUDE PATTERN "*.lib" EXCLUDE)
++    endif()
++  endforeach()
++  foreach(file LICENSE README runtime.json)
++    if(EXISTS "${QFLI_ORACLE_HOME}/${file}")
++      install(FILES "${QFLI_ORACLE_HOME}/${file}" DESTINATION qfli_mysql COMPONENT Runtime)
++    endif()
++  endforeach()
++  if(WIN32)
++    install(FILES "${QFLI_ORACLE_HOME}/lib/libmysql.dll" DESTINATION qfli_mysql/bin COMPONENT Runtime)
++  endif()
++endif()
+diff --git a/native/mysql/desktop/README.md b/native/mysql/desktop/README.md
+new file mode 100644
+index 0000000..f62c2a3
+--- /dev/null
++++ b/native/mysql/desktop/README.md
+@@ -0,0 +1,90 @@
++# Oracle MySQL Desktop Runtime
++
++Windows and Linux use the actual upstream Oracle server and C client. The
++adapter in `lib/mysql_database.dart` starts the private server through
++`LocalMySqlRuntime` and invokes `qfli_mysql_bridge` on worker isolates. Explicit
++injected channels retain their existing behavior. No TCP service is opened and
++no SQLite or cloud fallback is performed.
++
++## Build And Package
++
++Windows x64 input is the official Oracle MySQL 8.4.6 ZIP:
++
++- URL: `https://cdn.mysql.com/archives/mysql-8.4/mysql-8.4.6-winx64.zip`
++- SHA256: `b6c152f9f3aaa7294eb47db698e47974d37b261bf3cab4f90dc1243bb5ecd204`
++
++Stage it before the Windows Flutter build:
++
++```powershell
++./native/mysql/desktop/stage-windows.ps1 -Archive <path-to-official-zip>
++$env:QFLI_MYSQL_SOURCE = '<verified-mysql-8.4.6-source-tree>'
++flutter build windows
++```
++
++The pinned Oracle source tree supplies its RapidJSON headers; source provenance
++and extraction instructions are in `native/mysql/README.md`. The default source
++location is `build/mysql-port/mysql-8.4.6`. The official Microsoft Visual C++
++runtime required by Oracle must be installed on the target Windows host.
++
++Linux staging uses installed **Oracle** development/server packages. It rejects
++MariaDB and copies the server, resources, plugins and resolved native dependency
++chain. Host libc and the dynamic loader remain system prerequisites:
++
++```bash
++bash native/mysql/desktop/stage-linux.sh
++export QFLI_MYSQL_SOURCE=<verified-mysql-8.4.6-source-tree>
++flutter build linux
++```
++
++`QFLI_ORACLE_HOME` overrides the staged distribution location. Windows/Linux
++plugin CMake installs the complete runtime into `qfli_mysql/` beside the app.
++Missing runtime inputs fail desktop packaging. Standalone native builds use:
++
++```bash
++cmake -S native/mysql/desktop -B native/build/mysql-client \
++  -DQFLI_MYSQL_SOURCE=<verified-source> -DQFLI_ORACLE_HOME=<staged-distribution>
++cmake --build native/build/mysql-client
++cmake --install native/build/mysql-client --prefix <installation-root>
++```
++
++The launcher lives in `qfli_mysql/bin`. Windows keeps the bridge and Oracle DLL
++dependencies in `bin`; Linux keeps the bridge and shared libraries in `lib`.
++The runtime explicitly points mysqld at its bundled resources and plugins.
++Retain all upstream LICENSE/docs and source/build provenance in release bundles.
++
++## Lifecycle
++
++The default storage is the user's local application data under `qfli_sql/mysql`.
++`QFLI_MYSQL_BUNDLE` overrides runtime discovery. The test constructor can inject
++an isolated data directory; it never silently substitutes a system server.
++
++Initialization runs in a private staging directory. Only a successful Oracle
++initialization is moved to `data`; `initialized.json` records the exact server
++version and a random 256-bit local password. Existing data without a successful
++marker or a different version returns unavailable; automatic upgrade is disabled.
++`root.sql` installs that credential before accepting queries. Unix storage files
++are mode 600, directories/socket parents 700. Windows uses the user's local data
++ACL, an unpredictable pipe name and Oracle RSA password exchange over that pipe.
++
++A lifetime file lock and process-local registry prevent a second runtime from
++using the same directory. Queries and stop are serialized. Stop invokes Oracle
++shutdown, waits, and terminates only the owned launcher on timeout. Linux
++PDEATHSIG and the Windows creation-time Job Object terminate the owned server
++after application death. `stop()` releases its transport and lock while keeping
++database contents. Server diagnostics and failed initialization are reported.
++
++## Verification And Remaining Platforms
++
++Run `native/mysql/desktop/runtime_test.dart` with the bundle, bridge and launcher
++paths. It checks real initialization, ownership, exact values, parameter errors,
++scripts/transactions, output caps, credentials, persistence, stop, parent death
++and recovery. It retains its isolated fixture for diagnostics. Set
++`QFLI_MYSQL_TEST_BUNDLE` for `test/mysql_desktop_database_test.dart`; these tests
++exercise the typed application adapter using a temporary database.
++
++Windows Oracle 8.4.6 and Linux Oracle 8.0.46 have real-engine evidence. Full
++Windows Flutter GUI build remains unverified without MSVC; Linux Flutter GUI
++and Apple execution have not been tested. Portable macOS launcher/runtime source
++exists, but macOS bundle/signing integration is still required. Android server
++build/lifecycle, native iOS hosting and the product's local-MySQL engine selector
++remain open requirements. This backend delivery does not establish them.
+diff --git a/native/mysql/desktop/launcher.cpp b/native/mysql/desktop/launcher.cpp
+new file mode 100644
+index 0000000..b97ccc8
+--- /dev/null
++++ b/native/mysql/desktop/launcher.cpp
+@@ -0,0 +1,129 @@
++#include <cstdlib>
++#include <iostream>
++
++#ifdef _WIN32
++#define WIN32_LEAN_AND_MEAN
++#include <windows.h>
++#include <string>
++#include <vector>
++
++namespace {
++std::wstring quote(const wchar_t *argument)
++{
++    std::wstring value = L"\"";
++    size_t slashes = 0;
++    for (const wchar_t *cursor = argument; *cursor; ++cursor) {
++        if (*cursor == L'\\') { ++slashes; continue; }
++        value.append(slashes * (*cursor == L'"' ? 2 : 1), L'\\');
++        slashes = 0;
++        if (*cursor == L'"') value += L'\\';
++        value += *cursor;
++    }
++    value.append(slashes * 2, L'\\');
++    return value + L'"';
++}
++}
++
++int wmain(int argc, wchar_t **argv)
++{
++    if (argc < 3) return 64;
++    wchar_t *end = nullptr;
++    const auto owner_id = std::wcstoul(argv[1], &end, 10);
++    if (!end || *end || !owner_id || owner_id > MAXDWORD) return 64;
++    HANDLE owner = OpenProcess(SYNCHRONIZE, FALSE, static_cast<DWORD>(owner_id));
++    if (!owner || WaitForSingleObject(owner, 0) != WAIT_TIMEOUT) return 65;
++    HANDLE job = CreateJobObjectW(nullptr, nullptr);
++    JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits{};
++    limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
++    if (!job || !SetInformationJobObject(job, JobObjectExtendedLimitInformation, &limits, sizeof(limits))) return 66;
++
++    // Assign the child to its lifetime job at creation, before it can execute.
++    SIZE_T size = 0;
++    InitializeProcThreadAttributeList(nullptr, 1, 0, &size);
++    std::vector<char> storage(size);
++    auto *attributes = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(storage.data());
++    if (!InitializeProcThreadAttributeList(attributes, 1, 0, &size) ||
++        !UpdateProcThreadAttribute(attributes, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST,
++                                   &job, sizeof(job), nullptr, nullptr)) return 67;
++    STARTUPINFOEXW startup{};
++    startup.StartupInfo.cb = sizeof(startup);
++    startup.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
++    startup.StartupInfo.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
++    startup.StartupInfo.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
++    startup.StartupInfo.hStdError = GetStdHandle(STD_ERROR_HANDLE);
++    startup.lpAttributeList = attributes;
++    std::wstring command;
++    for (int index = 2; index < argc; ++index) {
++        if (index != 2) command += L' ';
++        command += quote(argv[index]);
++    }
++    PROCESS_INFORMATION process{};
++    const BOOL started = CreateProcessW(argv[2], command.data(), nullptr, nullptr, TRUE,
++        EXTENDED_STARTUPINFO_PRESENT | CREATE_NO_WINDOW, nullptr, nullptr, &startup.StartupInfo, &process);
++    DeleteProcThreadAttributeList(attributes);
++    if (!started) return 68;
++    CloseHandle(process.hThread);
++    HANDLE handles[] = {owner, process.hProcess};
++    const DWORD waited = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
++    if (waited != WAIT_OBJECT_0 + 1) TerminateJobObject(job, 125);
++    WaitForSingleObject(process.hProcess, INFINITE);
++    DWORD status = 125;
++    GetExitCodeProcess(process.hProcess, &status);
++    CloseHandle(process.hProcess);
++    CloseHandle(owner);
++    CloseHandle(job);
++    return static_cast<int>(status);
++}
++#else
++#include <cerrno>
++#include <csignal>
++#include <unistd.h>
++#ifdef __linux__
++#include <sys/prctl.h>
++#else
++#include <sys/event.h>
++#include <sys/wait.h>
++#endif
++
++int main(int argc, char **argv)
++{
++    if (argc < 3) return 64;
++    char *end = nullptr;
++    const long owner = std::strtol(argv[1], &end, 10);
++    if (!end || *end || owner <= 0 || owner != getppid()) return 65;
++#ifdef __linux__
++    if (prctl(PR_SET_PDEATHSIG, SIGTERM) != 0 || getppid() != owner) return 66;
++    execv(argv[2], argv + 2);
++    std::cerr << "Could not execute bundled mysqld: " << errno << '\n';
++    return 68;
++#else
++    const int queue = kqueue();
++    if (queue < 0) return 66;
++    struct kevent parent;
++    EV_SET(&parent, owner, EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT, 0, nullptr);
++    if (kevent(queue, &parent, 1, nullptr, 0, nullptr) != 0 || getppid() != owner) return 66;
++    const pid_t child = fork();
++    if (child < 0) return 67;
++    if (child == 0) { close(queue); execv(argv[2], argv + 2); _exit(68); }
++    struct kevent child_event;
++    EV_SET(&child_event, child, EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT, 0, nullptr);
++    if (kevent(queue, &child_event, 1, nullptr, 0, nullptr) != 0) {
++        kill(child, SIGKILL); waitpid(child, nullptr, 0); return 67;
++    }
++    struct kevent event;
++    if (kevent(queue, nullptr, 0, &event, 1, nullptr) <= 0 || event.ident == static_cast<uintptr_t>(owner)) {
++        kill(child, SIGTERM);
++        for (int attempt = 0; attempt < 100; ++attempt) {
++            int status;
++            if (waitpid(child, &status, WNOHANG) == child) return 125;
++            usleep(100000);
++        }
++        kill(child, SIGKILL);
++    }
++    int status = 0;
++    while (waitpid(child, &status, 0) < 0 && errno == EINTR) {}
++    close(queue);
++    return WIFEXITED(status) ? WEXITSTATUS(status) : 125;
++#endif
++}
++#endif
+diff --git a/native/mysql/desktop/runtime_test.dart b/native/mysql/desktop/runtime_test.dart
+new file mode 100644
+index 0000000..fd974a4
+--- /dev/null
++++ b/native/mysql/desktop/runtime_test.dart
+@@ -0,0 +1,331 @@
++import 'dart:async';
++import 'dart:convert';
++import 'dart:io';
++import 'dart:isolate';
++
++import 'package:path/path.dart' as p;
++
++import 'package:qfli_sql/local_mysql_runtime.dart';
++import 'package:qfli_sql/mysql_ffi.dart';
++
++void require(bool condition, String message) {
++  if (!condition) throw StateError('FAIL: $message');
++}
++
++void success(Map<String, Object?> result) {
++  require(result['available'] == true && result['exitCode'] == 0, '$result');
++}
++
++Future<void> main(List<String> arguments) async {
++  final orphan = arguments.first == '--parent-server';
++  final args = orphan ? arguments.sublist(1) : arguments;
++  require(args.length >= 3, 'pass bundle, bridge library and launcher');
++  final root = orphan
++      ? Directory(args[3])
++      : await Directory.systemTemp.createTemp('qfli-mysql-test-');
++  LocalMySqlRuntime createRuntime() => LocalMySqlRuntime(
++    bundleDirectory: Directory(args[0]),
++    dataDirectory: root,
++    libraryPath: args[1],
++    launcherPath: args[2],
++    serverPath: Platform.environment['QFLI_MYSQL_TEST_SERVER'],
++    serverUser: Platform.environment['QFLI_MYSQL_TEST_USER'],
++  );
++  var runtime = createRuntime();
++  Future<Map<String, Object?>> query(
++    String source, [
++    List<String?> params = const [],
++    String schema = 'lab',
++  ]) => runtime.invoke('query', {
++    'schema': schema,
++    'source': source,
++    'params': params,
++  });
++  Future<Map<String, Object?>> script(String source) =>
++      runtime.invoke('executeScript', {'schema': 'lab', 'source': source});
++  if (orphan) {
++    final result = await query('SELECT @@socket, @@pid_file', [], '');
++    success(result);
++    final values = (result['rows'] as List).single as List;
++    final serverPid = int.parse(
++      (await File(values[1] as String).readAsString()).trim(),
++    );
++    stdout.writeln(
++      'READY ${jsonEncode({'socket': values[0], 'pid': serverPid})}',
++    );
++    await Future<void>.delayed(const Duration(minutes: 20));
++    await runtime.stop();
++    return;
++  }
++  var passed = 0;
++  void pass(String label) {
++    passed++;
++    stdout.writeln('PASS $label');
++  }
++
++  try {
++    final version = await query(
++      'SELECT VERSION(), @@version_comment, @@skip_networking',
++      [],
++      '',
++    );
++    success(version);
++    require(
++      RegExp(r'^8\.\d+\.\d+').hasMatch(
++            ((version['rows'] as List).single as List).first as String,
++          ) &&
++          !version.toString().contains('MariaDB'),
++      'real Oracle engine',
++    );
++    require(
++      ((version['rows'] as List).single as List)[2] == '1',
++      'TCP disabled',
++    );
++    pass('actual upstream initialization and private transport');
++
++    final duplicate = createRuntime();
++    final locked = await duplicate.invoke('query', {
++      'schema': '',
++      'source': 'SELECT 1',
++      'params': <String?>[],
++    });
++    require(
++      locked['available'] == false &&
++          locked['error'].toString().contains('already in use'),
++      'duplicate owner rejected',
++    );
++    await duplicate.stop();
++    pass('exclusive data-directory ownership');
++
++    success(await query('CREATE DATABASE lab', [], ''));
++    success(
++      await query(
++        'CREATE TABLE items (id BIGINT PRIMARY KEY, amount DECIMAL(30,6), note TEXT, bytes BLOB)',
++      ),
++    );
++    success(
++      await query('INSERT INTO items VALUES (?, ?, ?, UNHEX(?))', [
++        '9007199254740993',
++        '123456789012345678901234.123456',
++        "O'Brien\u4e2d\u6587",
++        '00FF4142',
++      ]),
++    );
++    final selected = await query(
++      'SELECT id, amount, note, bytes, NULL FROM items',
++    );
++    success(selected);
++    final row = (selected['rows'] as List).single as List;
++    require(
++      row[0] == '9007199254740993' &&
++          row[1] == '123456789012345678901234.123456',
++      'exact numeric values',
++    );
++    require(
++      row[2] == "O'Brien\u4e2d\u6587" && row[3] == '00FF4142' && row[4] == null,
++      'UTF-8 binary and NULL',
++    );
++    pass('prepared values, exact BIGINT/DECIMAL, UTF-8, binary and NULL');
++
++    final unchanged = await query('UPDATE items SET note=? WHERE id=?', [
++      row[2] as String,
++      row[0] as String,
++    ]);
++    success(unchanged);
++    require(unchanged['affectedRows'] == 1, 'matched unchanged update');
++    final mismatch = await query('SELECT ?');
++    require(
++      mismatch['available'] == true && mismatch['exitCode'] != 0,
++      'parameter mismatch rejected',
++    );
++    final syntax = await query('SELEC invalid');
++    require(
++      syntax['available'] == true &&
++          syntax['exitCode'] == 1064 &&
++          syntax['sqlState'] == '42000',
++      'SQL diagnostics',
++    );
++    final multiple = await query('SELECT 1; DROP TABLE items');
++    require(
++      multiple['available'] == true && multiple['exitCode'] != 0,
++      'query is one prepared statement',
++    );
++    pass('matched-row counts and real Oracle errors');
++
++    final transaction = await script(
++      'START TRANSACTION; UPDATE items SET note="rolled back"; ROLLBACK; SELECT note FROM items;',
++    );
++    success(transaction);
++    require(
++      transaction['results'] is List &&
++          (transaction['results'] as List).length == 4,
++      'ordered script results',
++    );
++    final afterRollback = await query('SELECT note FROM items');
++    require(
++      ((afterRollback['rows'] as List).single as List).single == row[2],
++      'transaction rollback',
++    );
++    final partial = await script(
++      'INSERT INTO items VALUES (2, 1, NULL, NULL); SELEC bad; INSERT INTO items VALUES (3, 1, NULL, NULL);',
++    );
++    require(
++      partial['available'] == true && partial['exitCode'] == 1064,
++      'partial script failure',
++    );
++    final count = await query('SELECT COUNT(*) FROM items');
++    require(
++      ((count['rows'] as List).single as List).single == '2',
++      'earlier statements executed; later ones did not',
++    );
++    pass('multi-statements, rollback and partial failure');
++
++    final limited = await runtime.invoke('query', {
++      'schema': 'lab',
++      'source': 'SELECT id FROM items ORDER BY id',
++      'params': <String?>[],
++      'rowLimit': 1,
++    });
++    success(limited);
++    require(
++      limited['truncated'] == true && (limited['rows'] as List).length == 1,
++      'row cap',
++    );
++    final drained = await script(
++      '${List.filled(130, 'SELECT 1;').join()} UPDATE items SET note="after cap" WHERE id=2;',
++    );
++    success(drained);
++    require(
++      drained['truncated'] == true &&
++          (drained['results'] as List).length == 128,
++      'result-set cap',
++    );
++    final afterCap = await query('SELECT note FROM items WHERE id=2');
++    require(
++      ((afterCap['rows'] as List).single as List).single == 'after cap',
++      'execution continues after display cap',
++    );
++    pass('display caps and complete native result draining');
++
++    final transportResult = await query('SELECT @@socket', [], '');
++    final socket = ((transportResult['rows'] as List).single as List).single;
++    final unauthorized = await MySqlFfi.invoke(args[1], {
++      'method': 'query',
++      'socket': socket,
++      'password': '',
++      'schema': '',
++      'source': 'SELECT 1',
++      'params': <String?>[],
++    });
++    require(
++      unauthorized['available'] == false && unauthorized['exitCode'] == 1045,
++      'empty password denied',
++    );
++    final missing = await MySqlFfi.invoke(args[1], {
++      'method': 'query',
++      'socket': '$socket.missing',
++      'password': '',
++      'schema': '',
++      'source': 'SELECT 1',
++      'params': <String?>[],
++    });
++    require(
++      missing['available'] == false && missing['exitCode'] != 0,
++      'no TCP fallback',
++    );
++    pass('private credentials and absent transport failure');
++
++    await runtime.stop();
++    runtime = createRuntime();
++    final persisted = await query(
++      'SELECT id, amount, bytes FROM items WHERE id=9007199254740993',
++    );
++    success(persisted);
++    require(
++      ((persisted['rows'] as List).single as List).join('|') ==
++          '9007199254740993|123456789012345678901234.123456|00FF4142',
++      'persistent data after new runtime',
++    );
++    final queued = query('SELECT SLEEP(0.2)');
++    final stopped = runtime.stop();
++    success(await queued);
++    await stopped;
++    success(await query('SELECT 1'));
++    await runtime.stop();
++    pass('persistence, serialized queries, shutdown and restart');
++
++    final marker = File(p.join(root.path, 'initialized.json'));
++    final original = await marker.readAsString();
++    final metadata = jsonDecode(original) as Map<String, dynamic>;
++    await marker.writeAsString(jsonEncode({...metadata, 'version': '8.0.0'}));
++    final invalid = await query('SELECT 1');
++    require(
++      invalid['available'] == false &&
++          invalid['error'].toString().contains('version does not match'),
++      'version mismatch rejected',
++    );
++    await marker.writeAsString(original);
++    pass('version mismatch prevents implicit database upgrade');
++
++    final child = await Process.start(Platform.resolvedExecutable, [
++      '--packages=${(await Isolate.packageConfig)!.toFilePath()}',
++      Platform.script.toFilePath(),
++      '--parent-server',
++      ...args.take(3),
++      root.path,
++    ]);
++    final childErrors = child.stderr.transform(utf8.decoder).join();
++    late final String ready;
++    try {
++      ready = await child.stdout
++          .transform(utf8.decoder)
++          .transform(const LineSplitter())
++          .first
++          .timeout(const Duration(seconds: 60));
++    } on Object {
++      child.kill(ProcessSignal.sigkill);
++      final status = await child.exitCode;
++      throw StateError(
++        'Parent-exit fixture failed ($status): ${await childErrors}',
++      );
++    }
++    require(ready.startsWith('READY '), 'child server ready: $ready');
++    final info = jsonDecode(ready.substring(6)) as Map;
++    child.kill(ProcessSignal.sigkill);
++    await child.exitCode;
++    await childErrors;
++    var exited = false;
++    for (var attempt = 0; attempt < 100; attempt++) {
++      final disconnected = await MySqlFfi.invoke(args[1], {
++        'method': 'query',
++        'socket': info['socket'],
++        'password': metadata['password'],
++        'schema': '',
++        'source': 'SELECT 1',
++        'params': <String?>[],
++      });
++      if (disconnected['available'] == false) {
++        exited = true;
++        break;
++      }
++      await Future<void>.delayed(const Duration(milliseconds: 100));
++    }
++    require(exited, 'native server stopped after app death');
++    pass('native launcher cleans server on abrupt application exit');
++    final recovery = await query('SELECT COUNT(*) FROM items');
++    success(recovery);
++    require(
++      ((recovery['rows'] as List).single as List).single == '2',
++      'InnoDB data recovered after application death',
++    );
++    await runtime.stop();
++    pass('persistent InnoDB data recovers after abrupt exit');
++    stdout.writeln(
++      '$passed/$passed Oracle lifecycle checks passed on ${Platform.operatingSystem}.',
++    );
++  } finally {
++    await runtime.stop();
++    // Keep real-engine data/logs for inspection rather than deleting evidence.
++    stdout.writeln('Fixture: ${root.path}');
++  }
++}
+diff --git a/native/mysql/desktop/stage-linux-dependencies.cmake b/native/mysql/desktop/stage-linux-dependencies.cmake
+new file mode 100644
+index 0000000..763bbbb
+--- /dev/null
++++ b/native/mysql/desktop/stage-linux-dependencies.cmake
+@@ -0,0 +1,11 @@
++cmake_minimum_required(VERSION 3.20)
++file(GET_RUNTIME_DEPENDENCIES EXECUTABLES "${SERVER}" LIBRARIES "${CLIENT}"
++  RESOLVED_DEPENDENCIES_VAR dependencies UNRESOLVED_DEPENDENCIES_VAR unresolved
++  PRE_EXCLUDE_REGEXES "linux-vdso"
++  POST_EXCLUDE_REGEXES "/lib(c|m|pthread|dl|rt)\\.so" "/ld-linux[^/]*\\.so")
++if(unresolved)
++  message(FATAL_ERROR "Missing native MySQL dependencies: ${unresolved}")
++endif()
++foreach(dependency ${dependencies})
++  file(COPY "${dependency}" DESTINATION "${DESTINATION}/lib" FOLLOW_SYMLINK_CHAIN)
++endforeach()
+diff --git a/native/mysql/desktop/stage-linux.sh b/native/mysql/desktop/stage-linux.sh
+new file mode 100644
+index 0000000..a2479e8
+--- /dev/null
++++ b/native/mysql/desktop/stage-linux.sh
+@@ -0,0 +1,27 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++DESTINATION="${1:-$SCRIPT_ROOT/../../build/mysql/linux}"
++SERVER="${QFLI_MYSQL_SYSTEM_SERVER:-/usr/sbin/mysqld}"
++SHARE="${QFLI_MYSQL_SYSTEM_SHARE:-/usr/share/mysql}"
++PLUGIN="${QFLI_MYSQL_SYSTEM_PLUGIN:-/usr/lib/mysql/plugin}"
++VERSION="$($SERVER --no-defaults --version)"
++[[ "$VERSION" == *"Ver 8."* && "$VERSION" != *MariaDB* ]] || { printf 'Oracle MySQL 8.x is required.\n' >&2; exit 1; }
++[[ ! -e "$DESTINATION" ]] || { printf 'Use a fresh staging directory: %s\n' "$DESTINATION" >&2; exit 1; }
++pkg-config --exists mysqlclient
++mkdir -p "$DESTINATION/bin" "$DESTINATION/lib" "$DESTINATION/share" "$DESTINATION/licenses"
++cp "$SERVER" "$DESTINATION/bin/mysqld"
++cp -aL "$SHARE/." "$DESTINATION/share/"
++cp -aL "$PLUGIN" "$DESTINATION/lib/plugin"
++CLIENT="$(pkg-config --variable=libdir mysqlclient)/libmysqlclient.so"
++cmake -DSERVER="$SERVER" -DCLIENT="$CLIENT" -DDESTINATION="$DESTINATION" -P "$SCRIPT_ROOT/stage-linux-dependencies.cmake"
++for copyright in /usr/share/doc/mysql-server-*/copyright /usr/share/doc/mysql-client-*/copyright /usr/share/doc/libmysqlclient*/copyright; do
++  if [[ -f "$copyright" ]]; then
++    package="$(basename "$(dirname "$copyright")")"
++    cp "$copyright" "$DESTINATION/licenses/$package.txt"
++  fi
++done
++if [[ -f /usr/share/common-licenses/GPL-2 ]]; then cp /usr/share/common-licenses/GPL-2 "$DESTINATION/LICENSE"; fi
++printf '%s\n' "$VERSION" > "$DESTINATION/server-version.txt"
++printf 'Staged Oracle server and its native dependencies: %s\n' "$DESTINATION"
+diff --git a/native/mysql/desktop/stage-windows.ps1 b/native/mysql/desktop/stage-windows.ps1
+new file mode 100644
+index 0000000..19ae703
+--- /dev/null
++++ b/native/mysql/desktop/stage-windows.ps1
+@@ -0,0 +1,20 @@
++param(
++  [Parameter(Mandatory = $true)][string]$Archive,
++  [string]$Destination = (Join-Path $PSScriptRoot '../../build/mysql/windows')
++)
++$ErrorActionPreference = 'Stop'
++$expected = 'b6c152f9f3aaa7294eb47db698e47974d37b261bf3cab4f90dc1243bb5ecd204'
++if ((Get-FileHash -LiteralPath $Archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expected) {
++  throw 'Oracle MySQL 8.4.6 Windows archive does not match the pinned SHA256.'
++}
++$root = Join-Path $Destination 'mysql-8.4.6-winx64'
++if (Test-Path -LiteralPath $root) { throw "Use a fresh staging destination: $Destination" }
++Expand-Archive -LiteralPath $Archive -DestinationPath $Destination
++foreach ($relative in @('bin/mysqld.exe', 'lib/libmysql.dll', 'include/mysql.h', 'share/english/errmsg.sys', 'LICENSE')) {
++  if (-not (Test-Path -LiteralPath (Join-Path $root $relative) -PathType Leaf)) {
++    throw "Incomplete official MySQL distribution: $relative"
++  }
++}
++$manifest = [ordered]@{ format = 1; engine = 'Oracle MySQL'; version = '8.4.6'; platform = 'windows-x64'; archiveSha256 = $expected }
++$manifest | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $root 'runtime.json') -Encoding utf8
++Write-Output "Verified Oracle SDK: $root"
+diff --git a/native/src/qfli_mysql_client.cpp b/native/src/qfli_mysql_client.cpp
+index 61b8543..c9cbaf4 100644
+--- a/native/src/qfli_mysql_client.cpp
++++ b/native/src/qfli_mysql_client.cpp
+@@ -90,10 +90,11 @@ bool initialize_library(QueryResult &result)
+ 
+ std::unique_ptr<MYSQL, ConnectionCloser> connect(
+     QueryResult &result, const std::string &socket_path, const std::string &schema,
++    const std::string &password,
+     unsigned long flags = CLIENT_FOUND_ROWS)
+ {
+     if (socket_path.empty() || socket_path.find('\0') != std::string::npos ||
+-        schema.find('\0') != std::string::npos) {
++        schema.find('\0') != std::string::npos || password.find('\0') != std::string::npos) {
+         local_error(result, "Invalid local MySQL connection path or schema.");
+         return {};
+     }
+@@ -104,7 +105,11 @@ std::unique_ptr<MYSQL, ConnectionCloser> connect(
+     }
+     const unsigned int connect_timeout = 5;
+     const unsigned int operation_timeout = 60;
++#ifdef _WIN32
++    const auto protocol = MYSQL_PROTOCOL_PIPE;
++#else
+     const auto protocol = MYSQL_PROTOCOL_SOCKET;
++#endif
+     const auto ssl_mode = SSL_MODE_DISABLED;
+     const unsigned long max_packet = 8 * 1024 * 1024;
+     if (mysql_options(connection.get(), MYSQL_OPT_PROTOCOL, &protocol) != 0 ||
+@@ -116,7 +121,17 @@ std::unique_ptr<MYSQL, ConnectionCloser> connect(
+         set_error(result, connection.get());
+         return {};
+     }
+-    if (!mysql_real_connect(connection.get(), "localhost", "root", "",
++#ifdef _WIN32
++    // Oracle does not classify named pipes as TLS-secured transports. Its
++    // default caching_sha2_password uses RSA for the first private-pipe login.
++    const bool get_server_public_key = true;
++    if (mysql_options(connection.get(), MYSQL_OPT_GET_SERVER_PUBLIC_KEY,
++                      &get_server_public_key) != 0) {
++        set_error(result, connection.get());
++        return {};
++    }
++#endif
++    if (!mysql_real_connect(connection.get(), "localhost", "root", password.c_str(),
+                             schema.empty() ? nullptr : schema.c_str(), 0,
+                             socket_path.c_str(), flags)) {
+         set_error(result, connection.get());
+@@ -132,10 +147,30 @@ std::unique_ptr<MYSQL, ConnectionCloser> connect(
+ 
+ }  // namespace
+ 
++// Preserve the existing OHOS C++ ABI while desktop calls supply credentials.
+ QueryResult query(const std::string &socket_path, const std::string &schema,
+                   const std::string &source,
+                   const std::vector<std::optional<std::string>> &parameters,
+                   QueryLimits limits)
++{
++    return query(socket_path, schema, source, parameters, limits, {});
++}
++
++QueryResult shutdown(const std::string &socket_path)
++{
++    return shutdown(socket_path, {});
++}
++
++ScriptResult execute_script(const std::string &socket_path, const std::string &schema,
++                            const std::string &source, QueryLimits limits)
++{
++    return execute_script(socket_path, schema, source, limits, {});
++}
++
++QueryResult query(const std::string &socket_path, const std::string &schema,
++                  const std::string &source,
++                  const std::vector<std::optional<std::string>> &parameters,
++                  QueryLimits limits, const std::string &password)
+ {
+     QueryResult result;
+     if (socket_path.empty() || socket_path.find('\0') != std::string::npos ||
+@@ -162,7 +197,7 @@ QueryResult query(const std::string &socket_path, const std::string &schema,
+         local_error(result, "Could not initialize the MySQL client thread.");
+         return result;
+     }
+-    auto connection = connect(result, socket_path, schema);
++    auto connection = connect(result, socket_path, schema, password);
+     if (!connection) return result;
+     std::unique_ptr<MYSQL_STMT, StatementCloser> statement(mysql_stmt_init(connection.get()));
+     if (!statement) {
+@@ -287,7 +322,7 @@ QueryResult query(const std::string &socket_path, const std::string &schema,
+     }
+ }
+ 
+-QueryResult shutdown(const std::string &socket_path)
++QueryResult shutdown(const std::string &socket_path, const std::string &password)
+ {
+     QueryResult result;
+     if (!initialize_library(result)) return result;
+@@ -296,7 +331,7 @@ QueryResult shutdown(const std::string &socket_path)
+         local_error(result, "Could not initialize the MySQL client thread.");
+         return result;
+     }
+-    auto connection = connect(result, socket_path, "");
++    auto connection = connect(result, socket_path, "", password);
+     if (!connection) return result;
+     if (mysql_shutdown(connection.get(), SHUTDOWN_DEFAULT) != 0) {
+         set_error(result, connection.get());
+@@ -305,7 +340,8 @@ QueryResult shutdown(const std::string &socket_path)
+ }
+ 
+ ScriptResult execute_script(const std::string &socket_path, const std::string &schema,
+-                            const std::string &source, QueryLimits limits)
++                            const std::string &source, QueryLimits limits,
++                            const std::string &password)
+ {
+     ScriptResult script;
+     auto &summary = script.summary;
+@@ -319,7 +355,7 @@ ScriptResult execute_script(const std::string &socket_path, const std::string &s
+         local_error(summary, "Could not initialize the MySQL client thread.");
+         return script;
+     }
+-    auto connection = connect(summary, socket_path, schema,
++    auto connection = connect(summary, socket_path, schema, password,
+                               CLIENT_FOUND_ROWS | CLIENT_MULTI_STATEMENTS);
+     if (!connection) return script;
+     if (mysql_real_query(connection.get(), source.data(), source.size()) != 0) {
+diff --git a/native/src/qfli_mysql_client.h b/native/src/qfli_mysql_client.h
+index e29d6c4..11e3a84 100644
+--- a/native/src/qfli_mysql_client.h
++++ b/native/src/qfli_mysql_client.h
+@@ -46,11 +46,19 @@ QueryResult query(const std::string &socket_path, const std::string &schema,
+                   const std::string &source,
+                   const std::vector<std::optional<std::string>> &parameters = {},
+                   QueryLimits limits = {});
++QueryResult query(const std::string &socket_path, const std::string &schema,
++                  const std::string &source,
++                  const std::vector<std::optional<std::string>> &parameters,
++                  QueryLimits limits, const std::string &password);
+ 
+ QueryResult shutdown(const std::string &socket_path);
++QueryResult shutdown(const std::string &socket_path, const std::string &password);
+ 
+ ScriptResult execute_script(const std::string &socket_path, const std::string &schema,
+                             const std::string &source, QueryLimits limits = {});
++ScriptResult execute_script(const std::string &socket_path, const std::string &schema,
++                            const std::string &source, QueryLimits limits,
++                            const std::string &password);
+ 
+ const char *client_version();
+ 
+diff --git a/native/src/qfli_mysql_ffi.cpp b/native/src/qfli_mysql_ffi.cpp
+new file mode 100644
+index 0000000..785b5ea
+--- /dev/null
++++ b/native/src/qfli_mysql_ffi.cpp
+@@ -0,0 +1,139 @@
++#include "qfli_mysql_ffi.h"
++#include "qfli_mysql_client.h"
++
++#include <rapidjson/document.h>
++#include <rapidjson/stringbuffer.h>
++#include <rapidjson/writer.h>
++
++#include <cstdlib>
++#include <cstring>
++#include <stdexcept>
++
++namespace {
++using Writer = rapidjson::Writer<rapidjson::StringBuffer>;
++
++void text(Writer &writer, const std::string &value)
++{
++    writer.String(value.data(), static_cast<rapidjson::SizeType>(value.size()));
++}
++
++void fields(Writer &writer, const qfli_mysql::QueryResult &result)
++{
++    writer.Key("available"); writer.Bool(result.available);
++    writer.Key("exitCode"); writer.Uint(result.error_code);
++    writer.Key("error"); text(writer, result.error);
++    writer.Key("sqlState"); text(writer, result.sql_state);
++    writer.Key("affectedRows"); writer.Uint64(result.affected_rows);
++    writer.Key("truncated"); writer.Bool(result.truncated);
++    writer.Key("columns"); writer.StartArray();
++    for (const auto &column : result.columns) text(writer, column.name);
++    writer.EndArray();
++    writer.Key("columnInfo"); writer.StartArray();
++    for (const auto &column : result.columns) {
++        writer.StartObject();
++        writer.Key("name"); text(writer, column.name);
++        writer.Key("nativeType"); writer.Uint(column.native_type);
++        writer.Key("binary"); writer.Bool(column.binary);
++        writer.EndObject();
++    }
++    writer.EndArray();
++    writer.Key("rows"); writer.StartArray();
++    for (const auto &row : result.rows) {
++        writer.StartArray();
++        for (const auto &cell : row) {
++            if (cell.is_null) writer.Null();
++            else text(writer, cell.text);
++        }
++        writer.EndArray();
++    }
++    writer.EndArray();
++}
++
++std::string string_field(const rapidjson::Value &request, const char *name)
++{
++    if (!request.HasMember(name) || !request[name].IsString()) {
++        throw std::invalid_argument(std::string("Missing string field: ") + name);
++    }
++    return {request[name].GetString(), request[name].GetStringLength()};
++}
++
++qfli_mysql::QueryLimits limits(const rapidjson::Value &request)
++{
++    qfli_mysql::QueryLimits value;
++    if (request.HasMember("rowLimit")) {
++        if (!request["rowLimit"].IsUint() || request["rowLimit"].GetUint() == 0 ||
++            request["rowLimit"].GetUint() > value.rows) throw std::invalid_argument("Invalid row limit.");
++        value.rows = request["rowLimit"].GetUint();
++    }
++    if (request.HasMember("byteLimit")) {
++        if (!request["byteLimit"].IsUint() || request["byteLimit"].GetUint() == 0 ||
++            request["byteLimit"].GetUint() > value.bytes) throw std::invalid_argument("Invalid byte limit.");
++        value.bytes = request["byteLimit"].GetUint();
++    }
++    return value;
++}
++
++char *copy(const rapidjson::StringBuffer &buffer)
++{
++    auto *result = static_cast<char *>(std::malloc(buffer.GetSize() + 1));
++    if (result) std::memcpy(result, buffer.GetString(), buffer.GetSize() + 1);
++    return result;
++}
++} // namespace
++
++extern "C" char *qfli_mysql_invoke(const char *input, size_t length)
++{
++    try {
++        rapidjson::Document request;
++        if (!input || length > 16 * 1024 * 1024) throw std::invalid_argument("Invalid MySQL request size.");
++        request.Parse(input, length);
++        if (request.HasParseError() || !request.IsObject()) throw std::invalid_argument("Invalid MySQL request JSON.");
++        const auto method = string_field(request, "method");
++        const auto socket = string_field(request, "socket");
++        const auto password = string_field(request, "password");
++        rapidjson::StringBuffer buffer;
++        Writer writer(buffer);
++        writer.StartObject();
++        if (method == "shutdown") {
++            fields(writer, qfli_mysql::shutdown(socket, password));
++        } else {
++            const auto schema = string_field(request, "schema");
++            const auto source = string_field(request, "source");
++            const auto caps = limits(request);
++            if (method == "executeScript") {
++                const auto result = qfli_mysql::execute_script(socket, schema, source, caps, password);
++                fields(writer, result.summary);
++                writer.Key("results"); writer.StartArray();
++                for (const auto &item : result.results) {
++                    writer.StartObject(); fields(writer, item); writer.EndObject();
++                }
++                writer.EndArray();
++            } else if (method == "query") {
++                if (!request.HasMember("params") || !request["params"].IsArray()) {
++                    throw std::invalid_argument("Missing query parameters.");
++                }
++                std::vector<std::optional<std::string>> parameters;
++                for (const auto &value : request["params"].GetArray()) {
++                    if (value.IsNull()) parameters.emplace_back(std::nullopt);
++                    else if (value.IsString()) parameters.emplace_back(std::string(value.GetString(), value.GetStringLength()));
++                    else throw std::invalid_argument("Parameters must be strings or null.");
++                }
++                fields(writer, qfli_mysql::query(socket, schema, source, parameters, caps, password));
++            } else throw std::invalid_argument("Unknown MySQL method.");
++        }
++        writer.EndObject();
++        return copy(buffer);
++    } catch (const std::exception &error) {
++        qfli_mysql::QueryResult result;
++        result.error_code = 1;
++        result.error = error.what();
++        rapidjson::StringBuffer buffer;
++        Writer writer(buffer);
++        writer.StartObject(); fields(writer, result); writer.EndObject();
++        return copy(buffer);
++    } catch (...) {
++        return nullptr;
++    }
++}
++
++extern "C" void qfli_mysql_free(char *result) { std::free(result); }
+diff --git a/native/src/qfli_mysql_ffi.h b/native/src/qfli_mysql_ffi.h
+new file mode 100644
+index 0000000..0365d76
+--- /dev/null
++++ b/native/src/qfli_mysql_ffi.h
+@@ -0,0 +1,23 @@
++#ifndef QFLI_MYSQL_FFI_H
++#define QFLI_MYSQL_FFI_H
++
++#include <stddef.h>
++
++#ifdef _WIN32
++#define QFLI_MYSQL_API __declspec(dllexport)
++#else
++#define QFLI_MYSQL_API __attribute__((visibility("default")))
++#endif
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++/* The caller owns the returned UTF-8 JSON and releases it with this library. */
++QFLI_MYSQL_API char *qfli_mysql_invoke(const char *request, size_t length);
++QFLI_MYSQL_API void qfli_mysql_free(char *result);
++
++#ifdef __cplusplus
++}
++#endif
++#endif
+diff --git a/native/src/qfli_mysql_unavailable.cpp b/native/src/qfli_mysql_unavailable.cpp
+index 0f932a6..14a6b3f 100644
+--- a/native/src/qfli_mysql_unavailable.cpp
++++ b/native/src/qfli_mysql_unavailable.cpp
+@@ -28,6 +28,24 @@ ScriptResult execute_script(const std::string &, const std::string &,
+     return {unavailable(), {}};
+ }
+ 
++QueryResult query(const std::string &, const std::string &, const std::string &,
++                  const std::vector<std::optional<std::string>> &, QueryLimits,
++                  const std::string &)
++{
++    return unavailable();
++}
++
++QueryResult shutdown(const std::string &, const std::string &)
++{
++    return unavailable();
++}
++
++ScriptResult execute_script(const std::string &, const std::string &,
++                            const std::string &, QueryLimits, const std::string &)
++{
++    return {unavailable(), {}};
++}
++
+ const char *client_version()
+ {
+     return "";
+diff --git a/native/windows/CMakeLists.txt b/native/windows/CMakeLists.txt
+index 0a4fd90..229945a 100644
+--- a/native/windows/CMakeLists.txt
++++ b/native/windows/CMakeLists.txt
+@@ -1,5 +1,9 @@
+ cmake_minimum_required(VERSION 3.15)
+-project(qfli_sqlite_native LANGUAGES C)
++project(qfli_sqlite_native LANGUAGES C CXX)
+ add_subdirectory(../runtime ${CMAKE_CURRENT_BINARY_DIR}/engine)
+ set(qfli_sqlite_native_bundled_libraries
+   $<TARGET_FILE:qfli_sqlite> PARENT_SCOPE)
++if(NOT QFLI_ORACLE_HOME AND NOT DEFINED ENV{QFLI_ORACLE_HOME})
++  set(QFLI_ORACLE_HOME "${CMAKE_CURRENT_SOURCE_DIR}/../build/mysql/windows/mysql-8.4.6-winx64" CACHE PATH "Oracle server bundle")
++endif()
++add_subdirectory(../mysql/desktop ${CMAKE_CURRENT_BINARY_DIR}/mysql)
+diff --git a/test/mysql_desktop_database_test.dart b/test/mysql_desktop_database_test.dart
+new file mode 100644
+index 0000000..13d0c22
+--- /dev/null
++++ b/test/mysql_desktop_database_test.dart
+@@ -0,0 +1,116 @@
++import 'dart:io';
++
++import 'package:flutter_test/flutter_test.dart';
++import 'package:path/path.dart' as p;
++import 'package:qfli_sql/local_mysql_runtime.dart';
++import 'package:qfli_sql/mysql_database.dart';
++
++void main() {
++  TestWidgetsFlutterBinding.ensureInitialized();
++  final bundle = Platform.environment['QFLI_MYSQL_TEST_BUNDLE'];
++  group(
++    'real desktop Oracle adapter',
++    () {
++      late Directory root;
++      late LocalMySqlRuntime runtime;
++      late NativeMySqlDatabase database;
++      setUpAll(() async {
++        root = await Directory.systemTemp.createTemp('qfli-mysql-adapter-');
++        runtime = LocalMySqlRuntime(
++          bundleDirectory: Directory(bundle!),
++          dataDirectory: root,
++          libraryPath: p.join(
++            bundle,
++            Platform.isWindows ? 'bin' : 'lib',
++            Platform.isWindows
++                ? 'qfli_mysql_bridge.dll'
++                : 'libqfli_mysql_bridge.so',
++          ),
++          launcherPath: p.join(
++            bundle,
++            'bin',
++            Platform.isWindows
++                ? 'qfli_mysql_launcher.exe'
++                : 'qfli_mysql_launcher',
++          ),
++          serverUser: Platform.environment['QFLI_MYSQL_TEST_USER'],
++        );
++        database = NativeMySqlDatabase(runtime: runtime);
++      });
++      tearDownAll(() async {
++        await runtime.stop();
++        await root.delete(recursive: true);
++      });
++      test('retains native exact values, NULL and binary metadata', () async {
++        final result = await database.query(
++          databasePath: '',
++          source:
++              'SELECT CAST(? AS SIGNED) AS id, CAST(? AS DECIMAL(30,6)) AS amount, UNHEX(?) AS bytes, ? AS note',
++          parameters: [
++            '9007199254740993',
++            '123456789012345678901234.123456',
++            '00FF41',
++            null,
++          ],
++        );
++        expect(result.success, isTrue, reason: result.error);
++        expect(result.rows.single, [
++          '9007199254740993',
++          '123456789012345678901234.123456',
++          '00FF41',
++          null,
++        ]);
++        expect(result.columnInfo[2].binary, isTrue);
++      });
++      test(
++        'decodes ordered scripts and preserves errors after mutation',
++        () async {
++          final result = await database.executeScript(
++            databasePath: '',
++            source:
++                'CREATE DATABASE adapter; USE adapter; CREATE TABLE items (id INT PRIMARY KEY); INSERT INTO items VALUES (1); SELEC invalid;',
++          );
++          expect(result.available, isTrue);
++          expect(result.success, isFalse);
++          expect(result.exitCode, 1064);
++          expect(result.summary.sqlState, '42000');
++          expect(result.results, hasLength(4));
++          final persisted = await database.query(
++            databasePath: 'adapter',
++            source: 'SELECT id FROM items',
++          );
++          expect(persisted.rows.single, ['1']);
++        },
++      );
++    },
++    skip: bundle == null
++        ? 'Set QFLI_MYSQL_TEST_BUNDLE to a built Oracle bundle.'
++        : false,
++  );
++
++  test('missing desktop bundle returns an unavailable typed result', () async {
++    final root = await Directory.systemTemp.createTemp('qfli-mysql-missing-');
++    final runtime = LocalMySqlRuntime(
++      bundleDirectory: root,
++      dataDirectory: root,
++      libraryPath: p.join(root.path, 'missing-library'),
++      launcherPath: p.join(root.path, 'missing-launcher'),
++    );
++    try {
++      final database = NativeMySqlDatabase(runtime: runtime);
++      final result = await database.query(databasePath: '', source: 'SELECT 1');
++      expect(result.available, isFalse);
++      expect(result.exitCode, 127);
++      expect(result.error, contains('Missing bundled MySQL file'));
++      final script = await database.executeScript(
++        databasePath: '',
++        source: 'SELECT 1;',
++      );
++      expect(script.available, isFalse);
++      expect(script.results, isEmpty);
++    } finally {
++      await runtime.stop();
++      await root.delete(recursive: true);
++    }
++  });
++}

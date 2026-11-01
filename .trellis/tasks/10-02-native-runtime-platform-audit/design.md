@@ -180,3 +180,167 @@ selection is applied/tested but its commit overlaps preexisting cloud/core work
 and awaits the requested ownership decision. First test-tool cleanup removed
 the ordinary package's data; subsequent test targets use a separate application
 ID. See research/mysql-android-verification-2026-10-02.md for limits and evidence.
+
+## Android Rust Source Execution
+
+Use the existing upstream rustc/Miri native session ABI, with pinned Rust 1.98.1
+and the retained MIR-encoded Linux x64 guest standard libraries. Android native
+hosts require a real source-built driver and Cranelift backend, plus matching
+private metadata and build-host proc macros. Build only the embedded driver and
+backend; a mobile compiler CLI is unnecessary for this invocation boundary.
+Keep the source-archive build description empty so metadata identity remains
+compatible with the pinned guest libraries. Preserve compiler compatibility
+checks and guest/native provenance validation.
+
+This slice owns compiler bootstrap fixes, ABI-specific Android package filters,
+isolated device tests and runtime status after actual execution. Review in the
+ignored Rust snapshot, then deliver narrow deltas to qfli_rust. Existing broad
+cross-platform WIP requires an ownership decision before inclusion in commits.
+No shared-core/startup/OHOS or unrelated task metadata belongs in this delivery.
+
+Test applications use a distinct ID for both explicit integration targets and
+Flutter-generated test listeners. Prebuild and inspect the APK before testing:
+Flutter captures an application package object before it rebuilds the listener.
+Only packaged source execution establishes Android availability; ARM64 builds
+and unavailable Apple environments retain separate evidence and limitations.
+
+Both Android compiler hosts, Cranelift backends and adapters are built and
+packaged in qfli_rust. The x86_64 source cases passed 5/5, editor workflow passed
+1/1 and the ordinary owning APK executed its default project with exit 0.
+All six owning APK native files match package hashes and pass native audits.
+Owning analysis is clean and the Flutter suite passed 65 tests with 8 Windows
+embedded cases skipped for absent matching native inputs. Runtime availability
+is claimed only for the device-tested Android x64 target. Source delivery remains
+uncommitted pending ownership of its required preexisting runtime changes.
+
+## macOS Oracle Bundle Integration
+
+The portable Oracle runtime has no macOS application packaging step. Build the
+existing client bridge and parent launcher against full Oracle 8.4.6 macOS SDKs
+for every requested Xcode architecture. Package separate signed helper apps at
+Contents/Helpers/QfliMySql-{arm64,x64}.app: MacOS holds executables, Frameworks
+holds dependency libraries, PlugIns holds server plugins, and Resources holds
+Oracle data and licenses. Reuse CMake BundleUtilities to resolve the native
+dependency closure, then use loader-relative install names so the FFI bridge
+also loads correctly inside the outer Flutter executable.
+
+Validate each native input's architecture, macOS platform and minimum OS before
+signing. Sign libraries, sandbox-inheriting executables and the helper app in
+that order, before Xcode signs the outer app. Put final signed file hashes in
+the outer Resources directory to avoid a helper signature/hash cycle. Native
+discovery selects the current process ABI; an explicit QFLI_MYSQL_BUNDLE retains
+the existing flat desktop layout. Add an optional pluginDirectory constructor
+input for the helper layout and use it during initialization and normal start.
+
+Expected owning paths are native/mysql/macos packaging scripts/entitlements,
+local_mysql_runtime.dart, the Xcode build phase and parent network entitlements,
+plus runtime documentation. Preserve Android/Windows/Linux and preexisting SQL
+selector/cloud changes. Verification on this host covers portable packaging
+validation and Windows runtime regressions. No macOS native build, signing or
+execution claim is possible without Xcode and matching Oracle macOS inputs.
+
+The 15-path source patch is now applied in qfli_sql. All owning paths match the
+reviewed source after line-ending normalization. Twelve portable packaging
+validator cases, eleven actual Windows Oracle lifecycle cases (including the
+injected plugin path) and all 51 owning Flutter tests pass; changed owning Dart
+analysis is clean. Source commit awaits the project-required plan confirmation.
+No Oracle macOS archive, Xcode build, code signature or sandboxed Apple runtime
+has been verified. See research/mysql-macos-verification-2026-10-02.md.
+
+## Android ARM64 OpenJDK Artifact Recovery
+
+The owning ARM64 launcher still has 0x1000 LOAD alignment, despite the corrected
+16 KiB recipe delivered for x64. Rebuild the actual upstream OpenJDK 17.0.20
+server image in an independent WSL ext4 work directory using the current pinned
+source, patches, dependencies and retained spawn source. Preserve all old source
+trees and the verified x64 runtime. Export dereferenced ARM64 files, validate
+every packaged ELF and dependency, then use the existing stage.ps1 for only the
+ARM64 package. No interpreter substitute or ELF header rewrite is allowed.
+
+This slice owns generated ARM64 build/package inputs and their reproducible
+evidence, with runtime docs/spec updates after successful audits. Java startup,
+OHOS and other existing WIP remain separate. There is no physical ARM device;
+native ARM execution and API 28 device checks are explicitly unavailable and
+will not be inferred from packaging or x64 execution.
+
+The fresh owning ARM64 package passed all 44 native hashes against the new
+71-ELF upstream image. The normal dual-ABI APK passed 89 JDK and three framework
+ELF checks, including ABI, 16 KiB LOAD/dependencies and exact native provenance.
+The APK's JDK libraries undergo the existing Gradle strip operation: reproduce
+NDK 27 llvm-strip --strip-unneeded for non-libqfli libraries before comparing
+hashes; keep libqfli launchers/helpers unchanged. Both data archives match staged
+assets, and all 215 recorded x64/OHOS generated inputs remained unchanged.
+Owning runtime documentation and the existing ignored local spec are updated.
+The ordinary x64 editor executes the default Java project with exit 0, including
+after a separate JDK cold installation. Native ARM/API 28 execution remains
+unavailable. See research/java-arm64-verification-2026-10-02.md.
+
+## Embedded Nginx For iOS
+
+The missing behavior is an actual upstream Nginx public listener on iOS. Its
+existing child-process lifecycle is unsuitable there. Build the retained Nginx
+1.31.6 C source as a static library and run its single-process event engine on
+one owned pthread. Add a narrow upstream embedding patch to suppress host signal,
+environment, process-title and stderr mutation, and intercept fatal native exits
+inside the owned worker. A socketpair registered with Nginx's event backend wakes
+Stop without sending process signals. Sessions are serialized because Nginx owns
+global state; every terminal session must close native connections, event backend,
+logs, mappings and pools before a fresh session can start.
+
+The C ABI exposes version, start(prefix, config-test flag), poll(token, exit-code),
+stop(token) and release(token). Tokens prevent old callers from stopping a later
+session. A Swift MethodChannel owns this ABI on iOS. The Dart session retains
+configuration generation, middleware, health token, access diagnostics, proxy
+rules and cleanup behind a process/embedded host boundary. Automatic iOS preview
+selects the native engine only after its real version/start/health checks; an
+explicit native failure propagates. Existing desktop/Android/OHOS process behavior
+must pass regression gates.
+
+Expected source boundaries are native/nginx/embedded, an upstream embedding patch,
+Apple build/archive/Xcode source integration, the iOS bridge, nginx session/host
+services, runtime discovery and related tests/docs/spec. Project configuration,
+shared editor and existing OHOS WIP remain separate. First compile and exercise
+the identical native library on available Linux: real static/proxy/404, conflict,
+bad config, active-request stop, repeated stop/restart, host signal/environment/
+stdio preservation and resource reclamation. Apple packaging and device tests
+are skipped here because Xcode/Apple devices are unavailable; source integration
+and Linux engine evidence do not establish an Apple runtime pass.
+The embedded source implementation now passes nine Linux service/lifecycle cases
+and 100 config/start/HTTP/active-stop cycles under ASan/UBSan/LSan. The first
+active proxy stop exposed recursive HTTP request-pool destruction; the final
+patch retains the main request through upstream termination cleanup before its
+terminal handler releases the request and connection. Process-host regression
+passes all 38 owning Windows tests, and the actual Android application smoke
+passes with the normal build 4002 restored. Source integration includes the
+iOS SDK/ARCHS recipe, archive object platform checks, Swift channel and Dart host.
+Apple build/link/sign/device validation remains skipped for absent Xcode/devices;
+this slice is uncommitted pending its concrete project-required plan confirmation.
+
+The October 3 follow-up removes the upstream process, process-cycle, daemon and
+process-title sources from the embedded object graph. Those files still compiled
+fork despite runtime daemon/master settings; the iOS SDK prohibits it. Addon
+globals and rejecting execute/signal helpers satisfy the retained engine without
+process creation. Both object and archive-import checks enforce the boundary.
+Normal/sanitized Linux gates again pass nine cases and 100 lifecycle cycles.
+Android smoke passed on build 4003 after reconnecting a read-only emulator overlay;
+ordinary build 4004 is restored. Apple build/runtime validation remains unavailable.
+
+## Lua Default Input Follow-up
+
+Actual Linux CTest passes after using the installed Unix Makefiles toolchain.
+Inspection then found that the native Lua state's default input still uses the
+host process stdin. The scripting runner does not pass input.txt separately.
+Resolve each run's project input.txt in the shared C bridge, give the Lua state
+its own upstream luaL_Stream, and select it through io.input and io.stdin. A
+missing file selects an owned null-device stream with immediate EOF. Reject
+non-regular input paths before opening them, and report other read errors.
+Closing the state closes only its stream; the application's stdin stays intact.
+Keep the public ABI unchanged and preserve explicitly selected io.input files.
+
+The source boundary is the native bridge, Windows UTF-8 metadata helper, native
+regressions and owning runtime documentation/spec. Work first in an exact native
+snapshot under build/native/platform-audit/lua-stdin, then apply the verified
+patch to qfli_lua with sibling-directory permission. Unrelated main/pubspec,
+startup/content-import and OHOS changes are excluded. Linux and Windows native
+gates are available; Android application verification follows native delivery.
+Apple builds and device execution remain unavailable.

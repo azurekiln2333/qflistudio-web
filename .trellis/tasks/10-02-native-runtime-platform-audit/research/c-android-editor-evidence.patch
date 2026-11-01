@@ -1,0 +1,19 @@
+diff --git a/.trellis/spec/backend/android-runtime.md b/.trellis/spec/backend/android-runtime.md
+index 909145f..a2f82ef 100644
+--- a/.trellis/spec/backend/android-runtime.md
++++ b/.trellis/spec/backend/android-runtime.md
+@@ -120,7 +120,13 @@ EventChannel `qfli_forge/native/events` emits:
+   QFLI_C_ANDROID_AUDIT ok:true marker. Its eight x64 cases passed on API 37 with
+   16 KiB pages after fixing the pipe race. Before the fix, C++ printed the correct
+   result but an InterruptedIOException during pipe draining produced exit 127.
+-  ARM device execution and the ordinary editor workflow remain separate gates.
++  The ordinary owning debug APK separately passed project creation and editor
++  Run: AndroidCppNative/src/main.cpp reports Android Clang cpp, prints
++  Hello, QFLIStudio+! and exits 0 on API 37 with 16 KiB pages. Its native files
++  and compiler resources passed APK audits. A fresh task-owned emulator-5562
++  was used after the original emulator-5560 rejected both ordinary APK variants
++  for insufficient storage; no ordinary application data was removed. ARM
++  device execution remains unverified.
+ 
+ ## 7. Wrong vs Correct
+ 

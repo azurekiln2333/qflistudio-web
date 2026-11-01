@@ -1,0 +1,18 @@
+{
+  "command": "python -X utf8 scripts/audit_web_content.py --product",
+  "exitCode": 0,
+  "issues": 0,
+  "tutorials": 481,
+  "examples": 481,
+  "linkedExamples": 481,
+  "subjects": {
+    "html": 160,
+    "css": 160,
+    "javascript": 161
+  },
+  "assetsSha256": {
+    "assets\\content\\examples.json": "b40f900eaf6caa44abc2d1d9fb26d695f8571f8a7394408b99b4dd11632a57cd",
+    "assets\\content\\tutorials.json": "fe05fd1b3164219bba9b259b1aa3564b2052dd816c857c0e076cfed15d077f89"
+  },
+  "boundary": "schema/unique-content audit only; no browser/OHOS execution"
+}

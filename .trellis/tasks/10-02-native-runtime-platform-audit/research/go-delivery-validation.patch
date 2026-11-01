@@ -1,0 +1,35 @@
+diff --git a/.trellis/tasks/10-01-go-platform-support/research/validation.md b/.trellis/tasks/10-01-go-platform-support/research/validation.md
+--- a/.trellis/tasks/10-01-go-platform-support/research/validation.md
++++ b/.trellis/tasks/10-01-go-platform-support/research/validation.md
+@@ -60,2 +60,20 @@
+    regressions and the full application suite pass. No sibling repository edits.
+    No commits, remote operations, or unrelated system configuration changes.
++
++## Delivery Verification, 2026-10-02
++
++The cross-product audit staged only the platform runtime changes. In
++`lib/main.dart`, the foundation/platform imports and runtime metadata were
++selected against HEAD; the separate native-startup work remains in the working
++tree. The actual index was exported into qfli_web's ignored `go-staged` directory.
++Only this verification copy used absolute shared-core dependency paths.
++
++That source passed all 18 deliverable tests and full static analysis. The
++official Windows SDK was enabled, so SDK operations and cancellation were
++executed rather than skipped. The earlier 38-test working-tree result includes
++startup/content changes outside this native platform commit.
++
++The first export checks encountered Dart/Go compiler memory-allocation errors
++on the Windows host. The successful retry used Flutter `--concurrency 1`,
++`GOMAXPROCS=2`, and `GOFLAGS=-p=1` only in the verification process. The exported
++entry and package compiled cleanly; no product concurrency settings were changed.
+diff --git a/.trellis/spec/backend/native-go-runtime.md b/.trellis/spec/backend/native-go-runtime.md
+--- a/.trellis/spec/backend/native-go-runtime.md
++++ b/.trellis/spec/backend/native-go-runtime.md
+@@ -105,3 +105,7 @@
+ - `flutter analyze` and `flutter test`; set `QFLI_GO_TEST_EXECUTABLE` to an
+   installed SDK to run the official toolchain test rather than skip it.
++- If Windows reports compiler memory-allocation failures, constrain the
++  verification process with Flutter `--concurrency 1`, `GOMAXPROCS=2`, and
++  `GOFLAGS=-p=1`. Keep these settings local to verification; rerun the actual
++  SDK assertions and do not convert an allocation error into a successful test.
+ - Rebuild shared libraries after changing the runtime or vendored dependency.

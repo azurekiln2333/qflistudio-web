@@ -1,0 +1,482 @@
+[
+  {
+    "id": "html-example-101",
+    "language": "html",
+    "type": "html",
+    "title": "hgroup 标题组与副标题绑定",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>hgroup 标题组</title></head>\n<body>\n  <article>\n    <hgroup id=\"head-group\">\n      <h2>离线 IDE 实战</h2>\n      <p>从零搭建一个可用的本地开发环境</p>\n    </hgroup>\n    <p>正文：hgroup 让主标题和副标题在语义上不可分割。</p>\n  </article>\n  <p id=\"report\">等待探测</p>\n  <script>\n    var group = document.getElementById('head-group');\n    var tags = Array.prototype.map.call(group.children, function (el) {\n      return el.tagName.toLowerCase();\n    });\n    document.getElementById('report').textContent =\n      group.children.length + ' 个子元素：' + tags.join('>');\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面显示一个二级标题“离线 IDE 实战”，下面是灰色副标题“从零搭建一个可用的本地开发环境”，再下面是正文；探测行输出“2 个子元素：h2>p”。"
+  },
+  {
+    "id": "html-example-102",
+    "language": "html",
+    "type": "html",
+    "title": "search 搜索地标与表单语义",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>search 地标</title></head>\n<body>\n  <header><h1>我的文档库</h1></header>\n  <search id=\"site-search\">\n    <form action=\"#results\">\n      <label for=\"q\">站内搜索</label>\n      <input id=\"q\" name=\"q\" type=\"search\" value=\"离线\" autocomplete=\"off\">\n      <button type=\"button\" id=\"run\">筛选</button>\n    </form>\n  </search>\n  <p id=\"status\">等待筛选</p>\n  <p id=\"results\">离线优先 · 离线缓存 · 离线包</p>\n  <script>\n    var input = document.getElementById('q');\n    var statusEl = document.getElementById('status');\n    document.getElementById('run').addEventListener('click', function () {\n      statusEl.textContent = input.value ? '关键词：' + input.value : '关键词为空';\n    });\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面顶部是文档库标题，下面一行“站内搜索”标签 + 搜索框 + 筛选按钮。点击“筛选”后状态行变成“关键词：离线”；清空输入再点则显示“关键词为空”。"
+  },
+  {
+    "id": "html-example-103",
+    "language": "html",
+    "type": "html",
+    "title": "address 联系信息语义与默认样式",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>address 联系信息</title></head>\n<body>\n  <article>\n    <h1>离线缓存的三条经验</h1>\n    <p>正文内容……</p>\n    <footer>\n      <address id=\"contact\">\n        维护者：WebForge 文档组<br>\n        反馈：<a href=\"#feedback\">问题登记表</a><br>\n        更新时间：<time datetime=\"2026-10-22\">2026 年 10 月 22 日</time>\n      </address>\n      <p id=\"feedback\">问题登记表位于离线工作区根目录。</p>\n    </footer>\n  </article>\n  <p id=\"probe\">等待探测</p>\n  <script>\n    var box = document.getElementById('contact');\n    var style = getComputedStyle(box);\n    document.getElementById('probe').textContent =\n      'font-style=' + style.fontStyle + ';display=' + style.display +\n      ';lines=' + box.querySelectorAll('br').length;\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "文章末尾出现联系信息块，文字为斜体并分三行显示；探测行输出“font-style=italic;display=block;lines=2”。"
+  },
+  {
+    "id": "html-example-104",
+    "language": "html",
+    "type": "html",
+    "title": "menu 工具条与命令按钮组",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>menu 工具条</title>\n  <style>\n    menu { display: flex; gap: 8px; padding: 0; margin: 0 0 12px; }\n    button { padding: 6px 12px; }\n  </style>\n</head>\n<body>\n  <menu id=\"toolbar\">\n    <li><button type=\"button\" data-cmd=\"bold\">加粗</button></li>\n    <li><button type=\"button\" data-cmd=\"italic\">斜体</button></li>\n    <li><button type=\"button\" data-cmd=\"clear\" disabled>清除</button></li>\n  </menu>\n  <p id=\"log\">尚未选择命令</p>\n  <script>\n    var log = document.getElementById('log');\n    document.getElementById('toolbar').addEventListener('click', function (event) {\n      var button = event.target.closest('button');\n      if (!button || button.disabled) return;\n      log.textContent = '已选择：' + button.dataset.cmd;\n    });\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面上是一条横向工具条，三个按钮依次为“加粗”“斜体”“清除”，其中“清除”置灰不可点。点击“斜体”后下方文字变成“已选择：italic”。"
+  },
+  {
+    "id": "html-example-105",
+    "language": "html",
+    "type": "html",
+    "title": "article 与 aside 的正文和相关内容关系",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>article 与 aside</title></head>\n<body>\n  <main id=\"main\">\n    <article id=\"post\">\n      <h1>离线优先的设计取舍</h1>\n      <p>正文第一段：先把本地能力做扎实。</p>\n      <p>正文第二段：再考虑可选的同步。</p>\n    </article>\n    <aside id=\"related\" aria-labelledby=\"related-title\">\n      <h2 id=\"related-title\">相关阅读</h2>\n      <ul>\n        <li>本地存储配额</li>\n        <li>离线资源打包</li>\n      </ul>\n    </aside>\n  </main>\n  <p id=\"summary\">等待统计</p>\n  <script>\n    var post = document.getElementById('post');\n    var aside = document.getElementById('related');\n    var label = document.getElementById(aside.getAttribute('aria-labelledby'));\n    document.getElementById('summary').textContent =\n      post.querySelectorAll('p').length + ' 段正文 / ' +\n      aside.querySelectorAll('li').length + ' 条相关 / 标签=' + label.textContent;\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "主区域左侧是文章标题和两段正文，右侧是带“相关阅读”标题的两条列表；统计行输出“2 段正文 / 2 条相关 / 标签=相关阅读”。"
+  },
+  {
+    "id": "html-example-106",
+    "language": "html",
+    "type": "html",
+    "title": "nav 面包屑与 aria-current 当前项",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>面包屑导航</title></head>\n<body>\n  <nav id=\"crumbs\" aria-label=\"面包屑\">\n    <ol>\n      <li><a href=\"#home\">首页</a></li>\n      <li><a href=\"#docs\">教程</a></li>\n      <li><span aria-current=\"page\">HTML 进阶</span></li>\n    </ol>\n  </nav>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var nav = document.getElementById('crumbs');\n    var current = nav.querySelector('[aria-current=\"page\"]');\n    document.getElementById('state').textContent =\n      '当前页：' + current.textContent +\n      ' / 层级：' + nav.querySelectorAll('li').length +\n      ' / 链接：' + nav.querySelectorAll('a').length;\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面上出现“首页 › 教程 › HTML 进阶”的层级导航，前两项可点击跳转锚点，最后一项是纯文本；探测行输出“当前页：HTML 进阶 / 层级：3 / 链接：2”。"
+  },
+  {
+    "id": "html-example-107",
+    "language": "html",
+    "type": "html",
+    "title": "表格 caption 与 headers 显式关联",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>表格标题与表头关联</title></head>\n<body>\n  <table id=\"grades\">\n    <caption>期末成绩（满分 100）</caption>\n    <thead>\n      <tr><th id=\"h-name\" scope=\"col\">姓名</th><th id=\"h-score\" scope=\"col\">分数</th></tr>\n    </thead>\n    <tbody>\n      <tr><td headers=\"h-name\">小林</td><td headers=\"h-score\">92</td></tr>\n      <tr><td headers=\"h-name\">小周</td><td headers=\"h-score\">88</td></tr>\n    </tbody>\n  </table>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var table = document.getElementById('grades');\n    var firstScore = table.querySelector('tbody tr td[headers=\"h-score\"]');\n    var header = document.getElementById(firstScore.getAttribute('headers'));\n    document.getElementById('state').textContent =\n      'caption=' + table.caption.textContent.trim() +\n      ' / 行数=' + table.rows.length +\n      ' / 首个分数=' + firstScore.textContent +\n      ' / 表头=' + header.textContent;\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "表格上方显示标题“期末成绩（满分 100）”，表头两列“姓名”“分数”，两行数据；探测行输出“caption=期末成绩（满分 100） / 行数=3 / 首个分数=92 / 表头=分数”。"
+  },
+  {
+    "id": "html-example-108",
+    "language": "html",
+    "type": "html",
+    "title": "colgroup 与 col 列分组",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>列分组</title>\n  <style>\n    table { border-collapse: collapse; }\n    th, td { border: 1px solid #c8cdd4; padding: 6px 10px; }\n    .col-name { background: #eef4ff; }\n    .col-num { background: #f6fbf2; }\n  </style>\n</head>\n<body>\n  <table id=\"plan\">\n    <caption>季度计划（单位：小时）</caption>\n    <colgroup id=\"cols\">\n      <col span=\"1\" class=\"col-name\">\n      <col span=\"2\" class=\"col-num\">\n    </colgroup>\n    <thead>\n      <tr><th scope=\"col\">项目</th><th scope=\"col\">Q1</th><th scope=\"col\">Q2</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>离线缓存</td><td>40</td><td>60</td></tr>\n      <tr><td>示例验证</td><td>25</td><td>15</td></tr>\n    </tbody>\n  </table>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var cols = document.querySelectorAll('#cols col');\n    var owner = document.getElementById('cols').parentElement;\n    document.getElementById('state').textContent =\n      'col 数=' + cols.length +\n      ' / 第二个 span=' + cols[1].span +\n      ' / 覆盖列数=' + Array.prototype.reduce.call(cols, function (n, c) {\n        return n + Number(c.span || 1);\n      }, 0) +\n      ' / 父元素=' + owner.tagName.toLowerCase();\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "表格第一列“项目”为浅蓝底，后两列数字为浅绿底；探测行输出“col 数=2 / 第二个 span=2 / 覆盖列数=3 / 父元素=table”。"
+  },
+  {
+    "id": "html-example-109",
+    "language": "html",
+    "type": "html",
+    "title": "tfoot 合计行与表格渲染顺序",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>tfoot 合计行</title>\n  <style>\n    table { border-collapse: collapse; }\n    th, td { border: 1px solid #c8cdd4; padding: 6px 10px; }\n    tfoot th, tfoot td { background: #f2f4f7; font-weight: 600; }\n  </style>\n</head>\n<body>\n  <table id=\"cost\">\n    <caption>差旅费用（元）</caption>\n    <thead><tr><th scope=\"col\">项目</th><th scope=\"col\">金额</th></tr></thead>\n    <tfoot><tr><th scope=\"row\">合计</th><td id=\"total\">0</td></tr></tfoot>\n    <tbody>\n      <tr><td>车票</td><td data-amount=\"320\">320</td></tr>\n      <tr><td>住宿</td><td data-amount=\"480\">480</td></tr>\n    </tbody>\n  </table>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var table = document.getElementById('cost');\n    var sum = Array.prototype.reduce.call(\n      table.querySelectorAll('tbody td[data-amount]'),\n      function (total, cell) { return total + Number(cell.dataset.amount); },\n      0,\n    );\n    document.getElementById('total').textContent = sum;\n    var foot = table.querySelector('tfoot');\n    var lastBody = table.querySelector('tbody tr:last-child');\n    document.getElementById('state').textContent =\n      '合计=' + sum +\n      ' / table.tFoot 匹配=' + (table.tFoot === foot) +\n      ' / 行索引=' + foot.rows[0].rowIndex +\n      ' / 表体行数=' + table.tBodies[0].rows.length;\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "表格按“项目 / 金额”“车票 320”“住宿 480”“合计 800”从上到下渲染（合计行取自 DOM 中靠前的 tfoot）；探测行输出“合计=800 / table.tFoot 匹配=true / 行索引=3 / 表体行数=2”。rowIndex 读取的是合计行 tr，表头占索引 0。"
+  },
+  {
+    "id": "html-example-110",
+    "language": "html",
+    "type": "html",
+    "title": "details name 互斥手风琴",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>互斥手风琴</title></head>\n<body>\n  <details name=\"faq\" open>\n    <summary>离线包怎么更新？</summary>\n    <p>导入新的内容包后重启本地运行时即可。</p>\n  </details>\n  <details name=\"faq\">\n    <summary>支持哪些设备？</summary>\n    <p>支持桌面浏览器与 OHOS 设备上的本地运行时。</p>\n  </details>\n  <p id=\"state\">当前展开：离线包怎么更新？</p>\n  <script>\n    var panels = document.querySelectorAll('details[name=\"faq\"]');\n    Array.prototype.forEach.call(panels, function (panel) {\n      panel.addEventListener('toggle', function (event) {\n        var open = document.querySelectorAll('details[name=\"faq\"][open]');\n        document.getElementById('state').textContent =\n          '最新事件=' + event.newState +\n          ' / 展开数=' + open.length +\n          ' / 展开项=' + Array.prototype.map.call(open, function (item) {\n            return item.querySelector('summary').textContent;\n          }).join('、');\n      });\n    });\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面有两个可折叠面板，初始只展开第一个。点击第二个面板的标题后，第一个自动收起，状态行显示“最新事件=open / 展开数=1 / 展开项=支持哪些设备？”。"
+  },
+  {
+    "id": "html-example-111",
+    "language": "html",
+    "type": "html",
+    "title": "dialog 模态对话框与 ::backdrop",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>dialog 模态</title>\n  <style>\n    dialog { border: 1px solid #c8cdd4; border-radius: 8px; padding: 16px 20px; }\n    dialog::backdrop { background: rgba(15, 23, 42, 0.45); }\n  </style>\n</head>\n<body>\n  <button type=\"button\" id=\"open\">打开对话框</button>\n  <p id=\"result\">未操作</p>\n  <dialog id=\"dlg\" aria-labelledby=\"dlg-title\">\n    <h2 id=\"dlg-title\">确认删除</h2>\n    <p>删除后无法恢复。</p>\n    <form method=\"dialog\">\n      <button value=\"cancel\">取消</button>\n      <button value=\"ok\" id=\"confirm\">删除</button>\n    </form>\n  </dialog>\n  <script>\n    var dlg = document.getElementById('dlg');\n    document.getElementById('open').addEventListener('click', function () {\n      dlg.showModal();\n    });\n    dlg.addEventListener('close', function () {\n      document.getElementById('result').textContent =\n        'returnValue=' + dlg.returnValue + ' / open=' + dlg.open;\n    });\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "点击“打开对话框”后弹出带半透明遮罩的模态框；点“删除”后对话框关闭，状态行显示“returnValue=ok / open=false”。"
+  },
+  {
+    "id": "html-example-112",
+    "language": "html",
+    "type": "html",
+    "title": "popover 轻量浮层与 toggle 事件",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>popover 浮层</title>\n  <style>\n    [popover] { border: 1px solid #c8cdd4; border-radius: 8px; padding: 12px 16px; }\n  </style>\n</head>\n<body>\n  <button type=\"button\" id=\"trigger\" popovertarget=\"tip\">显示提示</button>\n  <div id=\"tip\" popover>\n    <p>这是一个声明式 popover 浮层。</p>\n    <button type=\"button\" id=\"hide\" popovertarget=\"tip\" popovertargetaction=\"hide\">关闭</button>\n  </div>\n  <p id=\"state\">popover closed</p>\n  <script>\n    var tip = document.getElementById('tip');\n    tip.addEventListener('toggle', function (event) {\n      document.getElementById('state').textContent =\n        'popover ' + event.newState + ' / pinned=' + tip.matches(':popover-open');\n    });\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "点击“显示提示”后浮层出现在按钮附近，状态行变为“popover open / pinned=true”；点击浮层里的“关闭”后浮层消失，状态行变为“popover closed / pinned=false”。"
+  },
+  {
+    "id": "html-example-113",
+    "language": "html",
+    "type": "html",
+    "title": "datalist 输入建议与 list 关联",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>datalist 建议</title></head>\n<body>\n  <label for=\"city\">城市</label>\n  <input id=\"city\" list=\"cities\" placeholder=\"输入或选择\" autocomplete=\"off\">\n  <datalist id=\"cities\">\n    <option value=\"杭州\"></option>\n    <option value=\"合肥\"></option>\n    <option value=\"深圳\"></option>\n  </datalist>\n  <p id=\"picked\">未选择</p>\n  <p id=\"meta\">等待探测</p>\n  <script>\n    var input = document.getElementById('city');\n    input.addEventListener('change', function () {\n      document.getElementById('picked').textContent =\n        input.value ? '已选：' + input.value : '未选择';\n    });\n    document.getElementById('meta').textContent =\n      'list 关联=' + (input.list ? input.list.id : 'none') +\n      ' / 候选数=' + (input.list ? input.list.options.length : 0);\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "输入框右侧出现下拉箭头，展开可见杭州、合肥、深圳三个建议；探测行输出“list 关联=cities / 候选数=3”。选择或输入合肥并失焦后，状态行显示“已选：合肥”。"
+  },
+  {
+    "id": "html-example-114",
+    "language": "html",
+    "type": "html",
+    "title": "optgroup 与 select multiple 多选",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>多选与分组</title></head>\n<body>\n  <label for=\"langs\">熟悉语言（可多选）</label>\n  <select id=\"langs\" multiple size=\"5\">\n    <optgroup label=\"前端\">\n      <option value=\"html\" selected>HTML</option>\n      <option value=\"css\">CSS</option>\n    </optgroup>\n    <optgroup label=\"后端\" disabled>\n      <option value=\"go\">Go</option>\n      <option value=\"rust\">Rust</option>\n    </optgroup>\n  </select>\n  <p id=\"out\">已选：html</p>\n  <p id=\"meta\">等待探测</p>\n  <script>\n    var select = document.getElementById('langs');\n    select.addEventListener('change', function () {\n      var picked = Array.prototype.map.call(select.selectedOptions, function (option) {\n        return option.value;\n      });\n      document.getElementById('out').textContent = '已选：' + (picked.join(', ') || '无');\n    });\n    var groups = select.querySelectorAll('optgroup');\n    document.getElementById('meta').textContent =\n      'multiple=' + select.multiple +\n      ' / size=' + select.size +\n      ' / 分组=' + groups.length +\n      ' / 禁用分组=' + (groups[1].disabled ? groups[1].label : '无') +\n      ' / 选项=' + select.options.length;\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面出现五行高的多选列表，“前端”组里的 HTML 默认选中，“后端”组整体置灰不可选；探测行输出“multiple=true / size=5 / 分组=2 / 禁用分组=后端 / 选项=4”。"
+  },
+  {
+    "id": "html-example-115",
+    "language": "html",
+    "type": "html",
+    "title": "output 元素与 for 关联计算结果",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>output 计算</title></head>\n<body>\n  <form id=\"calc\">\n    <p><label for=\"qty\">数量</label><input id=\"qty\" name=\"qty\" type=\"number\" value=\"2\" min=\"0\" step=\"1\"></p>\n    <p><label for=\"price\">单价</label><input id=\"price\" name=\"price\" type=\"number\" value=\"15\" min=\"0\" step=\"0.5\"></p>\n    <p>合计：<output id=\"sum\" name=\"sum\" for=\"qty price\">30.00</output> 元</p>\n  </form>\n  <p id=\"meta\">等待探测</p>\n  <script>\n    var form = document.getElementById('calc');\n    var qty = document.getElementById('qty');\n    var price = document.getElementById('price');\n    var sum = document.getElementById('sum');\n    function refresh() {\n      var total = Number(qty.value || 0) * Number(price.value || 0);\n      sum.textContent = total.toFixed(2);\n    }\n    form.addEventListener('input', refresh);\n    refresh();\n    document.getElementById('meta').textContent =\n      'for=' + sum.getAttribute('for') +\n      ' / name=' + sum.name +\n      ' / 初值=' + sum.value +\n      ' / 表单内=' + (form.elements.namedItem('sum') === sum);\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "表单显示数量 2、单价 15，合计行初始为 30.00 元；把数量改成 3 后合计立刻变成 45.00；探测行输出“for=qty price / name=sum / 初值=30.00 / 表单内=true”。"
+  },
+  {
+    "id": "html-example-116",
+    "language": "html",
+    "type": "html",
+    "title": "复选框 indeterminate 三态语义",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>三态复选框</title></head>\n<body>\n  <form id=\"picker\">\n    <p><label><input type=\"checkbox\" id=\"all\"> 全选</label></p>\n    <ul id=\"items\">\n      <li><label><input type=\"checkbox\" class=\"item\" value=\"html\" checked> HTML</label></li>\n      <li><label><input type=\"checkbox\" class=\"item\" value=\"css\" checked> CSS</label></li>\n      <li><label><input type=\"checkbox\" class=\"item\" value=\"js\"> JavaScript</label></li>\n    </ul>\n  </form>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var all = document.getElementById('all');\n    var items = Array.prototype.slice.call(document.querySelectorAll('.item'));\n    function syncAll() {\n      var checked = items.filter(function (item) { return item.checked; }).length;\n      all.checked = checked === items.length;\n      all.indeterminate = checked > 0 && checked < items.length;\n      document.getElementById('state').textContent =\n        '选中=' + checked + '/' + items.length +\n        ' / all.checked=' + all.checked +\n        ' / all.indeterminate=' + all.indeterminate;\n    }\n    all.addEventListener('change', function () {\n      items.forEach(function (item) { item.checked = all.checked; });\n      syncAll();\n    });\n    items.forEach(function (item) { item.addEventListener('change', syncAll); });\n    syncAll();\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "初始勾选 HTML 与 CSS 两项，父级“全选”呈横线三态；探测行输出“选中=2/3 / all.checked=false / all.indeterminate=true”。勾上 JavaScript 后父级变为已选，取消全选后三个子项全部取消。"
+  },
+  {
+    "id": "html-example-117",
+    "language": "html",
+    "type": "html",
+    "title": "form 属性把外部控件关联进表单",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>form 属性关联</title></head>\n<body>\n  <form id=\"signup\" action=\"#done\">\n    <p><label for=\"name\">昵称</label><input id=\"name\" name=\"name\" value=\"小林\"></p>\n  </form>\n  <section id=\"side\">\n    <h2>在表单外</h2>\n    <p><label for=\"email\">邮箱</label><input id=\"email\" name=\"email\" type=\"email\" form=\"signup\" value=\"lin@example.invalid\"></p>\n    <p><button type=\"submit\" form=\"signup\">提交</button></p>\n  </section>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var form = document.getElementById('signup');\n    var email = document.getElementById('email');\n    document.getElementById('state').textContent =\n      'email.form 匹配=' + (email.form === form) +\n      ' / 表单控件数=' + form.elements.length +\n      ' / 含 email=' + (form.elements.namedItem('email') === email) +\n      ' / 含 name=' + (form.elements.namedItem('name') !== null);\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "昵称输入框在表单里，邮箱输入框和提交按钮在表单外的侧栏里，但它们属于同一个表单；探测行输出“email.form 匹配=true / 表单控件数=3 / 含 email=true / 含 name=true”。"
+  },
+  {
+    "id": "html-example-118",
+    "language": "html",
+    "type": "html",
+    "title": "button formaction 与 formmethod 提交覆盖",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>按钮级提交覆盖</title></head>\n<body>\n  <form id=\"publish\" action=\"#local-draft\" method=\"get\">\n    <p><label for=\"title\">标题</label><input id=\"title\" name=\"title\" value=\"离线周报\"></p>\n    <button type=\"submit\" id=\"save\">保存草稿</button>\n    <button type=\"submit\" id=\"now\" formaction=\"#local-publish\" formmethod=\"post\">立即发布</button>\n  </form>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var form = document.getElementById('publish');\n    var save = document.getElementById('save');\n    var now = document.getElementById('now');\n    document.getElementById('state').textContent =\n      '表单 action=' + form.getAttribute('action') +\n      ' / 表单 method=' + form.method +\n      ' / 发布 action=' + now.getAttribute('formaction') +\n      ' / 发布 method=' + now.getAttribute('formmethod') +\n      ' / 发布 formAction 结尾匹配=' + now.formAction.endsWith('#local-publish') +\n      ' / 草稿 method 覆盖=' + (save.getAttribute('formmethod') || 'none');\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "表单显示一个标题输入框和“保存草稿”“立即发布”两个提交按钮；探测行输出“表单 action=#local-draft / 表单 method=get / 发布 action=#local-publish / 发布 method=post / 发布 formAction 结尾匹配=true / 草稿 method 覆盖=none”。"
+  },
+  {
+    "id": "html-example-119",
+    "language": "html",
+    "type": "html",
+    "title": "input type=image 提交坐标与 submitter",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>图片提交按钮</title></head>\n<body>\n  <form id=\"pick\" action=\"#hit\">\n    <p>点击下图不同位置提交，坐标会写进表单数据。</p>\n    <input type=\"image\" id=\"map\" name=\"spot\" alt=\"选择位置\" width=\"160\" height=\"80\"\n      src=\"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27160%27 height=%2780%27%3E%3Crect width=%27160%27 height=%2780%27 fill=%27%23e8f0fe%27/%3E%3Ccircle cx=%2780%27 cy=%2740%27 r=%2724%27 fill=%27%231a73e8%27/%3E%3C/svg%3E\">\n  </form>\n  <p id=\"state\">尚未提交</p>\n  <p id=\"meta\">等待探测</p>\n  <script>\n    var form = document.getElementById('pick');\n    var map = document.getElementById('map');\n    var image = new Image();\n    form.addEventListener('submit', function (event) {\n      event.preventDefault();\n      var data = new FormData(form, event.submitter);\n      document.getElementById('state').textContent =\n        'submitter 是图片按钮=' + (event.submitter === map) +\n        ' / type=' + map.type +\n        ' / 坐标字段=' + map.name + '.x,' + map.name + '.y' +\n        ' / 坐标=' + data.get(map.name + '.x') + ',' + data.get(map.name + '.y');\n    });\n    function reportImage() {\n      document.getElementById('meta').textContent =\n        'naturalWidth=' + image.naturalWidth + ' / complete=' + image.complete +\n        ' / form 关联=' + (map.form === form);\n    }\n    image.addEventListener('load', reportImage);\n    image.src = map.src;\n    if (image.complete) reportImage();\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面显示一个 160×80 的浅蓝底蓝色圆点图作为提交按钮；点击后状态行显示真实的 spot.x、spot.y 坐标，例如点击 (30,20) 输出“submitter 是图片按钮=true / type=image / 坐标字段=spot.x,spot.y / 坐标=30,20”。探测行通过独立的 Image 解码确认图片宽 160、已加载且按钮关联表单。"
+  },
+  {
+    "id": "html-example-120",
+    "language": "html",
+    "type": "html",
+    "title": "setCustomValidity 自定义校验消息",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>自定义校验</title></head>\n<body>\n  <form id=\"reg\">\n    <p><label for=\"code\">邀请码</label>\n      <input id=\"code\" name=\"code\" value=\"AB\" required autocomplete=\"off\"></p>\n    <p id=\"msg\" aria-live=\"polite\"></p>\n    <p><button type=\"submit\">注册</button></p>\n  </form>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var code = document.getElementById('code');\n    var msg = document.getElementById('msg');\n    function validate() {\n      code.setCustomValidity('');\n      if (code.value !== 'WF2026') {\n        code.setCustomValidity('邀请码必须是 WF2026');\n      }\n      msg.textContent = code.validationMessage || '校验通过';\n      document.getElementById('state').textContent =\n        'valid=' + code.validity.valid +\n        ' / customError=' + code.validity.customError +\n        ' / willValidate=' + code.willValidate;\n    }\n    code.addEventListener('input', validate);\n    validate();\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "初始值为 AB，提示行显示“邀请码必须是 WF2026”，探测行显示 valid=false / customError=true；把输入改成 WF2026 后提示变成“校验通过”，探测行变成 valid=true / customError=false。"
+  },
+  {
+    "id": "html-example-121",
+    "language": "html",
+    "type": "html",
+    "title": "textarea 尺寸、换行与选区 API",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>textarea 选区</title></head>\n<body>\n  <p><label for=\"note\">备注</label></p>\n  <textarea id=\"note\" rows=\"3\" cols=\"30\" wrap=\"soft\" maxlength=\"60\">第一行\n第二行</textarea>\n  <p id=\"snippet\">选中：第一行</p>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var note = document.getElementById('note');\n    function report() {\n      var picked = note.value.slice(note.selectionStart, note.selectionEnd).split('\\n').join('⏎');\n      document.getElementById('snippet').textContent = '选中：' + picked;\n      document.getElementById('state').textContent =\n        'len=' + note.value.length +\n        ' / sel=' + note.selectionStart + '-' + note.selectionEnd +\n        ' / rows=' + note.rows + ' / cols=' + note.cols +\n        ' / wrap=' + note.wrap + ' / maxlength=' + note.maxLength;\n    }\n    note.addEventListener('select', report);\n    note.addEventListener('input', report);\n    note.focus();\n    note.setSelectionRange(0, 3);\n    report();\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面显示三行高、30 字符宽的备注框，内容为两行文字；初始高亮“第一行”，状态行为“len=7 / sel=0-3 / rows=3 / cols=30 / wrap=soft / maxlength=60”。全选后状态变为 sel=0-7，选中提示变成“选中：第一行⏎第二行”。"
+  },
+  {
+    "id": "html-example-122",
+    "language": "html",
+    "type": "html",
+    "title": "formdata 事件与 FormData 迭代",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>formdata 事件</title></head>\n<body>\n  <form id=\"order\" action=\"#done\">\n    <p><label for=\"item\">商品</label><input id=\"item\" name=\"item\" value=\"离线键盘\"></p>\n    <p><label for=\"count\">数量</label><input id=\"count\" name=\"count\" type=\"number\" value=\"2\"></p>\n    <p><button type=\"submit\" id=\"go\">提交</button></p>\n  </form>\n  <p id=\"state\">尚未提交</p>\n  <script>\n    var form = document.getElementById('order');\n    form.addEventListener('submit', function (event) {\n      event.preventDefault();\n      new FormData(form);\n    });\n    form.addEventListener('formdata', function (event) {\n      var data = event.formData;\n      data.append('source', 'offline-ide');\n      data.set('count', String(Number(data.get('count')) * 2));\n      var pairs = [];\n      data.forEach(function (value, key) { pairs.push(key + '=' + value); });\n      document.getElementById('state').textContent = '提交数据：' + pairs.join('&');\n    });\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "表单显示商品“离线键盘”和数量 2；点击“提交”后状态行显示“提交数据：item=离线键盘&count=4&source=offline-ide”，说明脚本把数量翻倍并追加了来源字段。"
+  },
+  {
+    "id": "html-example-123",
+    "language": "html",
+    "type": "html",
+    "title": "requestSubmit 与提交事件取消",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>requestSubmit</title></head>\n<body>\n  <form id=\"draft\" action=\"#saved\">\n    <p><label for=\"text\">内容</label><input id=\"text\" name=\"text\" value=\"草稿内容\"></p>\n    <button type=\"submit\" id=\"native\">原生提交</button>\n  </form>\n  <p><button type=\"button\" id=\"programmatic\">脚本提交</button></p>\n  <p id=\"state\">等待操作</p>\n  <script>\n    var form = document.getElementById('draft');\n    var native = document.getElementById('native');\n    var log = [];\n    function render() {\n      document.getElementById('state').textContent = log.join(' → ');\n    }\n    form.addEventListener('submit', function (event) {\n      event.preventDefault();\n      log.push('submit(' + (event.submitter ? event.submitter.id : 'none') + ')');\n      render();\n    });\n    document.getElementById('programmatic').addEventListener('click', function () {\n      log.push('click(programmatic)');\n      form.requestSubmit(native);\n    });\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "点击“脚本提交”后状态行显示“click(programmatic) → submit(native)”；再点“原生提交”后追加一段“submit(native)”，说明两次都走了同一套 submit 事件和 submitter 信息。"
+  },
+  {
+    "id": "html-example-124",
+    "language": "html",
+    "type": "html",
+    "title": "input type=number 步进与 valueAsNumber",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>数字步进</title></head>\n<body>\n  <form id=\"st\">\n    <p><label for=\"n\">数量（步进 3，范围 0-20）</label></p>\n    <p><input id=\"n\" name=\"n\" type=\"number\" value=\"6\" min=\"0\" max=\"20\" step=\"3\"></p>\n    <p><button type=\"button\" id=\"up\">+3</button> <button type=\"button\" id=\"down\">-3</button></p>\n  </form>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var n = document.getElementById('n');\n    function report() {\n      document.getElementById('state').textContent =\n        'value=' + n.value +\n        ' / asNumber=' + n.valueAsNumber +\n        ' / valid=' + n.validity.valid +\n        ' / stepMismatch=' + n.validity.stepMismatch;\n    }\n    document.getElementById('up').addEventListener('click', function () { n.stepUp(); report(); });\n    document.getElementById('down').addEventListener('click', function () { n.stepDown(); report(); });\n    n.addEventListener('input', report);\n    report();\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "输入框初始显示 6，状态行为“value=6 / asNumber=6 / valid=true / stepMismatch=false”；点“+3”变成 9，点两次“-3”变成 3；手动输入 7 后状态变为 valid=false / stepMismatch=true。"
+  },
+  {
+    "id": "html-example-125",
+    "language": "html",
+    "type": "html",
+    "title": "ruby 注音标注与 rp 回退",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>ruby 注音</title></head>\n<body>\n  <p>日语：<ruby id=\"jp\">漢字<rp>(</rp><rt>かんじ</rt><rp>)</rp></ruby></p>\n  <p>中文：<ruby id=\"zh\">离线<rt>lí xiàn</rt></ruby></p>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var zh = document.getElementById('zh');\n    var rts = zh.querySelectorAll('rt');\n    var rps = document.getElementById('jp').querySelectorAll('rp');\n    document.getElementById('state').textContent =\n      'ruby 数=' + document.querySelectorAll('ruby').length +\n      ' / rt 数=' + rts.length +\n      ' / 注音=' + rts[0].textContent +\n      ' / rp 数=' + rps.length +\n      ' / rp 显示=' + getComputedStyle(rps[0]).display +\n      ' / rt 显示=' + getComputedStyle(rts[0]).display;\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "“漢字”上方显示“かんじ”，“离线”上方显示“lí xiàn”；探测行输出“ruby 数=2 / rt 数=1 / 注音=lí xiàn / rp 数=2 / rp 显示=none / rt 显示=ruby-text”。"
+  },
+  {
+    "id": "html-example-126",
+    "language": "html",
+    "type": "html",
+    "title": "bdi 与 bdo 的双向文本隔离",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>双向文本</title></head>\n<body dir=\"ltr\">\n  <p>登录用户：<bdi id=\"user\">أحمد</bdi> 已上线</p>\n  <p>昵称：<bdi id=\"nick\">@offline</bdi> 说：你好</p>\n  <p>强制反向：<bdo dir=\"rtl\" id=\"forced\">abc 123</bdo></p>\n  <p>自动方向：<span dir=\"auto\" id=\"auto\">שלום</span></p>\n  <p id=\"state\">等待探测</p>\n  <script>\n    function style(el) {\n      var cs = getComputedStyle(el);\n      return cs.unicodeBidi + '/' + cs.direction;\n    }\n    document.getElementById('state').textContent =\n      'bdi 数=' + document.querySelectorAll('bdi').length +\n      ' / user=' + style(document.getElementById('user')) +\n      ' / bdo=' + style(document.getElementById('forced')) +\n      ' / auto=' + style(document.getElementById('auto'));\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "第一行阿拉伯语用户名独立成段，标点不会跑到句子另一侧；探测行输出“bdi 数=2 / user=isolate/rtl / bdo=isolate-override/rtl / auto=isolate/rtl”。"
+  },
+  {
+    "id": "html-example-127",
+    "language": "html",
+    "type": "html",
+    "title": "mark 高亮与检索命中",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>mark 高亮</title></head>\n<body>\n  <p id=\"text\">离线优先意味着优先使用本地能力，离线不是退路。</p>\n  <p>命中 <mark id=\"hit\">离线</mark> 共 <span id=\"count\">0</span> 处</p>\n  <p id=\"wrapped\"></p>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var text = document.getElementById('text');\n    var keyword = '离线';\n    var parts = text.textContent.split(keyword);\n    var target = document.getElementById('wrapped');\n    parts.forEach(function (part, index) {\n      target.appendChild(document.createTextNode(part));\n      if (index < parts.length - 1) {\n        var mark = document.createElement('mark');\n        mark.textContent = keyword;\n        target.appendChild(mark);\n      }\n    });\n    var marks = target.querySelectorAll('mark');\n    document.getElementById('count').textContent = marks.length;\n    var markStyle = getComputedStyle(marks[0]);\n    document.getElementById('state').textContent =\n      'mark 数=' + marks.length +\n      ' / 背景=' + markStyle.backgroundColor +\n      ' / 与正文背景不同=' + (markStyle.backgroundColor !== getComputedStyle(text).backgroundColor);\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "第三行重复显示同一句话，但两处“离线”被黄色背景高亮；命中计数显示 2；探测行输出“mark 数=2 / 背景=rgb(255, 255, 0) / 与正文背景不同=true”。"
+  },
+  {
+    "id": "html-example-128",
+    "language": "html",
+    "type": "html",
+    "title": "del 与 ins 的修订记录语义",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>修订记录</title></head>\n<body>\n  <p id=\"doc\">\n    版本 2.2：<del cite=\"#changelog-21\" datetime=\"2026-09-01\">每 30 分钟自动联网同步</del>\n    <ins cite=\"#changelog-22\" datetime=\"2026-10-22\">每 30 分钟检查本地缓存</ins>\n  </p>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var del = document.querySelector('del');\n    var ins = document.querySelector('ins');\n    document.getElementById('state').textContent =\n      'del 线=' + getComputedStyle(del).textDecorationLine +\n      ' / ins 线=' + getComputedStyle(ins).textDecorationLine +\n      ' / ins.cite=' + ins.getAttribute('cite') +\n      ' / ins.dateTime=' + ins.dateTime +\n      ' / del.dateTime 非空=' + (del.dateTime !== '');\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面上“每 30 分钟自动联网同步”带删除线，“每 30 分钟检查本地缓存”带下划线；探测行输出“del 线=line-through / ins 线=underline / ins.cite=#changelog-22 / ins.dateTime=2026-10-22 / del.dateTime 非空=true”。"
+  },
+  {
+    "id": "html-example-129",
+    "language": "html",
+    "type": "html",
+    "title": "s 与 small 的语义边界",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>s 与 small</title></head>\n<body>\n  <p>原价 <s id=\"old\">¥199</s> 现价 ¥129</p>\n  <p><small id=\"note\">价格仅在离线工作区内有效，不含税费。</small></p>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var old = document.getElementById('old');\n    var note = document.getElementById('note');\n    var bodySize = parseFloat(getComputedStyle(document.body).fontSize);\n    var noteSize = parseFloat(getComputedStyle(note).fontSize);\n    document.getElementById('state').textContent =\n      's 线=' + getComputedStyle(old).textDecorationLine +\n      ' / s.dateTime 属性不存在=' + (old.dateTime === undefined) +\n      ' / small 更小=' + (noteSize < bodySize) +\n      ' / 字号=' + noteSize.toFixed(2) + '<' + bodySize.toFixed(2);\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面上“¥199”带删除线，“¥129”正常显示，下面一行细则以更小字号呈现；探测行输出“s 线=line-through / s.dateTime 属性不存在=true / small 更小=true / 字号=13.33<16.00”。"
+  },
+  {
+    "id": "html-example-130",
+    "language": "html",
+    "type": "html",
+    "title": "data value 机器可读取值",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>data 元素</title></head>\n<body>\n  <ul id=\"catalog\">\n    <li><data id=\"sku1\" value=\"WF-1001\">离线键盘</data></li>\n    <li><data id=\"sku2\" value=\"WF-1002\">离线鼠标</data></li>\n  </ul>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var items = document.querySelectorAll('data');\n    var values = Array.prototype.map.call(items, function (el) { return el.value; });\n    document.getElementById('state').textContent =\n      'items=' + items.length +\n      ' / values=' + values.join(',') +\n      ' / 首个文本=' + items[0].textContent +\n      ' / 显示方式=' + getComputedStyle(items[0]).display;\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "列表显示“离线键盘”“离线鼠标”两项；探测行输出“items=2 / values=WF-1001,WF-1002 / 首个文本=离线键盘 / 显示方式=inline”。"
+  },
+  {
+    "id": "html-example-131",
+    "language": "html",
+    "type": "html",
+    "title": "wbr 长词断行与 overflow-wrap",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>wbr 断行</title>\n  <style>\n    #path { width: 150px; border: 1px solid #c8cdd4; }\n    #long { width: 150px; border: 1px solid #c8cdd4; }\n  </style>\n</head>\n<body>\n  <p id=\"path\">offline/<wbr>workspace/<wbr>assets/<wbr>content/<wbr>examples.json</p>\n  <p id=\"long\">SupercalifragilisticexpialidociousSupercalifragilisticexpialidocious</p>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var path = document.getElementById('path');\n    var long = document.getElementById('long');\n    var before = getComputedStyle(long).overflowWrap;\n    long.style.overflowWrap = 'break-word';\n    var after = getComputedStyle(long).overflowWrap;\n    document.getElementById('state').textContent =\n      'wbr 数=' + path.querySelectorAll('wbr').length +\n      ' / 路径高=' + Math.round(path.getBoundingClientRect().height) +\n      ' / wrap 前=' + before + ' / wrap 后=' + after;\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "150px 宽的框里，长路径在斜杠处折成多行（高度明显超过一行）；超长单词在加上 overflow-wrap 后也能折行，不会横向溢出；探测行输出“wbr 数=4 / 路径高=… / wrap 前=normal / wrap 后=break-word”。"
+  },
+  {
+    "id": "html-example-132",
+    "language": "html",
+    "type": "html",
+    "title": "base 与相对 URL 解析",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>base 与相对 URL</title>\n  <base id=\"base\" href=\"#workspace/\">\n</head>\n<body>\n  <p><a id=\"rel\" href=\"notes/today.html\">今天的笔记</a></p>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var link = document.getElementById('rel');\n    var resolved = new URL('notes/today.html', document.baseURI);\n    document.getElementById('state').textContent =\n      'base 数=' + document.querySelectorAll('base').length +\n      ' / baseURI 含锚点=' + (document.baseURI.indexOf('#workspace') >= 0) +\n      ' / 解析 pathname=' + resolved.pathname +\n      ' / a.href 已绝对化=' + link.href.endsWith('/notes/today.html') +\n      ' / a.href 与解析一致=' + (link.href === resolved.href);\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面上“今天的笔记”链接指向同源的 `notes/today.html`；探测行输出“base 数=1 / baseURI 含锚点=true / 解析 pathname=/notes/today.html / a.href 已绝对化=true / a.href 与解析一致=true”。"
+  },
+  {
+    "id": "html-example-133",
+    "language": "html",
+    "type": "html",
+    "title": "translate 与 spellcheck 编辑语义",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>translate 与 spellcheck</title></head>\n<body>\n  <p id=\"brand\" translate=\"no\" spellcheck=\"false\">WebForge 离线 IDE</p>\n  <p id=\"code\" translate=\"no\"><code>webforge serve --offline</code></p>\n  <p><label for=\"note\">中文备注（不需要英文拼写检查）</label></p>\n  <textarea id=\"note\" spellcheck=\"true\" lang=\"zh-CN\" rows=\"2\" cols=\"40\">离线编辑器的拼写检查</textarea>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var brand = document.getElementById('brand');\n    var note = document.getElementById('note');\n    document.getElementById('state').textContent =\n      'brand.translate=' + brand.translate +\n      ' / brand 属性=' + brand.getAttribute('translate') +\n      ' / spellcheck=' + brand.spellcheck +\n      ' / note.spellcheck=' + note.spellcheck +\n      ' / note.lang=' + note.lang +\n      ' / body.translate=' + document.body.translate;\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "品牌名与命令行保持原样不被翻译；探测行输出“brand.translate=false / brand 属性=no / spellcheck=false / note.spellcheck=true / note.lang=zh-CN / body.translate=true”。"
+  },
+  {
+    "id": "html-example-134",
+    "language": "html",
+    "type": "html",
+    "title": "MathML 公式排版基础",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>MathML 公式</title></head>\n<body>\n  <math id=\"einstein\" display=\"block\">\n    <mrow>\n      <mi>E</mi><mo>=</mo><mi>m</mi><msup><mi>c</mi><mn>2</mn></msup>\n    </mrow>\n  </math>\n  <p>平均值：<math id=\"avg\"><mfrac><mrow><mn>1</mn></mrow><mi>n</mi></mfrac></math> 求和</p>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var block = document.getElementById('einstein');\n    var sup = block.querySelector('msup');\n    var avg = document.getElementById('avg');\n    var frac = avg.querySelector('mfrac');\n    document.getElementById('state').textContent =\n      'msup 存在=' + (sup !== null) +\n      ' / 次幂=' + sup.querySelector('mn').textContent +\n      ' / 块级显示=' + getComputedStyle(block).display +\n      ' / 分式高=' + Math.round(frac.getBoundingClientRect().height) +\n      ' / 公式宽=' + Math.round(block.getBoundingClientRect().width);\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面上出现居中的 E=mc² 公式（c 带 2 次幂），下面一行里有一个 1/n 的分式，分子 1 位于分母 n 上方；探测行输出“msup 存在=true / 次幂=2 / 块级显示=block math / 分式高=… / 公式宽=…”。"
+  },
+  {
+    "id": "html-example-135",
+    "language": "html",
+    "type": "html",
+    "title": "picture 与 source media 艺术指导",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>picture 艺术指导</title>\n</head>\n<body>\n  <picture id=\"art\">\n    <source media=\"(min-width: 600px)\"\n      srcset=\"data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27300%27%20height=%2760%27%3E%3Crect%20width=%27300%27%20height=%2760%27%20fill=%27%231a73e8%27/%3E%3Ctext%20x=%27150%27%20y=%2737%27%20font-size=%2718%27%20text-anchor=%27middle%27%20fill=%27%23fff%27%3E宽屏裁剪%3C/text%3E%3C/svg%3E\">\n    <source media=\"(min-width: 300px)\"\n      srcset=\"data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27200%27%20height=%2760%27%3E%3Crect%20width=%27200%27%20height=%2760%27%20fill=%27%238ab4f8%27/%3E%3Ctext%20x=%27100%27%20y=%2737%27%20font-size=%2716%27%20text-anchor=%27middle%27%20fill=%27%23113%27%3E窄屏裁剪%3C/text%3E%3C/svg%3E\">\n    <img id=\"fallback\" width=\"120\" height=\"60\" alt=\"响应式示意图\"\n      src=\"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27120%27 height=%2760%27%3E%3Crect width=%27120%27 height=%2760%27 fill=%27%23c8cdd4%27/%3E%3C/svg%3E\">\n  </picture>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var img = document.getElementById('fallback');\n    function report() {\n      var sources = document.querySelectorAll('#art source');\n      document.getElementById('state').textContent =\n        'source 数=' + sources.length +\n        ' / 首个 media=' + sources[0].media +\n        ' / 实际宽=' + img.naturalWidth +\n        ' / 命中宽屏=' + (img.naturalWidth === 300) +\n        ' / 已加载=' + (img.complete && img.naturalWidth > 0);\n    }\n    if (img.complete) report();\n    img.addEventListener('load', report);\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "宽视口（≥600px）下显示蓝色“宽屏裁剪”横图（300px），300-599px 换成浅蓝“窄屏裁剪”（200px），更窄时回退到默认图；探测行输出 source 数、首个 media、实际宽度与是否命中宽屏（值随视口变化）。"
+  },
+  {
+    "id": "html-example-136",
+    "language": "html",
+    "type": "html",
+    "title": "sup 与 sub 的表达式组合",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>上下标组合</title></head>\n<body>\n  <p id=\"water\">水分子：H<sub>2</sub>O，甲烷：CH<sub>4</sub></p>\n  <p id=\"pythagoras\">勾股定理：a<sup>2</sup> + b<sup>2</sup> = c<sup>2</sup></p>\n  <p id=\"sulfate\">硫酸根离子：SO<sub>4</sub><sup>2−</sup></p>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var subs = document.querySelectorAll('sub');\n    var sups = document.querySelectorAll('sup');\n    var sulfate = document.getElementById('sulfate');\n    document.getElementById('state').textContent =\n      'sub 数=' + subs.length +\n      ' / sup 数=' + sups.length +\n      ' / sub 对齐=' + getComputedStyle(subs[0]).verticalAlign +\n      ' / sup 对齐=' + getComputedStyle(sups[0]).verticalAlign +\n      ' / 硫酸根=' + sulfate.textContent.split(/\\s+/).join('') +\n      ' / 电荷在上=' + (sulfate.querySelector('sub').compareDocumentPosition(sulfate.querySelector('sup')) & Node.DOCUMENT_POSITION_FOLLOWING ? 'sub 在前' : 'sup 在前');\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "三行公式分别显示 H₂O、a²+b²=c² 与 SO₄²⁻；探测行输出“sub 数=3 / sup 数=4 / sub 对齐=sub / sup 对齐=super / 硫酸根=硫酸根离子：SO42− / 电荷在上=sub 在前”。"
+  },
+  {
+    "id": "html-example-137",
+    "language": "html",
+    "type": "html",
+    "title": "object 嵌入文档与回退内容",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>object 嵌入文档</title></head>\n<body>\n  <object id=\"figure\" type=\"text/html\" width=\"240\" height=\"80\">\n    <p>当前环境无法显示内嵌文档，请阅读文字说明。</p>\n  </object>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var figure = document.getElementById('figure');\n    var innerDoc = '<!doctype html><html><body><p id=\"inner\">运行内联的 HTML 文档</p>  <output id=\"webforge-check\" hidden>ok</output>\n</body></html>';\n    var url = URL.createObjectURL(new Blob([innerDoc], { type: 'text/html' }));\n    function report() {\n      var inner = figure.contentDocument;\n      var note = inner ? inner.getElementById('inner') : null;\n      document.getElementById('state').textContent =\n        'type=' + figure.type +\n        ' / data 是 Blob=' + (figure.data.indexOf('blob:') === 0) +\n        ' / 内嵌根元素=' + (inner && inner.documentElement ? inner.documentElement.tagName.toLowerCase() : 'none') +\n        ' / 内嵌文本=' + (note ? note.textContent : 'none') +\n        ' / 回退段数=' + figure.querySelectorAll('p').length;\n    }\n    figure.addEventListener('load', report);\n    figure.data = url;\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面上出现一个 240×80 的内嵌文档，里面显示“运行内联的 HTML 文档”；探测行输出“type=text/html / data 是 Blob=true / 内嵌根元素=html / 内嵌文本=运行内联的 HTML 文档 / 回退段数=1”。"
+  },
+  {
+    "id": "html-example-138",
+    "language": "html",
+    "type": "html",
+    "title": "embed 与 iframe srcdoc 内联文档",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>srcdoc 与 embed</title></head>\n<body>\n  <iframe id=\"frame\" title=\"内联示例文档\" width=\"260\" height=\"70\"\n    srcdoc=\"<p id='inner'>srcdoc 渲染的内容</p>\"></iframe>\n  <embed id=\"emb\" type=\"image/svg+xml\" width=\"80\" height=\"40\" title=\"内联图标\"\n    src=\"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2780%27 height=%2740%27%3E%3Ccircle cx=%2720%27 cy=%2720%27 r=%2716%27 fill=%27%231a73e8%27/%3E%3C/svg%3E\">\n  <p id=\"state\">等待探测</p>\n  <script>\n    var frame = document.getElementById('frame');\n    function report() {\n      var doc = frame.contentDocument;\n      var inner = doc && doc.getElementById('inner');\n      document.getElementById('state').textContent =\n        'srcdoc 同源可访=' + (doc !== null) +\n        ' / 内部文本=' + (inner ? inner.textContent : 'none') +\n        ' / frame.title=' + frame.title +\n        ' / embed.type=' + document.getElementById('emb').type +\n        ' / embed 标签=' + document.getElementById('emb').tagName.toLowerCase();\n    }\n    frame.addEventListener('load', report);\n    setTimeout(report, 200);\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "上方是一个 260×70 的内嵌框，里面显示“srcdoc 渲染的内容”，右侧是一个 80×40 的蓝色圆点图标；探测行输出“srcdoc 同源可访=true / 内部文本=srcdoc 渲染的内容 / frame.title=内联示例文档 / embed.type=image/svg+xml / embed 标签=embed”。"
+  },
+  {
+    "id": "html-example-139",
+    "language": "html",
+    "type": "html",
+    "title": "iframe sandbox 的脚本与同源隔离",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>sandbox 隔离</title></head>\n<body>\n  <iframe id=\"safe\" title=\"受限内嵌文档\" width=\"280\" height=\"70\" sandbox\n    srcdoc=\"<p id='note'>沙箱内容不会执行脚本</p><script>parent.postMessage('脚本已运行', '*');</script>\"></iframe>\n  <p id=\"state\">尚未收到任何消息</p>\n  <script>\n    window.__messages = 0;\n    window.addEventListener('message', function (event) {\n      window.__messages++;\n      document.getElementById('state').textContent = '收到消息：' + event.data;\n    });\n    var frame = document.getElementById('safe');\n    setTimeout(function () {\n      if (window.__messages === 0) {\n        document.getElementById('state').textContent =\n          '未收到消息 / 沙箱标记=' + frame.hasAttribute('sandbox') +\n          ' / 允许项=' + frame.sandbox.length +\n          ' / 可访内嵌文档=' + (frame.contentDocument !== null);\n      }\n    }, 250);\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "上方是一个内嵌文档，里面只显示出文字；内嵌脚本没有执行，所以父页面收不到消息；状态行变成“未收到消息 / 沙箱标记=true / 允许项=0 / 可访内嵌文档=false”。"
+  },
+  {
+    "id": "html-example-140",
+    "language": "html",
+    "type": "html",
+    "title": "canvas 高 DPI 像素适配与可访问回退",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>canvas 高 DPI</title>\n  <style>#board { width: 150px; height: 75px; border: 1px solid #c8cdd4; }</style>\n</head>\n<body>\n  <canvas id=\"board\" width=\"150\" height=\"75\" role=\"img\" aria-label=\"离线进度 60% 的条形图\">离线进度 60% 的条形图</canvas>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var board = document.getElementById('board');\n    var cssW = 150;\n    var cssH = 75;\n    var dpr = Math.min(window.devicePixelRatio || 1, 2);\n    board.width = Math.round(cssW * dpr);\n    board.height = Math.round(cssH * dpr);\n    var ctx = board.getContext('2d');\n    ctx.scale(dpr, dpr);\n    ctx.fillStyle = '#e8f0fe';\n    ctx.fillRect(0, 0, cssW, cssH);\n    ctx.fillStyle = '#1a73e8';\n    ctx.fillRect(0, 0, Math.round(cssW * 0.6), cssH);\n    function report() {\n      document.getElementById('state').textContent =\n        'dpr=' + dpr +\n        ' / 位图=' + board.width + 'x' + board.height +\n        ' / 显示=' + Math.round(board.getBoundingClientRect().width) + 'x' + Math.round(board.getBoundingClientRect().height) +\n        ' / 可访问名=' + board.getAttribute('aria-label');\n    }\n    report();\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面上出现 150×75 的条形图，左侧 60% 是深蓝、右侧是浅蓝；探测行输出 dpr、位图尺寸是显示尺寸乘以 dpr、显示尺寸 150×75 与可访问名称。"
+  },
+  {
+    "id": "html-example-141",
+    "language": "html",
+    "type": "html",
+    "title": "内联 SVG 的可访问名称与描述",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>SVG 可访问名</title></head>\n<body>\n  <svg id=\"chart\" role=\"img\" aria-labelledby=\"chart-title chart-desc\"\n    width=\"200\" height=\"100\" viewBox=\"0 0 200 100\">\n    <title id=\"chart-title\">离线缓存命中率</title>\n    <desc id=\"chart-desc\">柱状图：命中 92%，未命中 8%</desc>\n    <rect x=\"0\" y=\"10\" width=\"184\" height=\"20\" fill=\"#1a73e8\"></rect>\n    <rect x=\"0\" y=\"40\" width=\"16\" height=\"20\" fill=\"#c8cdd4\"></rect>\n    <text x=\"0\" y=\"85\" font-size=\"12\" fill=\"#3c4043\">命中 / 未命中</text>\n  </svg>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var chart = document.getElementById('chart');\n    var ids = chart.getAttribute('aria-labelledby').split(' ');\n    var texts = ids.map(function (id) { return document.getElementById(id).textContent; });\n    var bars = chart.querySelectorAll('rect');\n    document.getElementById('state').textContent =\n      '标签数=' + ids.length +\n      ' / 名称=' + texts[0] +\n      ' / 描述=' + texts[1] +\n      ' / 柱宽=' + bars[0].getAttribute('width') + ',' + bars[1].getAttribute('width') +\n      ' / 显示宽=' + Math.round(chart.getBoundingClientRect().width);\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面上显示两根横向柱：蓝色长柱与灰色短柱，下方有一行小字说明；探测行输出“标签数=2 / 名称=离线缓存命中率 / 描述=柱状图：命中 92%，未命中 8% / 柱宽=184,16 / 显示宽=200”。"
+  },
+  {
+    "id": "html-example-142",
+    "language": "html",
+    "type": "html",
+    "title": "video poster 与 playsinline 首帧策略",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>video 封面</title></head>\n<body>\n  <video id=\"clip\" width=\"240\" height=\"135\" playsinline muted loop controls preload=\"none\"\n    poster=\"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27240%27 height=%27135%27%3E%3Crect width=%27240%27 height=%27135%27 fill=%27%231a73e8%27/%3E%3Ctext x=%27120%27 y=%2772%27 font-size=%2718%27 text-anchor=%27middle%27 fill=%27%23fff%27%3E离线封面%3C/text%3E%3C/svg%3E\"></video>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var clip = document.getElementById('clip');\n    document.getElementById('state').textContent =\n      'poster 内联=' + (clip.poster.indexOf('data:image/svg+xml') === 0) +\n      ' / playsInline=' + clip.playsInline +\n      ' / muted=' + clip.muted +\n      ' / controls=' + clip.controls +\n      ' / readyState=' + clip.readyState +\n      ' / videoWidth=' + clip.videoWidth +\n      ' / 显示=' + Math.round(clip.getBoundingClientRect().width) + 'x' + Math.round(clip.getBoundingClientRect().height);\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面显示一个 240×135 的蓝色封面，写着“离线封面”，下方是播放控件；探测行输出“poster 内联=true / playsInline=true / muted=true / controls=true / readyState=0 / videoWidth=0 / 显示=240x135”。"
+  },
+  {
+    "id": "html-example-143",
+    "language": "html",
+    "type": "html",
+    "title": "track 字幕轨与 VTTCue",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>字幕轨</title></head>\n<body>\n  <video id=\"clip\" width=\"240\" height=\"135\" muted controls></video>\n  <p id=\"state\">等待字幕加载</p>\n  <script>\n    var nl = String.fromCharCode(10);\n    var vtt = ['WEBVTT', '', '1', '00:00:00.000 --> 00:00:05.000', '离线也能显示字幕', '', '2', '00:00:05.000 --> 00:00:10.000', '第二条字幕', ''].join(nl);\n    var url = URL.createObjectURL(new Blob([vtt], { type: 'text/vtt' }));\n    var clip = document.getElementById('clip');\n    var track = document.createElement('track');\n    track.kind = 'captions';\n    track.label = '中文';\n    track.srclang = 'zh';\n    track.default = true;\n    track.src = url;\n    clip.appendChild(track);\n    function report() {\n      var list = clip.textTracks;\n      var trackObj = list[0];\n      var cues = trackObj && trackObj.cues ? trackObj.cues.length : 0;\n      document.getElementById('state').textContent =\n        '轨道数=' + list.length +\n        ' / kind=' + (trackObj ? trackObj.kind : 'none') +\n        ' / cue 数=' + cues +\n        ' / 首条=' + (cues ? trackObj.cues[0].text : '') +\n        ' / 结束时间=' + (cues ? trackObj.cues[0].endTime : 0);\n    }\n    track.addEventListener('load', report);\n    track.addEventListener('error', function () {\n      document.getElementById('state').textContent = '字幕加载失败';\n    });\n    setTimeout(report, 400);\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面显示一个 240×135 的黑框播放器区域；字幕解析成功后状态行显示“轨道数=1 / kind=captions / cue 数=2 / 首条=离线也能显示字幕 / 结束时间=5”。"
+  },
+  {
+    "id": "html-example-144",
+    "language": "html",
+    "type": "html",
+    "title": "声明式 Shadow DOM 与插槽",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>声明式 Shadow DOM</title>\n</head>\n<body>\n  <user-card id=\"card\">\n    <template shadowrootmode=\"open\">\n      <style>\n        :host { display: block; border: 1px solid #c8cdd4; padding: 8px; }\n        h3 { color: #1a73e8; margin: 0 0 4px; }\n      </style>\n      <h3>声明式 Shadow DOM</h3>\n      <p><slot name=\"desc\">默认描述</slot></p>\n    </template>\n    <span slot=\"desc\">来自宿主页面的插槽内容</span>\n  </user-card>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var card = document.getElementById('card');\n    var root = card.shadowRoot;\n    var slot = root.querySelector('slot[name=\"desc\"]');\n    var assigned = slot.assignedNodes();\n    document.getElementById('state').textContent =\n      'shadowRoot=' + (root !== null) +\n      ' / 内部 h3=' + root.querySelector('h3').textContent +\n      ' / 外部 h3 数=' + card.querySelectorAll('h3').length +\n      ' / 分配节点=' + assigned.length +\n      ' / 插槽文本=' + (assigned[0] ? assigned[0].textContent : 'none') +\n      ' / host 边框=' + getComputedStyle(card).borderTopWidth;\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面上出现一个带边框的卡片，标题蓝色“声明式 Shadow DOM”，下面一行显示外部传入的插槽文本；探测行输出 shadowRoot 状态、内部与外部 h3 数量、分配节点数、插槽文本与 :host 实际边框宽度。"
+  },
+  {
+    "id": "html-example-145",
+    "language": "html",
+    "type": "html",
+    "title": "attachShadow 的作用域样式 ::slotted",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>attachShadow 样式作用域</title>\n  <style>badge-chip span { color: red; }</style>\n</head>\n<body>\n  <badge-chip id=\"chip\"><span slot=\"label\">离线</span></badge-chip>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var chip = document.getElementById('chip');\n    var root = chip.attachShadow({ mode: \"open\" });\n    root.innerHTML = \"<style>\" +\n      \":host { display: inline-block; border-radius: 999px; padding: 2px 10px; background: #e8f0fe; }\" +\n      \"::slotted(span) { font-weight: 700; letter-spacing: 1px; }\" +\n      \"</style><slot name='label'></slot>\";\n    var slotted = chip.querySelector('span');\n    var hostStyle = getComputedStyle(chip);\n    var slotStyle = getComputedStyle(slotted);\n    document.getElementById('state').textContent =\n      'mode=' + root.mode +\n      ' / host 背景=' + hostStyle.backgroundColor +\n      ' / host 圆角=' + hostStyle.borderTopLeftRadius +\n      ' / slotted 字重=' + slotStyle.fontWeight +\n      ' / 外部红色样式是否穿透=' + (slotStyle.color === 'rgb(255, 0, 0)') +\n      ' / light DOM 保留=' + (chip.querySelectorAll('span').length === 1);\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面上出现一个浅蓝胶囊标签“离线”，字重加粗、字距略宽；探测行输出“mode=open / host 背景=rgb(232, 240, 254) / host 圆角=999px / slotted 字重=700 / 外部红色样式是否穿透=true / light DOM 保留=true”。"
+  },
+  {
+    "id": "html-example-146",
+    "language": "html",
+    "type": "html",
+    "title": "自定义元素生命周期回调",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>元素生命周期</title></head>\n<body>\n  <div id=\"host\"></div>\n  <p><button type=\"button\" id=\"remove\">移除徽标</button></p>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var log = [];\n    class LiteBadge extends HTMLElement {\n      connectedCallback() {\n        log.push('connected:' + this.getAttribute('label'));\n        this.textContent = this.getAttribute('label');\n      }\n      disconnectedCallback() {\n        log.push('disconnected:' + this.getAttribute('label'));\n      }\n    }\n    customElements.define('lite-badge', LiteBadge);\n    var badge = document.createElement('lite-badge');\n    badge.setAttribute('label', '离线优先');\n    document.getElementById('host').appendChild(badge);\n    var state = document.getElementById('state');\n    function render(extra) {\n      state.textContent = '日志=' + log.join(' / ') + (extra ? ' / ' + extra : '');\n    }\n    render('升级=' + (badge instanceof LiteBadge) + ' / 文本=' + badge.textContent);\n    document.getElementById('remove').addEventListener('click', function () {\n      badge.remove();\n      render('仍在文档中=' + document.contains(badge));\n    });\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面上出现一个写着“离线优先”的徽标；探测行显示“日志=connected:离线优先 / 升级=true / 文本=离线优先”。点击“移除徽标”后徽标消失，状态行追加“disconnected:离线优先 / 仍在文档中=false”。"
+  },
+  {
+    "id": "html-example-147",
+    "language": "html",
+    "type": "html",
+    "title": "defer、async 与 noscript 加载时序",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>脚本时序</title></head>\n<body>\n  <script>window.__order = ['classic'];</script>\n  <script defer>window.__order.push('defer-1');</script>\n  <p id=\"target\">目标段落</p>\n  <noscript><p id=\"nojs\">需要启用 JavaScript 才能看到交互</p></noscript>\n  <script defer>\n    window.__order.push('defer-2');\n    document.addEventListener('DOMContentLoaded', function () {\n      document.getElementById('state').textContent =\n        '执行顺序=' + window.__order.join('>') +\n        ' / 解析期目标已存在=' + (document.getElementById('target') !== null) +\n        ' / noscript 进入 DOM=' + (document.getElementById('nojs') !== null);\n    });\n  </script>\n  <p id=\"state\">等待探测</p>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "DOMContentLoaded 之后状态行显示“执行顺序=classic>defer-1>defer-2 / 解析期目标已存在=true / noscript 进入 DOM=false”，说明 defer 脚本按顺序在解析完成后执行，而 noscript 内容在启用脚本时不进入 DOM。"
+  },
+  {
+    "id": "html-example-148",
+    "language": "html",
+    "type": "html",
+    "title": "script type=module 的作用域与 import.meta",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>模块作用域</title></head>\n<body>\n  <script>window.__order = ['classic']; window.leakedInClassic = 'classic-var';</script>\n  <script type=\"module\">\n    var leakedInModule = 'module-var';\n    window.__order.push('module');\n    document.getElementById('state').textContent =\n      '执行顺序=' + window.__order.join('>') +\n      ' / 经典脚本泄漏=' + window.leakedInClassic +\n      ' / 模块泄漏=' + String(window.leakedInModule) +\n      ' / import.meta 存在=' + (typeof import.meta === 'object') +\n      ' / 地址与文档一致=' + (import.meta.url === document.URL) +\n      ' / 严格模式=' + (function () { try { undeclaredProbe = 1; return false; } catch (e) { return true; } })();\n  </script>\n  <p id=\"state\">等待探测</p>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "状态行显示“执行顺序=classic>module / 经典脚本泄漏=classic-var / 模块泄漏=undefined / import.meta 存在=true / 地址与文档一致=true / 严格模式=true”，说明模块在经典脚本之后执行且不向 window 泄漏变量。"
+  },
+  {
+    "id": "html-example-149",
+    "language": "html",
+    "type": "html",
+    "title": "aria-live 状态区域的播报",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>aria-live 状态</title></head>\n<body>\n  <p><button type=\"button\" id=\"save\">保存</button></p>\n  <p id=\"status\" role=\"status\" aria-live=\"polite\">尚未保存</p>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var statusEl = document.getElementById('status');\n    var times = 0;\n    document.getElementById('save').addEventListener('click', function () {\n      times++;\n      statusEl.textContent = '已保存第 ' + times + ' 次';\n    });\n    document.getElementById('state').textContent =\n      'role=' + statusEl.getAttribute('role') +\n      ' / aria-live=' + statusEl.getAttribute('aria-live') +\n      ' / 动态区域数=' + document.querySelectorAll('[aria-live]').length +\n      ' / 初始文本=' + statusEl.textContent;\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面上有一个“保存”按钮与状态行“尚未保存”；点击两次后状态行变成“已保存第 2 次”，读屏会播报这句变化；探测行输出“role=status / aria-live=polite / 动态区域数=1 / 初始文本=尚未保存”。"
+  },
+  {
+    "id": "html-example-150",
+    "language": "html",
+    "type": "html",
+    "title": "role=tablist 标签页模式与键盘切换",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>标签页模式</title></head>\n<body>\n  <div role=\"tablist\" id=\"tablist\" aria-label=\"示例分组\">\n    <button type=\"button\" role=\"tab\" id=\"tab-a\" aria-selected=\"true\" aria-controls=\"panel-a\" tabindex=\"0\">HTML</button>\n    <button type=\"button\" role=\"tab\" id=\"tab-b\" aria-selected=\"false\" aria-controls=\"panel-b\" tabindex=\"-1\">CSS</button>\n  </div>\n  <div role=\"tabpanel\" id=\"panel-a\" aria-labelledby=\"tab-a\">HTML 面板内容</div>\n  <div role=\"tabpanel\" id=\"panel-b\" aria-labelledby=\"tab-b\" hidden>CSS 面板内容</div>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var tabs = Array.prototype.slice.call(document.querySelectorAll('[role=\"tab\"]'));\n    var panels = Array.prototype.slice.call(document.querySelectorAll('[role=\"tabpanel\"]'));\n    function select(tab) {\n      tabs.forEach(function (item) {\n        var on = item === tab;\n        item.setAttribute('aria-selected', String(on));\n        item.tabIndex = on ? 0 : -1;\n        document.getElementById(item.getAttribute('aria-controls')).hidden = !on;\n      });\n      var visible = panels.filter(function (panel) { return !panel.hidden; });\n      document.getElementById('state').textContent =\n        '选中=' + tab.id +\n        ' / 可见面板=' + visible.map(function (p) { return p.id; }).join(',') +\n        ' / 面板数=' + panels.length;\n    }\n    tabs.forEach(function (tab) {\n      tab.addEventListener('click', function () { select(tab); });\n      tab.addEventListener('keydown', function (event) {\n        if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;\n        event.preventDefault();\n        var index = tabs.indexOf(tab);\n        var next = tabs[(index + (event.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];\n        next.focus();\n        select(next);\n      });\n    });\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面上有两个标签“HTML”“CSS”，初始显示 HTML 面板；点击 CSS 后切换到 CSS 面板，状态行显示“选中=tab-b / 可见面板=panel-b / 面板数=2”；在 CSS 标签上按左方向键切回 HTML。"
+  },
+  {
+    "id": "html-example-151",
+    "language": "html",
+    "type": "html",
+    "title": "aria-expanded 披露按钮与 aria-controls",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>aria-expanded 披露</title></head>\n<body>\n  <button type=\"button\" id=\"toggle\" aria-expanded=\"false\" aria-controls=\"more\">更多信息</button>\n  <div id=\"more\" hidden>这里是展开后的补充内容。</div>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var toggle = document.getElementById('toggle');\n    var more = document.getElementById('more');\n    function report() {\n      document.getElementById('state').textContent =\n        'expanded=' + toggle.getAttribute('aria-expanded') +\n        ' / hidden=' + more.hidden +\n        ' / controls 匹配=' + (document.getElementById(toggle.getAttribute('aria-controls')) === more);\n    }\n    toggle.addEventListener('click', function () {\n      var open = toggle.getAttribute('aria-expanded') !== 'true';\n      toggle.setAttribute('aria-expanded', String(open));\n      more.hidden = !open;\n      report();\n    });\n    report();\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面上有一个“更多信息”按钮和隐藏的内容；点击后内容出现，状态行从“expanded=false / hidden=true / controls 匹配=true”变成“expanded=true / hidden=false / controls 匹配=true”。"
+  },
+  {
+    "id": "html-example-152",
+    "language": "html",
+    "type": "html",
+    "title": "tabindex 焦点顺序与可编程聚焦",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>tabindex 焦点顺序</title></head>\n<body>\n  <button type=\"button\" id=\"first\">第一</button>\n  <button type=\"button\" id=\"second\" tabindex=\"2\">第二（tabindex=2）</button>\n  <button type=\"button\" id=\"third\" tabindex=\"1\">第三（tabindex=1）</button>\n  <div id=\"focusable\" tabindex=\"-1\">可编程聚焦区域</div>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var log = [];\n    document.addEventListener('focusin', function (event) {\n      log.push(event.target.id);\n      document.getElementById('state').textContent =\n        '焦点顺序=' + log.join('>') +\n        ' / tabIndex 值=' + ['first', 'second', 'third'].map(function (id) {\n          return id + ':' + document.getElementById(id).tabIndex;\n        }).join(',') +\n        ' / 程序聚焦区域 tabIndex=' + document.getElementById('focusable').tabIndex;\n    });\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "连续按 Tab 时焦点顺序是“第三 → 第二 → 第一”（因 tabindex=1/2 优先于默认 0）；状态行同时列出每个元素的 tabIndex 值与可编程聚焦区域的 -1。"
+  },
+  {
+    "id": "html-example-153",
+    "language": "html",
+    "type": "html",
+    "title": "inert 阻止焦点与交互",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>inert 隔离</title>\n  <style>#modalish[inert] { opacity: 0.5; }</style>\n</head>\n<body>\n  <div id=\"modalish\" inert>\n    <p>弹层打开时应被隔离的背景区</p>\n    <button type=\"button\" id=\"blocked\">不可聚焦按钮</button>\n  </div>\n  <button type=\"button\" id=\"allowed\">可聚焦按钮</button>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var box = document.getElementById('modalish');\n    var blocked = document.getElementById('blocked');\n    var allowed = document.getElementById('allowed');\n    blocked.focus();\n    var afterBlocked = document.activeElement;\n    allowed.focus();\n    var afterAllowed = document.activeElement;\n    document.getElementById('state').textContent =\n      'inert=' + box.inert +\n      ' / 被阻按钮可聚焦=' + (afterBlocked === blocked) +\n      ' / 正常按钮可聚焦=' + (afterAllowed === allowed) +\n      ' / 被阻透明度=' + getComputedStyle(box).opacity;\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "背景区以半透明显示，其中的按钮无法获得焦点，点击也无反应；下面的“可聚焦按钮”可正常聚焦；探测行输出“inert=true / 被阻按钮可聚焦=false / 正常按钮可聚焦=true / 被阻透明度=0.5”。"
+  },
+  {
+    "id": "html-example-154",
+    "language": "html",
+    "type": "html",
+    "title": "hidden=until-found 与 beforematch",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>hidden until-found</title></head>\n<body>\n  <p><button type=\"button\" id=\"reveal\">模拟查找命中</button></p>\n  <div id=\"hidden-part\" hidden=\"until-found\">\n    <h2>隐藏章节</h2>\n    <p>搜索“离线缓存”会命中这一段。</p>\n  </div>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var part = document.getElementById('hidden-part');\n    var log = [];\n    part.addEventListener('beforematch', function () { log.push('beforematch'); });\n    function report() {\n      var style = getComputedStyle(part);\n      document.getElementById('state').textContent =\n        'hidden 值=' + (part.getAttribute('hidden') === null ? 'none' : part.getAttribute('hidden')) +\n        ' / content-visibility=' + style.contentVisibility +\n        ' / 已解密=' + (part.hidden === false) +\n        ' / 事件=' + (log.join(',') || 'none') +\n        ' / 高度=' + Math.round(part.getBoundingClientRect().height);\n    }\n    document.getElementById('reveal').addEventListener('click', function () {\n      part.dispatchEvent(new Event('beforematch'));\n      part.hidden = false;\n      report();\n    });\n    report();\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "初始时隐藏章节不可见但能被页内查找命中（`content-visibility: hidden`）；点击“模拟查找命中”后先触发 beforematch，再把内容展开，状态行输出 hidden 值与高度。"
+  },
+  {
+    "id": "html-example-155",
+    "language": "html",
+    "type": "html",
+    "title": "contenteditable plaintext-only 编辑区",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>contenteditable 纯文本</title>\n  <style>#editor { border: 1px solid #c8cdd4; min-height: 40px; padding: 6px 8px; }</style>\n</head>\n<body>\n  <div id=\"editor\" contenteditable=\"plaintext-only\" role=\"textbox\" aria-multiline=\"true\"\n    aria-label=\"备注编辑器\">第一行</div>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var editor = document.getElementById('editor');\n    var events = 0;\n    function report(extra) {\n      document.getElementById('state').textContent =\n        'contenteditable=' + editor.getAttribute('contenteditable') +\n        ' / isContentEditable=' + editor.isContentEditable +\n        ' / input 次数=' + events +\n        ' / 子元素数=' + editor.querySelectorAll('*').length +\n        ' / 文本=' + editor.textContent + (extra ? ' / ' + extra : '');\n    }\n    editor.addEventListener('input', function () { events++; report(); });\n    report();\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "页面上出现一个可编辑的纯文本区域，初始内容是“第一行”；在里面输入 `<b>粗</b>` 这样的文字后，子元素数仍为 0、文本原样保留尖括号，说明标签被当作文本对待。"
+  },
+  {
+    "id": "html-example-156",
+    "language": "html",
+    "type": "html",
+    "title": "combobox 与 aria-activedescendant",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>组合框</title></head>\n<body>\n  <label for=\"combo\" id=\"combo-label\">选择语言</label>\n  <input id=\"combo\" role=\"combobox\" aria-expanded=\"true\" aria-controls=\"list\" aria-autocomplete=\"list\" aria-activedescendant=\"opt-2\" value=\"CSS\">\n  <ul id=\"list\" role=\"listbox\" aria-labelledby=\"combo-label\">\n    <li id=\"opt-1\" role=\"option\" aria-selected=\"false\">HTML</li>\n    <li id=\"opt-2\" role=\"option\" aria-selected=\"true\">CSS</li>\n    <li id=\"opt-3\" role=\"option\" aria-selected=\"false\">JavaScript</li>\n  </ul>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var combo = document.getElementById('combo');\n    var options = Array.prototype.slice.call(document.querySelectorAll('[role=\"option\"]'));\n    var index = 1;\n    function activate(next) {\n      index = next;\n      options.forEach(function (option, i) {\n        option.setAttribute('aria-selected', String(i === index));\n      });\n      combo.setAttribute('aria-activedescendant', options[index].id);\n      combo.value = options[index].textContent;\n      document.getElementById('state').textContent =\n        '活动选项=' + options[index].id +\n        ' / 值=' + combo.value +\n        ' / 选中项数=' + options.filter(function (o) { return o.getAttribute('aria-selected') === 'true'; }).length +\n        ' / 焦点在输入框=' + (document.activeElement === combo);\n    }\n    combo.addEventListener('keydown', function (event) {\n      if (event.key === 'ArrowDown') {\n        event.preventDefault();\n        activate((index + 1) % options.length);\n      }\n      if (event.key === 'ArrowUp') {\n        event.preventDefault();\n        activate((index + options.length - 1) % options.length);\n      }\n    });\n    combo.addEventListener('focus', function () { activate(index); });\n    activate(1);\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "输入框显示“CSS”，下方列表里 CSS 被标记为选中；聚焦输入框后按一下方向下键，活动选项变为 JavaScript 且输入框值同步；再按方向下键循环回到 HTML，焦点始终留在输入框。"
+  },
+  {
+    "id": "html-example-157",
+    "language": "html",
+    "type": "html",
+    "title": "popover=manual 与显式关闭动作",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>manual 浮层</title>\n  <style>[popover] { border: 1px solid #c8cdd4; border-radius: 8px; padding: 10px 14px; }</style>\n</head>\n<body>\n  <button type=\"button\" id=\"toggle\" popovertarget=\"manual\">打开手动浮层</button>\n  <div id=\"manual\" popover=\"manual\">\n    <p>manual 浮层不会因为点击外部而关闭。</p>\n    <button type=\"button\" id=\"close\" popovertarget=\"manual\" popovertargetaction=\"toggle\">切换</button>\n  </div>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var tip = document.getElementById('manual');\n    var changes = 0;\n    tip.addEventListener('toggle', function (event) {\n      changes++;\n      document.getElementById('state').textContent =\n        'newState=' + event.newState +\n        ' / 事件数=' + changes +\n        ' / popover 值=' + tip.getAttribute('popover') +\n        ' / 打开=' + tip.matches(':popover-open');\n    });\n    document.getElementById('state').textContent =\n      'popover 值=' + tip.getAttribute('popover') + ' / 初始打开=' + tip.matches(':popover-open');\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "点击“打开手动浮层”后浮层出现；在页面空白处点击或按 Esc（不使用 light dismiss 的 manual 类型），浮层依然存在；再点浮层内的“切换”才关闭，状态行记录每次 newState 与事件数。"
+  },
+  {
+    "id": "html-example-158",
+    "language": "html",
+    "type": "html",
+    "title": "aria-describedby 与 aria-errormessage 关联",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>错误消息关联</title></head>\n<body>\n  <label for=\"mail\">邮箱</label>\n  <input id=\"mail\" name=\"mail\" type=\"email\" value=\"lin@\"\n    aria-describedby=\"mail-help\" aria-errormessage=\"mail-error\">\n  <p id=\"mail-help\">用于接收离线通知，不会联网。</p>\n  <p id=\"mail-error\" hidden></p>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var mail = document.getElementById('mail');\n    var error = document.getElementById('mail-error');\n    var help = document.getElementById('mail-help');\n    function check() {\n      var invalid = !(mail.value && mail.validity.valid);\n      error.textContent = invalid ? '请输入完整邮箱地址' : '';\n      error.hidden = !invalid;\n      mail.setAttribute('aria-invalid', String(invalid));\n      document.getElementById('state').textContent =\n        'valid=' + mail.validity.valid +\n        ' / aria-invalid=' + mail.getAttribute('aria-invalid') +\n        ' / 错误可见=' + (!error.hidden) +\n        ' / 关联帮助=' + (document.getElementById(mail.getAttribute('aria-describedby')) === help) +\n        ' / 错误文案=' + (error.textContent || 'none');\n    }\n    mail.addEventListener('input', check);\n    check();\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "初始值 `lin@` 不合法，邮箱框下方出现红色提示“请输入完整邮箱地址”，探测行显示 valid=false / aria-invalid=true；补全为 `lin@example.invalid` 后提示消失，aria-invalid 变回 false。"
+  },
+  {
+    "id": "html-example-159",
+    "language": "html",
+    "type": "html",
+    "title": "role=alert 错误汇总与焦点移动",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head><meta charset=\"utf-8\"><title>错误汇总</title></head>\n<body>\n  <form id=\"signup\" novalidate>\n    <p><label for=\"user\">用户名</label><input id=\"user\" name=\"user\" required value=\"\"></p>\n    <p><label for=\"pwd\">密码</label><input id=\"pwd\" name=\"pwd\" type=\"password\" required value=\"\"></p>\n    <p><button type=\"submit\">注册</button></p>\n  </form>\n  <div id=\"summary\" role=\"alert\" aria-live=\"assertive\" hidden>\n    <p id=\"summary-text\"></p>\n    <ul id=\"summary-list\"></ul>\n  </div>\n  <p id=\"state\">等待探测</p>\n  <script>\n    var form = document.getElementById('signup');\n    var summary = document.getElementById('summary');\n    var list = document.getElementById('summary-list');\n    var labels = { user: '用户名', pwd: '密码' };\n    form.addEventListener('submit', function (event) {\n      event.preventDefault();\n      var fields = [document.getElementById('user'), document.getElementById('pwd')];\n      var missing = fields.filter(function (field) { return !field.value; });\n      while (list.firstChild) list.removeChild(list.firstChild);\n      missing.forEach(function (field) {\n        var item = document.createElement('li');\n        item.textContent = labels[field.id] + '不能为空';\n        list.appendChild(item);\n      });\n      summary.hidden = missing.length === 0;\n      document.getElementById('summary-text').textContent =\n        missing.length ? missing.length + ' 项需要修正' : '表单已通过校验';\n      if (missing.length) missing[0].focus();\n      document.getElementById('state').textContent =\n        '错误数=' + missing.length +\n        ' / 汇总可见=' + (!summary.hidden) +\n        ' / 条目=' + list.children.length +\n        ' / 焦点=' + document.activeElement.id;\n    });\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "直接点“注册”时，汇总区出现“2 项需要修正”与两条“不能为空”，焦点自动跳到用户名字段；填好两项再提交后汇总隐藏，状态行显示错误数=0 与汇总可见=false。"
+  },
+  {
+    "id": "html-example-160",
+    "language": "html",
+    "type": "html",
+    "title": "综合实战：离线工单面板",
+    "code": "<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>离线工单面板</title>\n  <style>\n    body { font-family: sans-serif; }\n    table { border-collapse: collapse; }\n    th, td { border: 1px solid #c8cdd4; padding: 4px 8px; text-align: left; }\n    #title-error { color: #d93025; }\n    [popover] { border: 1px solid #c8cdd4; border-radius: 8px; padding: 10px 14px; }\n    #help { inset: auto 12px 12px; margin: 0; max-width: calc(100vw - 24px); }\n    #help:popover-open { display: block; }\n  </style>\n</head>\n<body>\n  <main>\n    <h1>离线工单面板</h1>\n    <form id=\"ticket\" novalidate>\n      <p>\n        <label for=\"title\">工单标题</label>\n        <input id=\"title\" name=\"title\" required aria-describedby=\"title-help\" aria-errormessage=\"title-error\">\n      </p>\n      <p id=\"title-help\">标题会保存到本地工单表。</p>\n      <p id=\"title-error\" hidden></p>\n      <p><button type=\"submit\" id=\"add\">添加工单</button></p>\n    </form>\n    <p id=\"status\" role=\"status\" aria-live=\"polite\">共 0 条工单</p>\n    <table id=\"board\">\n      <caption>本地工单</caption>\n      <thead><tr><th scope=\"col\">编号</th><th scope=\"col\">标题</th><th scope=\"col\">状态</th></tr></thead>\n      <tbody id=\"rows\"></tbody>\n      <tfoot><tr><th scope=\"row\">合计</th><td id=\"total\" colspan=\"2\">0</td></tr></tfoot>\n    </table>\n    <details name=\"panel\" open>\n      <summary>如何离线保存？</summary>\n      <p>数据只写入本地存储，不会访问网络。</p>\n    </details>\n    <p><button type=\"button\" id=\"open-help\" popovertarget=\"help\">查看帮助</button></p>\n    <div id=\"help\" popover>\n      <p>离线工单面板不会发送任何网络请求。</p>\n      <button type=\"button\" id=\"close-help\" popovertarget=\"help\" popovertargetaction=\"hide\">关闭</button>\n    </div>\n    <p id=\"state\">等待探测</p>\n  </main>\n  <script>\n    var form = document.getElementById('ticket');\n    var title = document.getElementById('title');\n    var error = document.getElementById('title-error');\n    var rows = document.getElementById('rows');\n    var total = document.getElementById('total');\n    var statusEl = document.getElementById('status');\n    var count = 0;\n    form.addEventListener('submit', function (event) {\n      event.preventDefault();\n      var invalid = title.value.trim() === '';\n      title.setAttribute('aria-invalid', String(invalid));\n      error.hidden = !invalid;\n      error.textContent = invalid ? '标题不能为空' : '';\n      if (invalid) {\n        title.focus();\n        document.getElementById('state').textContent = '校验失败，焦点=' + document.activeElement.id;\n        return;\n      }\n      count++;\n      var row = document.createElement('tr');\n      var idCell = document.createElement('td');\n      idCell.textContent = 'T-' + count;\n      var titleCell = document.createElement('td');\n      titleCell.textContent = title.value.trim();\n      var stateCell = document.createElement('td');\n      stateCell.textContent = '待处理';\n      row.appendChild(idCell);\n      row.appendChild(titleCell);\n      row.appendChild(stateCell);\n      rows.appendChild(row);\n      total.textContent = String(count);\n      statusEl.textContent = '共 ' + count + ' 条工单';\n      title.value = '';\n      document.getElementById('state').textContent = '已添加 / 行数=' + rows.children.length + ' / 合计=' + total.textContent;\n    });\n    document.getElementById('state').textContent =\n      '初始行数=' + rows.children.length + ' / 合计=' + total.textContent +\n      ' / 播报区=' + statusEl.getAttribute('role') +\n      ' / 折叠组=' + document.querySelector('details').getAttribute('name');\n  </script>\n  <output id=\"webforge-check\" hidden>ok</output>\n</body>\n</html>",
+    "expectedOutput": "面板初始显示空工单表（合计 0）、展开的说明与帮助按钮；空标题提交时出现红色“标题不能为空”并把焦点移回输入框；填入“磁盘告警”后新增一行 T-1，合计变 1，状态行播报“共 1 条工单”；点“查看帮助”在底部弹出浮层，按 Esc 或点浮层里的“关闭”都能收起。"
+  }
+]

@@ -1,0 +1,7 @@
+Web web-app-c606-20261026-relay gate=FAIL -> c-coordinator. Grant C607-NEG. GRANT CONSUMED; NO SUCCESSOR GRANT.
+Supervisor terminal=True outerActive=0 forcedCleanup=False relayDelivered=False.
+Runner elapsed=103.598s phases format=FAIL_OR_INCOMPLETE,tests=PASS,analysis=PASS,content=PASS.
+Roots format:61620/1,tests:72888/0,analysis:68484/0,content:36072/0 publisher 69684/0 delivered=True.
+allOwnedJobsEmpty=True terminalConfirmed=True sourceStable=True coreHead=2f9039a3ba95449679b17257b0313c1ee3644a2c plus live WIP, not clean-core-only evidence.
+Wrapper pid=72020 created=134374300975505421 wrapperAliveAtRelay=true outerTerminalClaimed=false wrapperExitPending=true.
+Evidence research/web-app-c606-20261026-relay/job.json. No catalog/native/WSL/HAP/device extra. No SDK/browser run until a NEW explicit grant.

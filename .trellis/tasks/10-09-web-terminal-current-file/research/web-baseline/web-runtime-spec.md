@@ -1,0 +1,238 @@
+# Web Runtime Contracts
+
+## 1. Scope / Trigger
+
+Use this contract when changing project configuration, preview startup, static
+serving, proxying, browser diagnostics, live reload, or the Web tools page.
+The product owns these capabilities; `qfli_studio_core` owns shared editor hooks.
+
+## 2. Signatures
+
+```dart
+Future<WebDevServer> WebDevServer.start(String projectPath);
+Future<WebRuntimeSession> WebRuntime.start(String projectPath);
+Future<NginxSession> NginxSession.start(String projectPath, {required String executable});
+Future<NginxSession> NginxSession.startWithHost(String projectPath, {required NginxHost host});
+Future<WebProjectConfig> WebProjectConfig.load(String projectPath);
+WebProjectConfig WebProjectConfig.parse(String projectPath, Map<String, dynamic> data);
+Future<void> WebPreviewSession.stop();
+```
+
+`WebRuntimeSession` extends `WebPreviewSession` with `engineName` and `requests`.
+`webProfile.webPreviewFactory` uses `WebRuntime.start`. The editor subscribes
+to `debugStream` and opens `url`; it stops the previous session before running
+again and stops the active session on disposal. Do not also start a second
+preview through `RunnerService.runProject`.
+
+## 3. Contracts
+
+- The listener binds `127.0.0.1`. Port zero requests an available ephemeral port.
+- `.qfli/web.json` stores `root: String?`, `port: int`, `spaFallback: bool`, and
+  `proxies: [{prefix: String, target: String}]`, plus
+  `engine: "auto" | "nginx" | "webforge"` (default `auto`).
+- Native Nginx owns the public loopback port. An ephemeral private WebForge
+  middleware retains static-path protection, SPA behavior, diagnostics and SSE.
+  Its Origin checks use the public Nginx port. Both belong to one session.
+- Native HTTP proxies and WebSocket upgrades run in Nginx. HTTPS rules use the
+  middleware because the native build does not include OpenSSL. Generate native
+  locations for both schemes: longer HTTPS prefixes must still beat HTTP parents.
+- Each native session uses its own temporary prefix, validates `nginx -t`, checks
+  the session-token header through `/__webforge/health`, tails JSON access logs
+  in bounded reads, and forwards stderr. Version/config/signal commands kill
+  their child on timeout. Stop uses `-s stop`, with a bounded kill fallback, then
+  stops middleware, cancels streams and removes the prefix.
+- iOS uses `EmbeddedNginxHost` through `qflistudio/nginx`. The native pthread
+  retains the same configuration/middleware/health-token checks. Configuration
+  checks finish/release their worker before server start. Stop waits for actual
+  native cleanup/release before deleting the prefix or stopping middleware.
+  The embedded error.log is tailed with bounded reads alongside access.log.
+- Display the running session's actual `engineName`. Explicit Nginx never
+  substitutes another engine. On HarmonyOS, `auto` handles a native exec EACCES
+  by selecting WebForge; other startup errors still propagate.
+- The root is explicit or derived from the safe HTML entry returned by
+  `RunnerService.findEntry`, including `.qfli/project.json`'s `entryFile`.
+  Legacy projects retain root `index.html`, then `src/index.html` discovery.
+  `WebProjectConfig.indexFile` is relative to the canonical root and defaults
+  to `index.html`. `/` and SPA navigation use it; subdirectories keep their own
+  `index.html`. An explicit Web root wins when the entry lies elsewhere.
+  Nginx passes `indexFile` to its private middleware. UI saves and server startup
+  both validate through `WebProjectConfig.parse`.
+- Proxy targets are HTTP(S) URLs without query, fragment, or credentials.
+  Prefix matches have path-segment boundaries; the longest prefix wins.
+- HTTP proxies preserve methods, query, bodies, status, redirects, and headers.
+  Strip hop headers and headers named by `Connection`. Preserve compressed bytes
+  with `HttpClient.autoUncompress = false`.
+- WebSocket proxies forward text, binary messages, and negotiated subprotocols.
+  Both peers are tracked and closed on stop. Never forward reserved close codes
+  1005, 1006, or 1015 as wire close codes.
+- `POST /__webforge/debug` accepts JSON with `message: String` and optional
+  `level: String`. Payloads are limited to 16 KiB; rendered lines to 4000 characters.
+- `GET /__webforge/events` emits SSE `data: reload`. Set
+  `HttpResponse.bufferOutput = false`; `flush()` alone did not stream data in
+  the Windows integration test. Debounce native file events by 180 ms.
+- Request events include method, URI, status, and duration. HTTP errors also
+  enter the editor debug stream.
+- `qflistudio/platform.openUrl` accepts `{url: String}`. Android launches an
+  HTTP(S) intent; iOS presents Safari inside the app to retain foreground service
+  execution. macOS needs network client and server entitlements.
+
+## 4. Validation & Error Matrix
+
+| Condition | Outcome |
+| --- | --- |
+| Invalid JSON, root, port, SPA flag, or proxy rule | Startup fails with a specific configuration error |
+| Invalid engine value | FormatException before binding |
+| Explicit Nginx with missing binary | Startup error |
+| Explicit Nginx with exec permission denied | ProcessException; no substitution |
+| Auto on HarmonyOS with exec permission denied | WebForge session, labeled WebForge |
+| Occupied native port | Startup fails and cleans temporary prefix / middleware |
+| Traversal, hidden project files, symlink escape | 403 |
+| Missing asset | 404, never the SPA HTML |
+| Extensionless HTML navigation with SPA fallback | Root HTML |
+| Static request outside GET/HEAD | 405 |
+| Invalid debug JSON | 400 |
+| Debug event from a foreign Origin | 403 |
+| Debug event larger than 16 KiB | 413 |
+| Upstream connection / WebSocket failure | 502 |
+| Upstream timeout | 504 |
+
+## 5. Good / Base / Bad Cases
+
+- Good: a `src/index.html` template loads its relative CSS/JS; `/api/items?q=7`
+  forwards to `/v1/items?q=7`; a WebSocket proxy echoes binary data.
+- Good: importing HTML as `src/lesson.html` previews it at `/` with working
+  relative assets, through both WebForge and native Nginx.
+- Base: a root-level static project runs with an ephemeral loopback port.
+- Bad: `/missing.js` receives SPA HTML, proxy redirects are followed internally,
+  or a second preview listener remains active after an editor run.
+
+## 6. Tests Required
+
+- `test/web_dev_server_test.dart`: static assets, traversal/symlinks, SPA rules,
+  proxy request/response fidelity, redirects, WebSocket protocol/messages/stop,
+  a real SSE file-change event, malformed events, and error diagnostics.
+- `test/nginx_session_test.dart`: real upstream binary/header, native HTTP and
+  WebSocket proxies, overlapping HTTP/HTTPS prefix priority, diagnostics, native
+  access logs, SSE streaming, port conflict and post-stop connection failure.
+- Both server suites cover a custom imported HTML entry. The WebForge suite
+  also checks SPA navigation and an explicit root pointing to build output.
+- `test/web_app_test.dart`: product hook wiring and root/src entry behavior.
+- `test/web_tools_navigation_test.dart`: existing navigation and persisted settings.
+- `test/web_tools_page_test.dart`: actual HTTP transport and visible codec results.
+- Run `flutter analyze --no-pub` and `flutter test --no-pub`. Native platform
+  builds and device checks provide separate evidence; Dart tests do not validate
+  Swift, entitlements, Android intents, or HarmonyOS browser behavior.
+
+## 7. Wrong vs Correct
+
+```dart
+// Wrong: a dynamic map result can fail at runtime for Connection headers.
+result.addAll(value.split(',').map((item) => item.trim().toLowerCase()));
+
+// Correct: add each normalized token through the typed set boundary.
+for (final item in value.split(',')) {
+  result.add(item.trim().toLowerCase());
+}
+```
+
+The Dart engine is a local development server. Advertise Nginx only when a real
+upstream executable or embedded library is packaged, started, verified, and stopped correctly.
+
+## Native Packaging & Evidence
+
+- Linux builds the retained upstream C source through its CMake dependency and
+  uses `install(PROGRAMS ...)` under `data/nginx/`. Configure probes require a
+  native target host; reject a cross-built runner instead of packaging a host
+  executable. `scripts/build_nginx_desktop.sh linux [OUTPUT]` also supports a
+  checkout build under `assets/runtime/nginx/linux/` for integration tests.
+- macOS runs `scripts/bundle_nginx_macos.sh` in the Runner target. Build both
+  configure probes, final objects and linking with the same `ARCHS`; bundle the helper
+  under `Contents/Helpers/nginx`, its license under `Contents/Resources/nginx/`,
+  and sign the helper with the parent signing identity and sandbox inheritance
+  before the outer application. Parent network client/server rights are needed.
+  A copied unsigned helper or executable in Flutter assets is insufficient.
+- `WebRuntime.nginxExecutable()` resolves Linux `data/nginx/nginx`, macOS
+  `Contents/Helpers/nginx`, then platform-specific checkout paths. Desktop tests
+  use that same discovery and exercise automatic engine selection as well as
+  explicit Nginx. Missing native builds produce a visible skip, never a pass.
+  Apple builds and Linux app execution remain unverified; consult VALIDATION.
+  The 2026-10-02 WSL standalone build passed native static/proxy/404/stop checks.
+  Keep that engine evidence distinct from Linux Flutter middleware integration.
+- iOS links an upstream static archive through the Runner's Build Embedded Nginx
+  phase and Flutter/Nginx.xcconfig. The SDK/ARCHS-specific build verifies target
+  type sizes/byte order without executing target configure probes. Every object
+  must match the iOS device/simulator platform before the final archive is linked.
+  The Swift bridge retains the ABI through actual calls. Apple build/sign/runtime
+  gates remain unverified without Xcode/devices; Linux embedded evidence is separate.
+- Retain upstream source/Windows archive hashes in `vendor/nginx/SOURCE.json`;
+  retained build inputs and binaries are covered by `HASHES.sha256`.
+- Android API 24 PIE executables ship as `jniLibs/<abi>/libnginx_exec.so` with
+  legacy library extraction. `nginxPath` returns `applicationInfo.nativeLibraryDir`.
+  Do not extract to writable app data and assume chmod enables execution.
+  Application smoke passed on the API 37 x86_64 emulator with actual 16 KiB
+  pages. This does not prove arm64/32-bit device execution.
+- HarmonyOS packages native files under `entry/libs/<abi>/`; `nginxPath` resolves
+  `applicationInfo.nativeLibraryPath`. Declare each native executable in
+  `module.executableBinaryPaths` using module-relative paths, such as
+  `libs/x86_64/libnginx_exec.so`. The original package installed this file with
+  mode 100644 and app `Process.run(..., ['-v'])` returned EACCES, while system
+  `echo` worked. The manifest change passes signed dual-ABI packaging; app
+  execution after the change remains unverified. Shell execution is insufficient.
+- WSL Windows compiler invocation uses `/init <executable> <argv[0]> <args>`.
+  Normalize CRLF compiler output before configure writes generated C strings.
+  Scope LF Git attributes to shell scripts, patches and native source inputs.
+- Run `tool/nginx_smoke.dart` on each device ABI and require its PASS marker.
+  APK/HAP builds and shell `-V` alone cannot satisfy this gate. Restore the normal
+  `lib/main.dart` target for deliverable builds. See `vendor/nginx/VALIDATION.md`.
+
+## Embedded Lifecycle ABI
+
+`qfli_nginx_version() -> const char*`, `qfli_nginx_start(prefix, test) -> int64_t`,
+`qfli_nginx_poll(token, int* exit) -> int`, `qfli_nginx_stop(token) -> int`,
+and `qfli_nginx_release(token) -> int` are the only public native exports.
+
+The Flutter channel contract is:
+
+| Method | Arguments | Success result |
+| --- | --- | --- |
+| version | none | upstream version string |
+| start | `{prefix: String, test: bool}` | positive int64 token |
+| poll | `{token: int}` | null while running; int exit code after cleanup |
+| stop | `{token: int}` | null after a stop request is sent |
+| release | `{token: int}` | null after joining/releasing the completed worker |
+
+Native negative POSIX errors become `NGINX_START` / `NGINX_SESSION` platform
+errors; malformed payloads become `INVALID_ARGUMENT`. C poll returns 0 pending,
+1 completed, or a negative error. C start returns -EBUSY while a job remains
+owned; release returns -EBUSY before completion. Old stop/release tokens are
+harmless and cannot stop a later job. Polling can resume during Stop after a
+transient channel error. Native core settings require daemon/master off and
+zero timer_resolution/debug_points, including in configuration-test mode.
+
+The worker blocks SIGPIPE only in its thread. It never installs host signal
+handlers, sets process titles/environment, redirects descriptors or uses process
+exit. The event backend's done action must be retained before partial init can
+fail. Every terminal path releases arrays allocated outside the cycle pool.
+
+Embedded CORE_SRCS must omit ngx_process.c, ngx_process_cycle.c, ngx_daemon.c
+and ngx_setproctitle.c. Disabling master/daemon in configuration alone still
+compiles fork, which is unavailable in the iOS SDK. The addon supplies the event
+engine globals and rejecting ngx_execute/ngx_os_signal_process implementations;
+ngx_debug_point cannot signal the host. The build rejects process-management
+objects and forbidden process imports in the static archive on Linux and iOS.
+Retain undefined-symbols.txt as build evidence. Optional event timer imports
+remain compiled upstream but timer_resolution must be zero before event init.
+Create the archive in the fresh build directory before replacing the output;
+ar rcs on an existing archive retains removed process-management members.
+
+Wrong: destroy an active HTTP request pool directly. Upstream cleanup finalizes
+request references and can free that same pool recursively. Correct: retain the
+main request while running ngx_http_terminate_request, then synchronously run
+ngx_http_terminate_handler and close its connection. The build omits native
+threads/AIO/HTTP2/HTTP3; do not enable them without extending this cleanup contract.
+
+Required gates are `native/nginx/embedded/test_embedded.py` (real library) and
+`test_lifecycle.c` (100 cycles with leak detection), `test/nginx_host_test.dart`
+(channel cleanup/error/diagnostic behavior), the unchanged real process suite,
+and the Android application smoke. Apple device and simulator builds remain
+separate gates, never inferred from Linux compilation or mocked channel tests.

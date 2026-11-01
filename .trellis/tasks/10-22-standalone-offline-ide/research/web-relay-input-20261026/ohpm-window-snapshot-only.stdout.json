@@ -1,0 +1,122 @@
+{
+  "snapshotOnly": true,
+  "blocker": "source graph incomplete: the declared local dependency is absent from the generated resolution surfaces, so local-only OHPM resolution is unproven; OHPM is not started",
+  "runnable": false,
+  "surfaces": {
+    "inputs": {
+      "entryManifest": "ohos/entry/oh-package.json5",
+      "entryLock": "ohos/entry/oh-package-lock.json5",
+      "rootLock": "ohos/oh-package-lock.json5",
+      "moduleMap": "ohos/oh_modules/.ohpm/lock.json5",
+      "dependencyMap": [
+        "ohos/.hvigor/dependencyMap/dependencyMap.json5",
+        "ohos/.hvigor/dependencyMap/oh-package.json5"
+      ],
+      "typesPackage": [
+        "ohos/entry/src/main/cpp/types/libqfli_web_cdp_transport/index.d.ts",
+        "ohos/entry/src/main/cpp/types/libqfli_web_cdp_transport/oh-package.json5"
+      ]
+    },
+    "declared": {
+      "entryManifestCdp": true,
+      "entryManifestSpecifier": "\"libqfli_web_cdp_transport.so\": \"file:./src/main/cpp/types/libqfli_web_cdp_transport\"",
+      "entryManifestNginx": true,
+      "proofImportsCdp": true
+    },
+    "typesPackage": {
+      "name": "libqfli_web_cdp_transport.so",
+      "version": "1.0.0",
+      "types": "./index.d.ts",
+      "exports": [
+        "close",
+        "openSelf",
+        "read",
+        "write"
+      ]
+    },
+    "resolved": {
+      "entryLockCdp": false,
+      "entryLockNginx": true,
+      "rootLockCdp": false,
+      "moduleMapOverrideCdp": false,
+      "moduleMapModulesCdp": false,
+      "moduleMapPackagesCdp": false,
+      "entryOhModulesCdp": false,
+      "entryOhModulesNginx": true
+    },
+    "registryUrls": [
+      "https://ohpm.openharmony.cn/ohpm/@ohos/hypium/-/hypium-1.0.6.tgz"
+    ]
+  },
+  "gap": [
+    "entry/oh-package-lock.json5",
+    "oh_modules/.ohpm overrideDependencyMap",
+    "oh_modules/.ohpm modules",
+    "oh_modules/.ohpm packages",
+    "entry/oh_modules junction"
+  ],
+  "source": {
+    "files": [
+      {
+        "path": "ohos/.hvigor/dependencyMap/dependencyMap.json5",
+        "bytes": 628,
+        "sha256": "cbac85fb3ab2839ea79254c2739120ea1922c719a18988d9be98de3e40999fa3"
+      },
+      {
+        "path": "ohos/.hvigor/dependencyMap/oh-package.json5",
+        "bytes": 809,
+        "sha256": "39c89710590331581d06ab670cd615421546abf351dba4e1826e5b7fcd26db18"
+      },
+      {
+        "path": "ohos/build-profile.json5",
+        "bytes": 803,
+        "sha256": "b2a947f5c7d1509438444d4e68a48b5be50bcbea691f54bb60f5aac287762309"
+      },
+      {
+        "path": "ohos/entry/build-profile.json5",
+        "bytes": 353,
+        "sha256": "9c4e3a74167e3e3e32d0c959f20d544c8be412c52e5755f7f463f7aa2e4759df"
+      },
+      {
+        "path": "ohos/entry/oh-package-lock.json5",
+        "bytes": 3718,
+        "sha256": "c0a9b4cd75ae696856fe7af30e48f46b4b6359f0811b086dd0a586e22a4db248"
+      },
+      {
+        "path": "ohos/entry/oh-package.json5",
+        "bytes": 345,
+        "sha256": "7bfeb4468b0142fd68aa4afe6da695a3be69042769151dc8306d4f2ad0741963"
+      },
+      {
+        "path": "ohos/entry/src/main/cpp/CMakeLists.txt",
+        "bytes": 2440,
+        "sha256": "7879c2647690367254bbeec49cbce07d01dae016e590f055e03d999154f7746d"
+      },
+      {
+        "path": "ohos/entry/src/main/cpp/types/libqfli_web_cdp_transport/index.d.ts",
+        "bytes": 1024,
+        "sha256": "a4a94492b32e09fc3075f046dff3b65ce951466ed692b5678a6236de7b97718d"
+      },
+      {
+        "path": "ohos/entry/src/main/cpp/types/libqfli_web_cdp_transport/oh-package.json5",
+        "bytes": 94,
+        "sha256": "222cae56414498d77fda65aa6fc0978448bfa6eeb529fe96e709343a38629ee9"
+      },
+      {
+        "path": "ohos/entry/src/ohosTest/ets/testability/SelfCdpProof.ets",
+        "bytes": 21214,
+        "sha256": "775c65e32f50542a52cd38c7a4be794fffc446670b0e6b4f43f54e693c144653"
+      },
+      {
+        "path": "ohos/oh-package-lock.json5",
+        "bytes": 678,
+        "sha256": "afefb3b851a63111b64ca0348f1b95088128524c565bbb0d4c2daefd4771af51"
+      },
+      {
+        "path": "ohos/oh_modules/.ohpm/lock.json5",
+        "bytes": 7316,
+        "sha256": "79f4df23e066bf4a3fa4fb3a196c930bbc679f42bfbad3614807d091c104db23"
+      }
+    ]
+  }
+}

@@ -1,0 +1,2012 @@
+diff --git a/.trellis/spec/backend/native-python-runtime.md b/.trellis/spec/backend/native-python-runtime.md
+index a540e2f..faa496a 100644
+--- a/.trellis/spec/backend/native-python-runtime.md
++++ b/.trellis/spec/backend/native-python-runtime.md
+@@ -20,6 +20,22 @@ NAPI exports `run(source, stdin, heapKb, projectPath, entryFile, compileOnly)`
+ and `version()`. MethodChannel `qfli_py/native` handles `available`, `run`,
+ and `checkSyntax`. The latter maps to `compileOnly=true`.
+ 
++The legacy C/NAPI ABI remains available. Controlled callers use
++`qfli_py_execute[_into](..., compile_only, token, artifact_output, bytecode_file)`.
++Create/request/free cancellation tokens through `qfli_py_cancel_*`. The caller
++retains its token until queued or executing work has completed. Native VM state
++is touched only by the worker under the runtime lock; stop only sets an atomic
++flag. A pending or executing stop returns 130 with KeyboardInterrupt. Exception
++printing clears the active token before writing diagnostics. Long sleeps check
++the signal every 20 ms; arbitrary blocking native I/O is not interruptible.
++
++Android probe includes `runControl: true` and `bytecode: true`. `prepareRun`
++registers a token and returns an opaque string ID before `run` is submitted.
++`run` accepts `runId`; `cancel(runId)` signals it directly on the platform
++thread. Registry lookup, signaling, removal and token freeing share one lock.
++Completion removes the ID, making late cancellation harmless. OHOS retains its
++legacy channel; these new channel capabilities are not advertised there.
++
+ Platform adapters are HarmonyOS ArkTS/NAPI and Android Kotlin/JNI. Android
+ calls the same C API on one executor with a 1 MiB stack and returns results
+ on the main thread. JNI exchanges standard UTF-8 byte arrays and rejects
+@@ -58,6 +74,22 @@ Use upstream POSIX reading for `.py` imports and never change process cwd.
+ `checkSyntax` compiles the selected source without executing it or resolving
+ its imports. `mp_compile` uses `is_repl=false` for scripts.
+ 
++`compile` accepts `artifactOutput`, invokes upstream `mp_compile_to_raw_code`
++and `mp_raw_code_save`, and writes bytecode-only .mpy data through the existing
++project file resolver/tracker. Compile errors do not touch a previous artifact;
++I/O failures are reported and may leave partial output. `run` can accept
++`bytecodeFile` and uses upstream `mp_raw_code_load_file`. Imported .mpy modules
++use the same upstream importer; source files are unnecessary after compilation.
++File format/version and integer-width compatibility are enforced by upstream.
++Keep both port configs and generated qstr headers synchronized; do not edit
++upstream serializer or invent a different bytecode format.
++
++The tools page discovers .py/.mpy and exposes compile/stop commands. Compilation
++saves a sibling .mpy and refreshes the file list. Source-only commands are
++disabled for bytecode. Retain the run callback while working, cancel on page
++disposal, and also cancel a run handle arriving after disposal. Outputs are
++buffered until native completion; preserve stdout/stderr and actual exit codes.
++
+ `open(file, mode='r')` / `io.open` support `r/w/a/x`, optional `+`, `b/t`,
+ upstream stream methods, iteration, and context managers. Project paths use
+ `realpath`; new files require an existing parent inside the project.
+@@ -93,7 +125,7 @@ not an isolation mechanism for untrusted Python code.
+ - Bad: `open('../outside.txt', 'w')` fails; syntax checking
+   `open('new.txt', 'w')` must not create the file.
+ - Unsupported: CPython extension modules, pip, `os`, networking,
+-  `encoding/errors/newline` arguments, interactive stdin and run cancellation.
++  `encoding/errors/newline` arguments and interactive stdin.
+ 
+ ## 6. Tests Required
+ 
+@@ -118,6 +150,12 @@ not an isolation mechanism for untrusted Python code.
+   dynamic dependencies are `libace_napi.z.so`, `libhilog_ndk.z.so`, and `libc.so`.
+ - Keep semantic generated port/qstr changes; remove incidental line-ending
+   and build-date changes before staging.
++- `test/python_lifecycle_test.dart`: real loop/sleep interruption, pre-start
++  and queued stop, token isolation, recovery, early runner result, upstream
++  artifacts without entry/imported source and rejected bytecode/path escapes.
++- Android's ordinary debug entry must pass the expanded 46-case JNI self-check;
++  additionally operate the normal tools page to stop a loop and compile/run an
++  artifact after removing its source from the selectable file set.
+ 
+ ## 7. Wrong vs Correct
+ 
+diff --git a/.trellis/spec/backend/python-ffi.md b/.trellis/spec/backend/python-ffi.md
+index 6dfbf20..56d8184 100644
+--- a/.trellis/spec/backend/python-ffi.md
++++ b/.trellis/spec/backend/python-ffi.md
+@@ -16,8 +16,9 @@ void qfli_py_result_free(QfliPyRunResult *result);
+ const char *qfli_py_version(void);
+ ```
+ 
+-`PythonFfiBackend({String? libraryPath}).probe/run` executes these symbols on
+-a worker isolate. `PythonNativeTransport.automatic` selects FFI on Windows,
++`PythonFfiBackend({String? libraryPath}).probe/run/start` uses the controlled
++`qfli_py_execute_into` symbol on a worker isolate. `start` returns a result
++future and cancel callback immediately. `PythonNativeTransport.automatic` selects FFI on Windows,
+ Linux, iOS and macOS; Android/OHOS retain their channel adapters. Tests can
+ explicitly choose either transport.
+ 
+@@ -32,6 +33,11 @@ explicitly choose either transport.
+   paths are development/test overrides, never an evaluator fallback.
+ - Shared C locking serializes all isolate invocations. Every run resets VM
+   globals/modules and closes project descriptors, including error paths.
++- The owner isolate creates a token, sends only its integer address and request
++  data to the worker, and frees it in result completion. Late cancellation is a
++  no-op after completion. Never capture FFI bindings or native function pointers
++  in the worker closure. Apple app linker flags must retain execute and all
++  cancellation exports as well as result_free/version.
+ - Windows uses OS-native UTF-8 paths, locking, clocks and module readers.
+   Both tracked port headers must agree. Do not modify upstream lexer syntax.
+ - Apple local pods stage compilation units under their pod root; sibling ../
+@@ -43,7 +49,9 @@ explicitly choose either transport.
+ | --- | --- |
+ | Missing library/symbol | Probe unavailable; run retains QFLI_PY_MODULE_MISSING |
+ | NUL argument / invalid heap size | INVALID_ARGUMENT before native allocation |
+-| Compile-only | No Python side effect or project artifact |
++| Syntax check | No Python side effect or project artifact |
++| Compilation with artifactOutput | Upstream .mpy written without executing |
++| Pending/running stop | Exit 130; previous stdout retained; subsequent run works |
+ | Concurrent runs | Separate results; serialized C VM state |
+ | Native exception / explicit exit | Real traceback and exit code preserved |
+ 
+@@ -71,5 +79,4 @@ Correct: also supply mp_lexer_new_from_file using mp_lexer_new and the custom
+ reader; the upstream lexer omits that adapter when those readers are disabled.
+ 
+ Wrong: kill a Dart isolate and assume its native C execution has stopped.
+-Correct: record cancellation as unsupported until a cooperative C API and
+-runner stop contract are implemented and tested.
++Correct: keep the worker alive through cleanup and signal its own native token.
+diff --git a/android/app/src/debug/kotlin/com/azurekiln/qfli/pyflow/QfliPySelfCheck.kt b/android/app/src/debug/kotlin/com/azurekiln/qfli/pyflow/QfliPySelfCheck.kt
+index b25bfed..2248465 100644
+--- a/android/app/src/debug/kotlin/com/azurekiln/qfli/pyflow/QfliPySelfCheck.kt
++++ b/android/app/src/debug/kotlin/com/azurekiln/qfli/pyflow/QfliPySelfCheck.kt
+@@ -135,6 +135,71 @@ internal object QfliPySelfCheck {
+                 Log.e(TAG, "FAIL ${test.name}: exit=${actual.exitCode}, output=${actual.output}, error=${actual.error}")
+             }
+         }
+-        Log.i(TAG, "Native self-check passed $passed/${cases.size}")
++        val lifecycle = runLifecycle(root, src)
++        Log.i(TAG, "Native self-check passed ${passed + lifecycle}/${cases.size + 10}")
++    }
++
++    private fun runLifecycle(root: File, src: File): Int {
++        var passed = 0
++        fun verify(name: String, ok: Boolean) {
++            if (ok) { passed++; Log.i(TAG, "PASS $name") }
++            else Log.e(TAG, "FAIL $name")
++        }
++        val entry = File(src, "lifecycle.py").absolutePath
++        fun run(source: String, id: String? = null, compile: Boolean = false,
++                output: String = "", bytecode: String = "", stdin: String = "") =
++            QfliPyNative.run(source, stdin, projectPath = root.absolutePath,
++                entryFile = entry, compileOnly = compile, runId = id,
++                artifactOutput = output, bytecodeFile = bytecode)
++
++        val before = QfliPyNative.prepareRun()
++        QfliPyNative.cancelRun(before)
++        val pre = run("open('must-not-exist', 'w').close()", before)
++        verify("cancel-before-start", pre.exitCode == 130 && !File(root, "must-not-exist").exists())
++
++        for ((name, body) in listOf("loop" to "while True: pass", "sleep" to "import time\ntime.sleep(60)")) {
++            val id = QfliPyNative.prepareRun()
++            val timer = Thread({ Thread.sleep(200); QfliPyNative.cancelRun(id) }, "QfliPyCancel")
++            timer.start()
++            val result = run("print('before')\n$body", id)
++            timer.join(3000)
++            verify("cancel-$name", result.exitCode == 130 && result.output == "before\n" &&
++                result.error?.contains("KeyboardInterrupt") == true)
++        }
++        val firstId = QfliPyNative.prepareRun()
++        val queuedId = QfliPyNative.prepareRun()
++        QfliPyNative.cancelRun(queuedId)
++        val first = run("import time\ntime.sleep(0.05)\nprint(42)", firstId)
++        val queued = run("open('must-not-exist', 'w').close()", queuedId)
++        verify("cancel-token-isolation", first.exitCode == 0 && first.output == "42\n" &&
++            queued.exitCode == 130 && !File(root, "must-not-exist").exists())
++        verify("cancel-after-completion", !QfliPyNative.cancelRun(firstId) && !QfliPyNative.cancelRun(queuedId))
++        verify("fresh-after-cancel", run("print(42)").output == "42\n")
++
++        val helper = File(src, "compiled_helper.py").also { it.writeText("value = 7\n") }
++        val helperArtifact = File(src, "compiled_helper.mpy")
++        val artifact = File(src, "lifecycle.mpy")
++        val code = "import compiled_helper\ndef twice(value):\n    return value * 2\n" +
++            "with open('compiled-result.txt', 'w') as f:\n    f.write(input())\n" +
++            "print(twice(compiled_helper.value), open('compiled-result.txt').read())\n"
++        val helperCompile = QfliPyNative.run(helper.readText(), projectPath = root.absolutePath,
++            entryFile = helper.absolutePath, compileOnly = true, artifactOutput = helperArtifact.absolutePath)
++        val compile = run(code, compile = true, output = artifact.absolutePath)
++        verify("compile-mpy-no-execution", helperCompile.exitCode == 0 && compile.exitCode == 0 &&
++            artifact.readBytes().take(3) == listOf<Byte>(77, 6, 0) &&
++            !File(root, "compiled-result.txt").exists())
++        helper.delete()
++        val nonBmp = "\u4F60\u597D\uD83D\uDE80"
++        val loaded = run("", bytecode = artifact.absolutePath, stdin = "$nonBmp\n")
++        verify("load-entry-and-import-mpy", loaded.exitCode == 0 && loaded.output == "14 $nonBmp\n" && loaded.error == null)
++        val bytes = artifact.readBytes()
++        val badCompile = run("def broken(:", compile = true, output = artifact.absolutePath)
++        verify("failed-compile-retains-mpy", badCompile.exitCode == 1 &&
++            badCompile.error?.contains("SyntaxError") == true && artifact.readBytes().contentEquals(bytes))
++        val badArtifact = File(src, "bad.mpy").also { it.writeBytes(byteArrayOf(77, 5, 0, 31)) }
++        val badLoad = run("", bytecode = badArtifact.absolutePath)
++        verify("invalid-mpy-and-recovery", badLoad.exitCode == 1 &&
++            badLoad.error?.contains("incompatible .mpy file") == true && run("print(42)").output == "42\n")
++        return passed
+     }
+ }
+diff --git a/android/app/src/main/kotlin/com/azurekiln/qfli/pyflow/QfliPyNative.kt b/android/app/src/main/kotlin/com/azurekiln/qfli/pyflow/QfliPyNative.kt
+index 19bb47e..90acf2e 100644
+--- a/android/app/src/main/kotlin/com/azurekiln/qfli/pyflow/QfliPyNative.kt
++++ b/android/app/src/main/kotlin/com/azurekiln/qfli/pyflow/QfliPyNative.kt
+@@ -38,8 +38,14 @@ object QfliPyNative {
+         Thread(null, task, "QfliPy", 1024L * 1024L)
+     }
+     private val mainHandler = Handler(Looper.getMainLooper())
++    private data class RunSession(val token: Long, var submitted: Boolean = false)
++    private val sessions = mutableMapOf<String, RunSession>()
++    private var nextRunId = 0L
+ 
+     private external fun nativeVersion(): ByteArray
++    private external fun nativeCreateCancel(): Long
++    private external fun nativeCancel(token: Long)
++    private external fun nativeFreeCancel(token: Long)
+     private external fun nativeRun(
+         source: ByteArray,
+         stdin: ByteArray,
+@@ -47,13 +53,35 @@ object QfliPyNative {
+         projectPath: ByteArray,
+         entryFile: ByteArray,
+         compileOnly: Boolean,
++        token: Long,
++        artifactOutput: ByteArray,
++        bytecodeFile: ByteArray,
+     ): QfliPyNativeResult
+ 
++    internal fun prepareRun(): String = synchronized(sessions) {
++        check(loadError == null) { loadError ?: "Native Python runtime unavailable" }
++        val id = (++nextRunId).toString()
++        sessions[id] = RunSession(nativeCreateCancel())
++        id
++    }
++
++    internal fun cancelRun(id: String): Boolean = synchronized(sessions) {
++        val session = sessions[id] ?: return@synchronized false
++        nativeCancel(session.token)
++        true
++    }
++
++    private fun releaseRun(id: String) = synchronized(sessions) {
++        sessions.remove(id)?.let { nativeFreeCancel(it.token) }
++    }
++
+     fun availability(): Map<String, Any?> = if (loadError == null) {
+         mapOf(
+             "available" to true,
+             "version" to String(nativeVersion(), Charsets.UTF_8),
+             "detail" to "MicroPython native runtime",
++            "runControl" to true,
++            "bytecode" to true,
+         )
+     } else {
+         mapOf("available" to false, "version" to "", "detail" to loadError)
+@@ -66,22 +94,46 @@ object QfliPyNative {
+         projectPath: String = "",
+         entryFile: String = "",
+         compileOnly: Boolean = false,
++        runId: String? = null,
++        artifactOutput: String = "",
++        bytecodeFile: String = "",
+     ): QfliPyNativeResult {
+         check(loadError == null) { loadError ?: "Native Python runtime unavailable" }
+-        return nativeRun(
++        val token = if (runId == null) 0L else synchronized(sessions) {
++            val session = checkNotNull(sessions[runId]) { "Unknown Python run" }
++            check(!session.submitted) { "Python run already submitted" }
++            session.submitted = true
++            session.token
++        }
++        try {
++            return nativeRun(
+             source.toByteArray(Charsets.UTF_8),
+             stdin.toByteArray(Charsets.UTF_8),
+             heapKb,
+             projectPath.toByteArray(Charsets.UTF_8),
+             entryFile.toByteArray(Charsets.UTF_8),
+             compileOnly,
++            token,
++            artifactOutput.toByteArray(Charsets.UTF_8),
++            bytecodeFile.toByteArray(Charsets.UTF_8),
+         )
++        } finally {
++            if (runId != null) releaseRun(runId)
++        }
+     }
+ 
+     fun handleMethodCall(call: MethodCall, result: MethodChannel.Result) {
+         when (call.method) {
+             "available" -> result.success(availability())
+-            "run", "checkSyntax" -> {
++            "prepareRun" -> {
++                try {
++                    result.success(prepareRun())
++                } catch (error: Exception) {
++                    result.error("QFLI_PY_NATIVE_ERROR", error.message, null)
++                }
++            }
++            "cancel" -> result.success(call.argument<String>("runId")?.let { cancelRun(it) } ?: false)
++            "run", "checkSyntax", "compile" -> {
+                 val source = call.argument<String>("source")
+                 if (source == null) {
+                     result.error("QFLI_PY_BAD_ARGUMENT", "Missing Python source", null)
+@@ -95,10 +147,14 @@ object QfliPyNative {
+                 val heapKb = call.argument<Number>("heapKb")?.toInt() ?: 8192
+                 val projectPath = call.argument<String>("projectPath") ?: ""
+                 val entryFile = call.argument<String>("entryFile") ?: ""
+-                val compileOnly = call.method == "checkSyntax"
++                val compileOnly = call.method != "run"
++                val runId = call.argument<String>("runId")
++                val artifactOutput = call.argument<String>("artifactOutput") ?: ""
++                val bytecodeFile = call.argument<String>("bytecodeFile") ?: ""
+                 executor.execute {
+                     try {
+-                        val outcome = run(source, stdin, heapKb, projectPath, entryFile, compileOnly)
++                        val outcome = run(source, stdin, heapKb, projectPath, entryFile,
++                            compileOnly, runId, artifactOutput, bytecodeFile)
+                         mainHandler.post { result.success(outcome.toChannelResult()) }
+                     } catch (error: Exception) {
+                         mainHandler.post {
+diff --git a/lib/main.dart b/lib/main.dart
+index daf8513..d8f248d 100644
+--- a/lib/main.dart
++++ b/lib/main.dart
+@@ -28,9 +28,9 @@ const StudioProfile pythonProfile = StudioProfile(
+   showHomeTabs: false,
+   runtimeKind: 'micropython-native-and-desktop',
+   runtimeStatus: 'available',
+-  supportedFileExtensions: ['.py'],
++  supportedFileExtensions: ['.py', '.mpy'],
+   // main.py 排在默认入口表前面，保证本版一定先命中它。
+-  entryFileNames: ['main.py', 'src/main.py'],
++  entryFileNames: ['main.py', 'src/main.py', 'main.mpy', 'src/main.mpy'],
+ );
+ 
+ Future<void> main() async {
+diff --git a/lib/python_ffi.dart b/lib/python_ffi.dart
+index 9c516b5..a4a5a03 100644
+--- a/lib/python_ffi.dart
++++ b/lib/python_ffi.dart
+@@ -26,6 +26,9 @@ typedef _RunNative =
+       Pointer<Utf8>,
+       Pointer<Utf8>,
+       Int32,
++      Pointer<Void>,
++      Pointer<Utf8>,
++      Pointer<Utf8>,
+     );
+ typedef _RunDart =
+     void Function(
+@@ -36,11 +39,25 @@ typedef _RunDart =
+       Pointer<Utf8>,
+       Pointer<Utf8>,
+       int,
++      Pointer<Void>,
++      Pointer<Utf8>,
++      Pointer<Utf8>,
+     );
+ typedef _FreeNative = Void Function(Pointer<_NativeResult>);
+ typedef _FreeDart = void Function(Pointer<_NativeResult>);
+ typedef _VersionNative = Pointer<Utf8> Function();
+ typedef _VersionDart = Pointer<Utf8> Function();
++typedef _CreateNative = Pointer<Void> Function();
++typedef _CreateDart = Pointer<Void> Function();
++typedef _TokenNative = Void Function(Pointer<Void>);
++typedef _TokenDart = void Function(Pointer<Void>);
++
++class PythonFfiExecution {
++  const PythonFfiExecution._(this.result, this.cancel);
++
++  final Future<Map<String, Object?>> result;
++  final Future<void> Function() cancel;
++}
+ 
+ class PythonFfiException implements Exception {
+   const PythonFfiException(this.code, this.message);
+@@ -70,7 +87,13 @@ class PythonFfiBackend {
+             'The bundled MicroPython runtime returned no version.',
+           );
+         }
+-        return {'available': true, 'version': version, 'detail': ''};
++        return {
++          'available': true,
++          'version': version,
++          'detail': '',
++          'runControl': true,
++          'bytecode': true,
++        };
+       } on PythonFfiException catch (error) {
+         return {'available': false, 'version': '', 'detail': error.message};
+       }
+@@ -84,12 +107,101 @@ class PythonFfiBackend {
+     required String projectPath,
+     required String entryFile,
+     bool compileOnly = false,
++    String artifactOutput = '',
++    String bytecodeFile = '',
++  }) {
++    _validate(
++      source,
++      stdin,
++      heapKb,
++      projectPath,
++      entryFile,
++      artifactOutput,
++      bytecodeFile,
++    );
++    try {
++      return start(
++        source: source,
++        stdin: stdin,
++        heapKb: heapKb,
++        projectPath: projectPath,
++        entryFile: entryFile,
++        compileOnly: compileOnly,
++        artifactOutput: artifactOutput,
++        bytecodeFile: bytecodeFile,
++      ).result;
++    } on PythonFfiException catch (error) {
++      return Future.error(error);
++    }
++  }
++
++  PythonFfiExecution start({
++    required String source,
++    required String stdin,
++    required int heapKb,
++    required String projectPath,
++    required String entryFile,
++    bool compileOnly = false,
++    String artifactOutput = '',
++    String bytecodeFile = '',
+   }) {
++    _validate(
++      source,
++      stdin,
++      heapKb,
++      projectPath,
++      entryFile,
++      artifactOutput,
++      bytecodeFile,
++    );
++    final bindings = _loadBindings(libraryPath);
++    final token = bindings.create();
++    if (token == nullptr) {
++      throw const PythonFfiException(
++        'QFLI_PY_NATIVE_ERROR',
++        'Unable to allocate cancellation token.',
++      );
++    }
++    var finished = false;
++    final future =
++        _startWorker(
++          _NativeRequest(
++            libraryPath,
++            source,
++            stdin,
++            heapKb,
++            projectPath,
++            entryFile,
++            compileOnly,
++            token.address,
++            artifactOutput,
++            bytecodeFile,
++          ),
++        ).whenComplete(() {
++          finished = true;
++          bindings.freeToken(token);
++        });
++    return PythonFfiExecution._(future, () async {
++      if (!finished) bindings.cancel(token);
++    });
++  }
++
++  static void _validate(
++    String source,
++    String stdin,
++    int heapKb,
++    String projectPath,
++    String entryFile,
++    String artifactOutput,
++    String bytecodeFile,
++  ) {
+     for (final argument in {
+       'source': source,
+       'stdin': stdin,
+       'projectPath': projectPath,
+       'entryFile': entryFile,
++      'artifactOutput': artifactOutput,
++      'bytecodeFile': bytecodeFile,
+     }.entries) {
+       if (argument.value.contains('\u0000')) {
+         throw PythonFfiException(
+@@ -104,24 +216,50 @@ class PythonFfiBackend {
+         'heapKb must fit a nonnegative 32-bit integer.',
+       );
+     }
+-    final path = libraryPath;
+-    return Isolate.run(
+-      () => _invokeNative(
+-        path,
+-        source,
+-        stdin,
+-        heapKb,
+-        projectPath,
+-        entryFile,
+-        compileOnly,
+-      ),
+-    );
+   }
+ }
+ 
++class _NativeRequest {
++  const _NativeRequest(
++    this.path,
++    this.source,
++    this.stdin,
++    this.heapKb,
++    this.projectPath,
++    this.entryFile,
++    this.compileOnly,
++    this.tokenAddress,
++    this.artifactOutput,
++    this.bytecodeFile,
++  );
++  final String? path;
++  final String source,
++      stdin,
++      projectPath,
++      entryFile,
++      artifactOutput,
++      bytecodeFile;
++  final int heapKb, tokenAddress;
++  final bool compileOnly;
++}
++
++Future<Map<String, Object?>> _startWorker(_NativeRequest request) =>
++    Isolate.run(() => _invokeNative(request));
++
+ class _Bindings {
+   _Bindings(DynamicLibrary library)
+-    : run = library.lookupFunction<_RunNative, _RunDart>('qfli_py_run_into'),
++    : run = library.lookupFunction<_RunNative, _RunDart>(
++        'qfli_py_execute_into',
++      ),
++      create = library.lookupFunction<_CreateNative, _CreateDart>(
++        'qfli_py_cancel_create',
++      ),
++      cancel = library.lookupFunction<_TokenNative, _TokenDart>(
++        'qfli_py_cancel_request',
++      ),
++      freeToken = library.lookupFunction<_TokenNative, _TokenDart>(
++        'qfli_py_cancel_free',
++      ),
+       free = library.lookupFunction<_FreeNative, _FreeDart>(
+         'qfli_py_result_free',
+       ),
+@@ -132,6 +270,8 @@ class _Bindings {
+   final _RunDart run;
+   final _FreeDart free;
+   final _VersionDart version;
++  final _CreateDart create;
++  final _TokenDart cancel, freeToken;
+ }
+ 
+ _Bindings _loadBindings(String? libraryPath) {
+@@ -170,30 +310,32 @@ DynamicLibrary _openLibrary(String? explicitPath) {
+   return DynamicLibrary.open(name);
+ }
+ 
+-Map<String, Object?> _invokeNative(
+-  String? libraryPath,
+-  String source,
+-  String stdin,
+-  int heapKb,
+-  String projectPath,
+-  String entryFile,
+-  bool compileOnly,
+-) {
+-  final bindings = _loadBindings(libraryPath);
++Map<String, Object?> _invokeNative(_NativeRequest request) {
++  final bindings = _loadBindings(request.path);
+   final result = calloc<_NativeResult>();
+   final arguments = <Pointer<Utf8>>[];
+   try {
+-    for (final value in [source, stdin, projectPath, entryFile]) {
++    for (final value in [
++      request.source,
++      request.stdin,
++      request.projectPath,
++      request.entryFile,
++      request.artifactOutput,
++      request.bytecodeFile,
++    ]) {
+       arguments.add(value.toNativeUtf8(allocator: calloc));
+     }
+     bindings.run(
+       result,
+       arguments[0],
+       arguments[1],
+-      heapKb,
++      request.heapKb,
+       arguments[2],
+       arguments[3],
+-      compileOnly ? 1 : 0,
++      request.compileOnly ? 1 : 0,
++      Pointer<Void>.fromAddress(request.tokenAddress),
++      arguments[4],
++      arguments[5],
+     );
+     return {
+       'exitCode': result.ref.exitCode,
+diff --git a/lib/python_runner.dart b/lib/python_runner.dart
+index 9d3d45b..958532d 100644
+--- a/lib/python_runner.dart
++++ b/lib/python_runner.dart
+@@ -63,11 +63,53 @@ class PythonProgramRunner implements ProgramRunner {
+   static const String stdinFileName = 'input.txt';
+ 
+   /// 本后端接管的源码后缀。
+-  static const Set<String> _sourceExtensions = {'.py'};
++  static const Set<String> _sourceExtensions = {'.py', '.mpy'};
+ 
+   /// 与 `native/ohos/QfliPyNative.ets` 里的通道名一致。
+   static const MethodChannel _channel = MethodChannel('qfli_py/native');
+ 
++  Future<PythonCompilationResult> compile({
++    required String projectPath,
++    required String entryFile,
++  }) async {
++    if (p.extension(entryFile).toLowerCase() != '.py') {
++      return const PythonCompilationResult(error: '请选择 Python 源码文件。');
++    }
++    final source = _readText(File(entryFile));
++    if (source == null) return const PythonCompilationResult(error: '无法读取文件。');
++    final probe = await _probeNative();
++    if (!probe.available || !probe.supportsArtifacts) {
++      return PythonCompilationResult(
++        error: probe.detail.isEmpty ? '此运行组件不支持生成 .mpy 文件。' : probe.detail,
++      );
++    }
++    final artifact = p.setExtension(entryFile, '.mpy');
++    try {
++      final raw = await _invokeNative('compile', {
++        'source': source,
++        'stdin': '',
++        'heapKb': heapKb,
++        'projectPath': projectPath,
++        'entryFile': entryFile,
++        'artifactOutput': artifact,
++      });
++      if (raw is! Map || raw['exitCode'] is! int) {
++        return const PythonCompilationResult(error: '原生运行时返回了意外的结果。');
++      }
++      final success = raw['exitCode'] == 0;
++      return PythonCompilationResult(
++        success: success,
++        artifactPath: success ? artifact : '',
++        error: '${raw['error'] ?? ''}',
++        version: probe.version,
++      );
++    } on MissingPluginException {
++      return const PythonCompilationResult(error: 'Python 运行组件不可用。');
++    } on PlatformException catch (error) {
++      return PythonCompilationResult(error: error.message ?? error.code);
++    }
++  }
++
+   Future<PythonSyntaxResult> checkSyntax({
+     required String projectPath,
+     required String entryFile,
+@@ -145,7 +187,8 @@ class PythonProgramRunner implements ProgramRunner {
+ 
+     final fileName = p.basename(entryFile);
+ 
+-    final source = _readText(entry);
++    final isBytecode = p.extension(entryFile).toLowerCase() == '.mpy';
++    final source = isBytecode ? '' : _readText(entry);
+     if (source == null) {
+       return _failure(fileName, '$_appPrefix无法读取 $fileName（编码或权限问题）。');
+     }
+@@ -156,7 +199,21 @@ class PythonProgramRunner implements ProgramRunner {
+     if (!probe.available) {
+       return _notWired(fileName, probe.detail);
+     }
++    if (isBytecode && !probe.supportsArtifacts) {
++      return _failure(fileName, '$_appPrefix此运行组件不支持 .mpy 文件。');
++    }
+ 
++    if (_useFfi || probe.supportsCancellation) {
++      return _runControlled(
++        fileName: fileName,
++        version: probe.version,
++        source: source,
++        stdin: _readStdin(projectPath),
++        projectPath: projectPath,
++        entryFile: entryFile,
++        bytecodeFile: isBytecode ? entryFile : '',
++      );
++    }
+     return _runNative(
+       fileName: fileName,
+       version: probe.version,
+@@ -167,6 +224,105 @@ class PythonProgramRunner implements ProgramRunner {
+     );
+   }
+ 
++  Future<ProgramRunResult> _runControlled({
++    required String fileName,
++    required String version,
++    required String source,
++    required String stdin,
++    required String projectPath,
++    required String entryFile,
++    required String bytecodeFile,
++  }) async {
++    final Future<Object?> pending;
++    final Future<void> Function() cancel;
++    try {
++      if (_useFfi) {
++        final execution = PythonFfiBackend(libraryPath: libraryPath).start(
++          source: source,
++          stdin: stdin,
++          heapKb: heapKb,
++          projectPath: projectPath,
++          entryFile: entryFile,
++          bytecodeFile: bytecodeFile,
++        );
++        pending = execution.result;
++        cancel = execution.cancel;
++      } else {
++        final runId = await _channel.invokeMethod<String>('prepareRun');
++        if (runId == null || runId.isEmpty) {
++          return _failure(fileName, '$_appPrefix无法创建原生运行句柄。');
++        }
++        var finished = false;
++        pending = _channel
++            .invokeMethod<Object?>('run', {
++              'source': source,
++              'stdin': stdin,
++              'heapKb': heapKb,
++              'projectPath': projectPath,
++              'entryFile': entryFile,
++              'runId': runId,
++              if (bytecodeFile.isNotEmpty) 'bytecodeFile': bytecodeFile,
++            })
++            .whenComplete(() => finished = true);
++        cancel = () async {
++          if (!finished) {
++            await _channel.invokeMethod<Object?>('cancel', {'runId': runId});
++          }
++        };
++      }
++    } on PythonFfiException catch (error) {
++      return _failure(fileName, '$_appPrefix${error.message}');
++    } on MissingPluginException {
++      return _notWired(fileName, '');
++    } on PlatformException catch (error) {
++      return _failure(fileName, '$_appPrefix${error.message ?? error.code}');
++    }
++    final stdout = StreamController<String>();
++    final stderr = StreamController<String>();
++    final exit = Completer<int>();
++    unawaited(_completeControlled(pending, stdout, stderr, exit));
++    final label = version.isEmpty ? '内嵌 MicroPython' : 'MicroPython $version';
++    return ProgramRunResult(
++      title: '运行 $fileName（$label）',
++      stdout: stdout.stream,
++      stderr: stderr.stream,
++      exitCode: exit.future,
++      cancel: cancel,
++    );
++  }
++
++  Future<void> _completeControlled(
++    Future<Object?> pending,
++    StreamController<String> stdout,
++    StreamController<String> stderr,
++    Completer<int> exit,
++  ) async {
++    try {
++      final raw = await pending;
++      if (raw is! Map || raw['exitCode'] is! int) {
++        stderr.add('$_appPrefix原生运行时返回了意外的结果。');
++        exit.complete(notRunExitCode);
++      } else {
++        _splitLines('${raw['output'] ?? ''}').forEach(stdout.add);
++        final error = '${raw['error'] ?? ''}';
++        if (error.isNotEmpty) _splitLines(error).forEach(stderr.add);
++        if (raw['truncated'] == true) stderr.add('$_appPrefix输出过长，已被截断。');
++        exit.complete(raw['exitCode'] as int);
++      }
++    } catch (error) {
++      final detail = error is PythonFfiException
++          ? error.message
++          : error is PlatformException
++          ? error.message ?? error.code
++          : '$error';
++      stderr.add('$_appPrefix原生运行时出错：$detail');
++      exit.complete(notRunExitCode);
++    } finally {
++      unawaited(stdout.close());
++      unawaited(stderr.close());
++    }
++  }
++
+   /// 走原生 .so。
+   Future<ProgramRunResult> _runNative({
+     required String fileName,
+@@ -258,6 +414,8 @@ class PythonProgramRunner implements ProgramRunner {
+           available: raw['available'] == true,
+           version: '${raw['version'] ?? ''}',
+           detail: '${raw['detail'] ?? ''}',
++          supportsCancellation: raw['runControl'] == true,
++          supportsArtifacts: raw['bytecode'] == true,
+         );
+       }
+       // 兼容只回 bool 的旧接线（两份 QfliPyNative.ets 副本没同步时会走到这里）。
+@@ -287,7 +445,9 @@ class PythonProgramRunner implements ProgramRunner {
+         heapKb: arguments['heapKb'] as int,
+         projectPath: arguments['projectPath'] as String,
+         entryFile: arguments['entryFile'] as String,
+-        compileOnly: method == 'checkSyntax',
++        compileOnly: method != 'run',
++        artifactOutput: arguments['artifactOutput'] as String? ?? '',
++        bytecodeFile: arguments['bytecodeFile'] as String? ?? '',
+       );
+     } on PythonFfiException catch (error) {
+       throw PlatformException(code: error.code, message: error.message);
+@@ -387,12 +547,24 @@ class PythonSyntaxResult {
+   final String version;
+ }
+ 
++class PythonCompilationResult extends PythonSyntaxResult {
++  const PythonCompilationResult({
++    super.success,
++    super.error,
++    super.version,
++    this.artifactPath = '',
++  });
++  final String artifactPath;
++}
++
+ /// 原生后端的探测结果。
+ class _NativeProbe {
+   const _NativeProbe({
+     required this.available,
+     this.version = '',
+     this.detail = '',
++    this.supportsCancellation = false,
++    this.supportsArtifacts = false,
+   });
+ 
+   /// 模块是否真的可用（不是「文件在不在」，是「dlopen 成没成功」）。
+@@ -403,4 +575,6 @@ class _NativeProbe {
+ 
+   /// 不可用时的原因。可用时为空串。
+   final String detail;
++  final bool supportsCancellation;
++  final bool supportsArtifacts;
+ }
+diff --git a/lib/python_tools_page.dart b/lib/python_tools_page.dart
+index fba7a35..371fbc1 100644
+--- a/lib/python_tools_page.dart
++++ b/lib/python_tools_page.dart
+@@ -1,3 +1,4 @@
++import 'dart:async';
+ import 'dart:io';
+ 
+ import 'package:flutter/material.dart';
+@@ -35,6 +36,7 @@ class _PythonToolsPageState extends State<PythonToolsPage> {
+   bool _loadingFiles = false;
+   bool _working = false;
+   int _fileLoadGeneration = 0;
++  Future<void> Function()? _cancelRun;
+ 
+   List<Project> get _projects => widget.store.projects
+       .where(
+@@ -65,6 +67,8 @@ class _PythonToolsPageState extends State<PythonToolsPage> {
+ 
+   @override
+   void dispose() {
++    final cancel = _cancelRun;
++    if (cancel != null) unawaited(cancel());
+     widget.store.removeListener(_onProjectsChanged);
+     super.dispose();
+   }
+@@ -104,7 +108,8 @@ class _PythonToolsPageState extends State<PythonToolsPage> {
+       await for (final entity in Directory(
+         project.path,
+       ).list(recursive: true, followLinks: false)) {
+-        if (entity is File && p.extension(entity.path).toLowerCase() == '.py') {
++        if (entity is File &&
++            {'.py', '.mpy'}.contains(p.extension(entity.path).toLowerCase())) {
+           files.add(entity.path);
+         }
+       }
+@@ -154,6 +159,11 @@ class _PythonToolsPageState extends State<PythonToolsPage> {
+           if (mounted) setState(() => _status = '无法运行此文件');
+           return;
+         }
++        if (mounted) {
++          setState(() => _cancelRun = result.cancel);
++        } else {
++          await result.cancel?.call();
++        }
+         final stdout = result.stdout.toList();
+         final stderr = result.stderr.toList();
+         final exitCode = await result.exitCode;
+@@ -171,11 +181,69 @@ class _PythonToolsPageState extends State<PythonToolsPage> {
+           _output = '$error';
+         });
+       }
++    } finally {
++      if (mounted) {
++        setState(() {
++          _working = false;
++          _cancelRun = null;
++        });
++      }
++    }
++  }
++
++  Future<void> _compile() async {
++    final project = _project;
++    final file = _selectedFile;
++    if (_working || project == null || file == null) return;
++    setState(() {
++      _working = true;
++      _status = '正在编译';
++      _output = '';
++    });
++    try {
++      final result = await _runner.compile(
++        projectPath: project.path,
++        entryFile: file,
++      );
++      if (!mounted) return;
++      setState(() {
++        _status = result.success ? '编译完成' : '编译失败';
++        _output = result.success
++            ? p.relative(result.artifactPath, from: project.path)
++            : result.error;
++      });
++      if (result.success) await _refreshFiles();
++    } catch (error) {
++      if (mounted) {
++        setState(() {
++          _status = '编译失败';
++          _output = '$error';
++        });
++      }
+     } finally {
+       if (mounted) setState(() => _working = false);
+     }
+   }
+ 
++  Future<void> _stop() async {
++    final cancel = _cancelRun;
++    if (cancel == null) return;
++    setState(() {
++      _cancelRun = null;
++      _status = '正在停止';
++    });
++    try {
++      await cancel();
++    } catch (error) {
++      if (mounted) {
++        setState(() {
++          _cancelRun = cancel;
++          _output = '$error';
++        });
++      }
++    }
++  }
++
+   @override
+   Widget build(BuildContext context) {
+     final project = _project;
+@@ -262,7 +330,7 @@ class _PythonToolsPageState extends State<PythonToolsPage> {
+                 else if (_files.isEmpty)
+                   const Padding(
+                     padding: EdgeInsets.symmetric(vertical: 16),
+-                    child: Text('项目中没有 .py 文件'),
++                    child: Text('项目中没有 Python 文件'),
+                   ),
+                 const SizedBox(height: 16),
+                 Wrap(
+@@ -270,12 +338,32 @@ class _PythonToolsPageState extends State<PythonToolsPage> {
+                   runSpacing: 8,
+                   children: [
+                     FilledButton.tonalIcon(
+-                      onPressed: file == null || _working || _loadingFiles
++                      onPressed:
++                          file == null ||
++                              p.extension(file).toLowerCase() != '.py' ||
++                              _working ||
++                              _loadingFiles
+                           ? null
+                           : () => _execute(checkOnly: true),
+                       icon: const Icon(Icons.fact_check_outlined),
+                       label: const Text('检查语法'),
+                     ),
++                    IconButton.filledTonal(
++                      tooltip: '编译',
++                      onPressed:
++                          file == null ||
++                              p.extension(file).toLowerCase() != '.py' ||
++                              _working ||
++                              _loadingFiles
++                          ? null
++                          : _compile,
++                      icon: const Icon(Icons.build_outlined),
++                    ),
++                    IconButton.filledTonal(
++                      tooltip: '停止运行',
++                      onPressed: _cancelRun == null ? null : _stop,
++                      icon: const Icon(Icons.stop),
++                    ),
+                     FilledButton.icon(
+                       onPressed: file == null || _working || _loadingFiles
+                           ? null
+diff --git a/native/apple/podspec.rb b/native/apple/podspec.rb
+index d154c7c..cddf271 100644
+--- a/native/apple/podspec.rb
++++ b/native/apple/podspec.rb
+@@ -69,7 +69,7 @@ module QfliPythonNative
+     }
+     # These flags belong on the app link, where static archive dead stripping occurs.
+     spec.user_target_xcconfig = {
+-      'OTHER_LDFLAGS' => '$(inherited) -Wl,-u,_qfli_py_run_into -Wl,-u,_qfli_py_result_free -Wl,-u,_qfli_py_version'
++      'OTHER_LDFLAGS' => '$(inherited) -Wl,-u,_qfli_py_run_into -Wl,-u,_qfli_py_execute_into -Wl,-u,_qfli_py_cancel_create -Wl,-u,_qfli_py_cancel_request -Wl,-u,_qfli_py_cancel_free -Wl,-u,_qfli_py_result_free -Wl,-u,_qfli_py_version'
+     }
+ 
+     case platform
+diff --git a/native/lifecycle.md b/native/lifecycle.md
+new file mode 100644
+index 0000000..2ad9c9b
+--- /dev/null
++++ b/native/lifecycle.md
+@@ -0,0 +1,44 @@
++# Native Python Lifecycle And Bytecode
++
++Windows/Linux/Apple FFI and Android JNI share the upstream MicroPython compiler
++and VM. `PythonProgramRunner.run` accepts .py and .mpy. Controlled runs return
++streams, an exit future and a stop callback before execution completes. Stop
++uses a native per-run token; killing an isolate is not a native stop operation.
++
++`PythonProgramRunner.compile` saves a sibling .mpy without executing the script.
++The tools page provides compile and stop commands and discovers compiled files.
++The upstream serializer/loader validates .mpy version and integer width. These
++are bytecode artifacts, not standalone executables or CPython .pyc files.
++Compile imported sources separately when distributing a source-free project.
++
++The existing OHOS run/check channel and tokenless C ABI remain compatible.
++OHOS does not expose the new host cancellation or artifact channel operations.
++Stop is cooperative during VM execution and sleep; other blocking native I/O
++cannot be interrupted. Compile errors preserve existing artifacts. A write
++failure reports an error and can leave a partial artifact.
++
++## Verification On 2026-10-02
++
++- Windows real native FFI regression: 34/34 cases.
++- Windows lifecycle/runner tests: loop and 60-second sleep cancellation,
++  pre-start and queued stop, token isolation and recovery, real .mpy execution
++  after deleting entry/imported source, invalid artifacts and path boundaries.
++- Full staged Flutter suite: 57/57, including 360x800 and 1200x800 tools-page
++  compile/stop workflows. Source analysis (lib/test/tool) passed.
++- Android x86_64 debug APK: installed on emulator-5560 (API 37, 16384-byte
++  pages), ordinary app entry passed 46/46 native JNI cases. Tools page stopped
++  a real loop (exit 130) and compiled/reloaded main.mpy after renaming main.py
++  (compiled-native 42, artifact-stderr, exit 0).
++- Installed x86_64 release APK also passed real UI compilation, loop stop and
++  source-free artifact execution after shrinking. Native ELF LOAD segments use
++  0x4000 alignment; debug/release APKs passed zipalign -c -P 16 4. Dynamic native
++  dependencies are libm.so, libdl.so and libc.so. The release APK is 26,971,354
++  bytes, SHA256 51EEA2F6D3805F960E1484C2F32DF5901D015D0B560F88A0E97EE37C387281D2.
++- Apple execution skipped: no Apple host or Xcode. Windows Flutter GUI skipped:
++  no Visual Studio C++ tools. No Android ARM devices. Linux re-execution of this
++  new lifecycle slice is pending the WSL approval service; prior Linux tests
++  describe the earlier implementation and are not new lifecycle evidence.
++
++Build the Windows DLL with native/desktop/build.ps1, then run the Flutter tests,
++source analysis, and tool/python_ffi_smoke.dart. Android debug startup runs the
++JNI cases automatically; release/profile contain the existing no-op self-check.
+diff --git a/native/micropython_embed/genhdr/qstrdefs.generated.h b/native/micropython_embed/genhdr/qstrdefs.generated.h
+index 9fc3e60..1c70fb0 100644
+--- a/native/micropython_embed/genhdr/qstrdefs.generated.h
++++ b/native/micropython_embed/genhdr/qstrdefs.generated.h
+@@ -273,6 +273,7 @@ QDEF1(MP_QSTR___traceback__, 53071, 13, "__traceback__")
+ QDEF0(MP_QSTR___truediv__, 61320, 11, "__truediv__")
+ QDEF0(MP_QSTR___xor__, 60448, 7, "__xor__")
+ QDEF1(MP_QSTR__machine, 19391, 8, "_machine")
++QDEF1(MP_QSTR__mpy, 10590, 4, "_mpy")
+ QDEF1(MP_QSTR_a2b_base64, 2876, 10, "a2b_base64")
+ QDEF1(MP_QSTR_abs_tol, 28029, 7, "abs_tol")
+ QDEF1(MP_QSTR_acos, 40987, 4, "acos")
+diff --git a/native/micropython_embed/port/mpconfigport.h b/native/micropython_embed/port/mpconfigport.h
+index 0cba7e1..cf5479d 100644
+--- a/native/micropython_embed/port/mpconfigport.h
++++ b/native/micropython_embed/port/mpconfigport.h
+@@ -55,6 +55,13 @@
+ #define MICROPY_ENABLE_COMPILER (1)
+ #define MICROPY_ENABLE_GC       (1)
+ 
++#define MICROPY_PERSISTENT_CODE_LOAD (1)
++#define MICROPY_PERSISTENT_CODE_SAVE (1)
++void qfli_py_check_cancel(void);
++#define MICROPY_VM_HOOK_INIT qfli_py_check_cancel();
++#define MICROPY_VM_HOOK_LOOP qfli_py_check_cancel();
++#define MICROPY_VM_HOOK_RETURN qfli_py_check_cancel();
++
+ /*
+  * 这个必须显式关掉，而且理由很硬：EXTRA 档默认把它打开，但
+  * py/builtinevex.c 里有一句
+@@ -102,9 +109,7 @@
+ #define MICROPY_PY_PLATFORM (0)
+ 
+ /*
+- * 我们跑的是「整段脚本」，没有交互式 REPL，也没有「随时中断」的通道，
+- * 所以键盘中断那套不装。少了它 py/runtime.c 里就少一处对
+- * mp_hal_set_interrupt_char 的依赖。
++ * No keyboard/REPL input; host cancellation uses the VM hooks above.
+  */
+ #define MICROPY_KBD_EXCEPTION (0)
+ 
+diff --git a/native/port/mpconfigport.h b/native/port/mpconfigport.h
+index 0cba7e1..cf5479d 100644
+--- a/native/port/mpconfigport.h
++++ b/native/port/mpconfigport.h
+@@ -55,6 +55,13 @@
+ #define MICROPY_ENABLE_COMPILER (1)
+ #define MICROPY_ENABLE_GC       (1)
+ 
++#define MICROPY_PERSISTENT_CODE_LOAD (1)
++#define MICROPY_PERSISTENT_CODE_SAVE (1)
++void qfli_py_check_cancel(void);
++#define MICROPY_VM_HOOK_INIT qfli_py_check_cancel();
++#define MICROPY_VM_HOOK_LOOP qfli_py_check_cancel();
++#define MICROPY_VM_HOOK_RETURN qfli_py_check_cancel();
++
+ /*
+  * 这个必须显式关掉，而且理由很硬：EXTRA 档默认把它打开，但
+  * py/builtinevex.c 里有一句
+@@ -102,9 +109,7 @@
+ #define MICROPY_PY_PLATFORM (0)
+ 
+ /*
+- * 我们跑的是「整段脚本」，没有交互式 REPL，也没有「随时中断」的通道，
+- * 所以键盘中断那套不装。少了它 py/runtime.c 里就少一处对
+- * mp_hal_set_interrupt_char 的依赖。
++ * No keyboard/REPL input; host cancellation uses the VM hooks above.
+  */
+ #define MICROPY_KBD_EXCEPTION (0)
+ 
+diff --git a/native/src/qfli_py_bridge.c b/native/src/qfli_py_bridge.c
+index dae86e6..af8f459 100644
+--- a/native/src/qfli_py_bridge.c
++++ b/native/src/qfli_py_bridge.c
+@@ -27,6 +27,7 @@
+ #include "py/mphal.h"
+ #include "py/obj.h"
+ #include "py/parse.h"
++#include "py/persistentcode.h"
+ #include "py/runtime.h"
+ #include "py/stackctrl.h"
+ #include "shared/runtime/gchelper.h"
+@@ -71,6 +72,13 @@
+ 
+ static void *g_heap = NULL;
+ static size_t g_heap_size = 0;
++static QfliPyCancel *g_active_cancel;
++
++void qfli_py_check_cancel(void)
++{
++    if (qfli_py_cancel_requested(g_active_cancel))
++        mp_raise_type(&mp_type_KeyboardInterrupt);
++}
+ 
+ /*
+  * 只分配一次堆。每次运行都重新 gc_init/mp_init：mp_init 会重新建立
+@@ -196,7 +204,8 @@ static void print_safely(mp_obj_t obj, int as_exception)
+  * *exit_code 带回退出码。返回非 0 表示环境级失败（目前只有 OOM）。
+  */
+ static int execute(const char *source, const char *project_dir,
+-                   const char *entry_file, int compile_only, int *exit_code)
++                   const char *entry_file, int compile_only, int *exit_code,
++                   const char *artifact_output, const char *bytecode_file)
+ {
+     nlr_buf_t nlr;
+ 
+@@ -207,6 +216,8 @@ static int execute(const char *source, const char *project_dir,
+         mp_parse_tree_t parse_tree;
+         mp_obj_t module_fun;
+ 
++        qfli_py_check_cancel();
++
+         mp_sys_path = mp_obj_new_list(0, NULL);
+         if (entry_file != NULL && entry_file[0] != '\0')
+         {
+@@ -229,11 +240,25 @@ static int execute(const char *source, const char *project_dir,
+          */
+         source_name = (entry_file == NULL || entry_file[0] == '\0')
+             ? MP_QSTR__lt_stdin_gt_ : qstr_from_str(entry_file);
+-        lex = mp_lexer_new_from_str_len(
+-            source_name, source, strlen(source), 0);
+-
+-        parse_tree = mp_parse(lex, MP_PARSE_FILE_INPUT);
+-        module_fun = mp_compile(&parse_tree, source_name, false);
++        mp_compiled_module_t module;
++        module.context = m_new_obj(mp_module_context_t);
++        module.context->module.globals = mp_globals_get();
++        if (bytecode_file != NULL && bytecode_file[0] != '\0')
++        {
++            char resolved[QFLI_PY_PATH_MAX];
++            qfli_py_file_resolve(bytecode_file, 0, resolved);
++            mp_raw_code_load_file(qstr_from_str(resolved), &module);
++        }
++        else
++        {
++            lex = mp_lexer_new_from_str_len(source_name, source, strlen(source), 0);
++            parse_tree = mp_parse(lex, MP_PARSE_FILE_INPUT);
++            mp_compile_to_raw_code(&parse_tree, source_name, false, &module);
++        }
++        qfli_py_check_cancel();
++        if (compile_only && artifact_output != NULL && artifact_output[0] != '\0')
++            qfli_py_file_save_bytecode(&module, artifact_output);
++        module_fun = mp_make_function_from_proto_fun(module.rc, module.context, NULL);
+         if (!compile_only)
+             mp_call_function_0(module_fun);
+ 
+@@ -244,6 +269,17 @@ static int execute(const char *source, const char *project_dir,
+ 
+     {
+         mp_obj_t exc = (mp_obj_t)nlr.ret_val;
++        int cancelled = qfli_py_cancel_requested(g_active_cancel);
++        /* Exception printing must not trigger another cancellation exception. */
++        g_active_cancel = NULL;
++        if (cancelled)
++        {
++            qfli_py_hal_set_sink(QFLI_PY_SINK_STDERR);
++            mp_hal_stdout_tx_strn_cooked("KeyboardInterrupt\n", 18);
++            qfli_py_hal_set_sink(QFLI_PY_SINK_STDOUT);
++            *exit_code = 130;
++            return 0;
++        }
+ 
+         /*
+          * sys.exit() 走的是 SystemExit 异常，这在 CPython 和 MicroPython 里
+@@ -331,6 +367,14 @@ static QfliPyRunResult make_result(int exit_code, const char *output, const char
+ QfliPyRunResult qfli_py_run(const char *source, const char *stdin_text, int heap_kb,
+                             const char *project_dir, const char *entry_file,
+                             int compile_only)
++{
++    return qfli_py_execute(source, stdin_text, heap_kb, project_dir, entry_file,
++        compile_only, NULL, NULL, NULL);
++}
++
++QfliPyRunResult qfli_py_execute(const char *source, const char *stdin_text, int heap_kb,
++    const char *project_dir, const char *entry_file, int compile_only,
++    QfliPyCancel *token, const char *artifact_output, const char *bytecode_file)
+ {
+     QfliPyRunResult result;
+     int exit_code = 0;
+@@ -347,6 +391,11 @@ QfliPyRunResult qfli_py_run(const char *source, const char *stdin_text, int heap
+      * worker），所以这里必须锁。
+      */
+     qfli_py_runtime_lock();
++    if (qfli_py_cancel_requested(token))
++    {
++        qfli_py_runtime_unlock();
++        return make_result(130, "", "KeyboardInterrupt\n");
++    }
+ 
+     /*
+      * 设 GC 扫栈的「顶」。
+@@ -383,10 +432,13 @@ QfliPyRunResult qfli_py_run(const char *source, const char *stdin_text, int heap
+ 
+     qfli_py_hal_reset(stdin_text);
+     qfli_py_file_begin(project_dir);
++    g_active_cancel = token;
+ 
+-    if (execute(source, project_dir, entry_file, compile_only, &exit_code) != 0)
++    if (execute(source, project_dir, entry_file, compile_only, &exit_code,
++        artifact_output, bytecode_file) != 0)
+     {
+         result = make_result(1, qfli_py_hal_stdout(), qfli_py_hal_stderr());
++        g_active_cancel = NULL;
+         qfli_py_file_end();
+         mp_deinit();
+         qfli_py_runtime_unlock();
+@@ -395,6 +447,7 @@ QfliPyRunResult qfli_py_run(const char *source, const char *stdin_text, int heap
+ 
+     result = make_result(exit_code, qfli_py_hal_stdout(), qfli_py_hal_stderr());
+     result.truncated = qfli_py_hal_truncated();
++    g_active_cancel = NULL;
+ 
+     qfli_py_file_end();
+     mp_deinit();
+diff --git a/native/src/qfli_py_bridge.h b/native/src/qfli_py_bridge.h
+index 9baf2fb..7bb13b9 100644
+--- a/native/src/qfli_py_bridge.h
++++ b/native/src/qfli_py_bridge.h
+@@ -46,6 +46,14 @@ typedef struct {
+     int truncated;
+ } QfliPyRunResult;
+ 
++typedef struct qfli_py_cancel QfliPyCancel;
++/* The caller owns a token until its queued/executing worker has completed. */
++QFLI_PY_API QfliPyCancel *qfli_py_cancel_create(void);
++QFLI_PY_API void qfli_py_cancel_request(QfliPyCancel *token);
++QFLI_PY_API void qfli_py_cancel_free(QfliPyCancel *token);
++int qfli_py_cancel_requested(QfliPyCancel *token);
++void qfli_py_check_cancel(void);
++
+ /*
+  * 同步运行一次。
+  *
+@@ -69,6 +77,16 @@ QFLI_PY_API void qfli_py_run_into(QfliPyRunResult *result,
+     const char *source, const char *stdin_text, int heap_kb,
+     const char *project_dir, const char *entry_file, int compile_only);
+ 
++/* Optional .mpy output for compilation, or .mpy input for execution. */
++QFLI_PY_API QfliPyRunResult qfli_py_execute(const char *source,
++    const char *stdin_text, int heap_kb, const char *project_dir,
++    const char *entry_file, int compile_only, QfliPyCancel *token,
++    const char *artifact_output, const char *bytecode_file);
++QFLI_PY_API void qfli_py_execute_into(QfliPyRunResult *result,
++    const char *source, const char *stdin_text, int heap_kb,
++    const char *project_dir, const char *entry_file, int compile_only,
++    QfliPyCancel *token, const char *artifact_output, const char *bytecode_file);
++
+ /* 释放 qfli_py_run 返回的两个缓冲区。可以安全地对 NULL 调用。 */
+ QFLI_PY_API void qfli_py_result_free(QfliPyRunResult *result);
+ 
+diff --git a/native/src/qfli_py_ffi.c b/native/src/qfli_py_ffi.c
+index 701c3fe..8d7a5b2 100644
+--- a/native/src/qfli_py_ffi.c
++++ b/native/src/qfli_py_ffi.c
+@@ -8,3 +8,13 @@ QFLI_PY_API void qfli_py_run_into(QfliPyRunResult *result,
+     if (result != NULL)
+         *result = qfli_py_run(source, stdin_text, heap_kb, project_dir, entry_file, compile_only);
+ }
++
++QFLI_PY_API void qfli_py_execute_into(QfliPyRunResult *result,
++    const char *source, const char *stdin_text, int heap_kb,
++    const char *project_dir, const char *entry_file, int compile_only,
++    QfliPyCancel *token, const char *artifact_output, const char *bytecode_file)
++{
++    if (result != NULL)
++        *result = qfli_py_execute(source, stdin_text, heap_kb, project_dir,
++            entry_file, compile_only, token, artifact_output, bytecode_file);
++}
+diff --git a/native/src/qfli_py_file.c b/native/src/qfli_py_file.c
+index 02348aa..40fc95d 100644
+--- a/native/src/qfli_py_file.c
++++ b/native/src/qfli_py_file.c
+@@ -3,6 +3,7 @@
+ 
+ #include "py/builtin.h"
+ #include "py/runtime.h"
++#include "py/persistentcode.h"
+ #include "py/stream.h"
+ 
+ #include <errno.h>
+@@ -114,6 +115,36 @@ static void resolve_path(mp_obj_t file, bool create, char resolved[QFLI_PY_PATH_
+         mp_raise_OSError(ENAMETOOLONG);
+ }
+ 
++void qfli_py_file_resolve(const char *name, int create, char *resolved)
++{
++    resolve_path(mp_obj_new_str(name, strlen(name)), create != 0, resolved);
++}
++
++static void write_bytecode(void *data, const char *bytes, size_t length)
++{
++    qfli_py_file_node_t *node = data;
++    while (length > 0)
++    {
++        intptr_t written = qfli_py_write(node->fd, bytes, length);
++        if (written < 0 && errno == EINTR) continue;
++        if (written <= 0) mp_raise_OSError(written < 0 ? errno : MP_EIO);
++        bytes += written;
++        length -= (size_t)written;
++    }
++}
++
++void qfli_py_file_save_bytecode(mp_compiled_module_t *module, const char *name)
++{
++    char resolved[QFLI_PY_PATH_MAX];
++    qfli_py_file_resolve(name, 1, resolved);
++    int fd = qfli_py_open(resolved, O_WRONLY | O_CREAT | O_TRUNC, 0644);
++    if (fd < 0) mp_raise_OSError(errno);
++    qfli_py_file_node_t *node = qfli_py_file_track(fd);
++    mp_print_t print = {node, write_bytecode};
++    mp_raw_code_save(module, &print);
++    qfli_py_file_close(node);
++}
++
+ static mp_uint_t file_read(mp_obj_t self, void *buf, mp_uint_t size, int *errcode)
+ {
+     qfli_file_t *file = MP_OBJ_TO_PTR(self);
+diff --git a/native/src/qfli_py_file.h b/native/src/qfli_py_file.h
+index d7cf724..f3338c1 100644
+--- a/native/src/qfli_py_file.h
++++ b/native/src/qfli_py_file.h
+@@ -1,6 +1,8 @@
+ #ifndef QFLI_PY_FILE_H
+ #define QFLI_PY_FILE_H
+ 
++#include "py/emitglue.h"
++
+ typedef struct qfli_py_file_node qfli_py_file_node_t;
+ 
+ void qfli_py_file_begin(const char *project_dir);
+@@ -8,5 +10,8 @@ void qfli_py_file_end(void);
+ qfli_py_file_node_t *qfli_py_file_track(int fd);
+ void qfli_py_file_close(qfli_py_file_node_t *node);
+ 
++void qfli_py_file_resolve(const char *name, int create, char *resolved);
++void qfli_py_file_save_bytecode(mp_compiled_module_t *module, const char *name);
++
+ 
+ #endif
+diff --git a/native/src/qfli_py_hal.c b/native/src/qfli_py_hal.c
+index 5ec0ee0..9a173be 100644
+--- a/native/src/qfli_py_hal.c
++++ b/native/src/qfli_py_hal.c
+@@ -228,21 +228,29 @@ mp_uint_t mp_hal_ticks_cpu(void)
+     return mp_hal_ticks_us();
+ }
+ 
+-void mp_hal_delay_us(mp_uint_t us)
++static void delay_us(uint64_t us)
+ {
+-    qfli_py_sleep_us(us);
++    uint64_t deadline = qfli_py_monotonic_ns() / 1000u + us;
++    for (;;)
++    {
++        qfli_py_check_cancel();
++        uint64_t now = qfli_py_monotonic_ns() / 1000u;
++        if (now >= deadline) break;
++        uint64_t remaining = deadline - now;
++        qfli_py_sleep_us(remaining > 20000u ? 20000u : remaining);
++    }
+ }
+ 
++void mp_hal_delay_us(mp_uint_t us) { delay_us(us); }
++
+ /*
+  * time.sleep() 走这里。
+  *
+- * 上游的 unix port 会在延时里调 mp_handle_pending()，好让 Ctrl-C 能打断
+- * sleep。我们没有「随时中断」的通道（MICROPY_KBD_EXCEPTION 是关的），
+- * 所以就是一个纯粹的睡。
++ * Check the host cancellation signal at most every 20 ms while sleeping.
+  */
+ void mp_hal_delay_ms(mp_uint_t ms)
+ {
+-    qfli_py_sleep_us((uint64_t)ms * 1000u);
++    delay_us((uint64_t)ms * 1000u);
+ }
+ 
+ uint64_t mp_hal_time_ns(void)
+diff --git a/native/src/qfli_py_jni.cpp b/native/src/qfli_py_jni.cpp
+index 1ef99ed..966d3bd 100644
+--- a/native/src/qfli_py_jni.cpp
++++ b/native/src/qfli_py_jni.cpp
+@@ -1,6 +1,7 @@
+ #include <jni.h>
+ 
+ #include <cstring>
++#include <cstdint>
+ #include <new>
+ #include <string>
+ 
+@@ -67,14 +68,17 @@ Java_com_azurekiln_qfli_pyflow_QfliPyNative_nativeVersion(JNIEnv *env, jobject)
+ extern "C" JNIEXPORT jobject JNICALL
+ Java_com_azurekiln_qfli_pyflow_QfliPyNative_nativeRun(
+     JNIEnv *env, jobject, jbyteArray source, jbyteArray stdin_text, jint heap_kb,
+-    jbyteArray project_dir, jbyteArray entry_file, jboolean compile_only)
++    jbyteArray project_dir, jbyteArray entry_file, jboolean compile_only,
++    jlong token, jbyteArray artifact_output, jbyteArray bytecode_file)
+ {
+     try {
+-        std::string source_text, input_text, project_path, entry_path;
++        std::string source_text, input_text, project_path, entry_path, output_path, bytecode_path;
+         if (!ReadUtf8(env, source, &source_text)
+             || !ReadUtf8(env, stdin_text, &input_text)
+             || !ReadUtf8(env, project_dir, &project_path)
+-            || !ReadUtf8(env, entry_file, &entry_path))
++            || !ReadUtf8(env, entry_file, &entry_path)
++            || !ReadUtf8(env, artifact_output, &output_path)
++            || !ReadUtf8(env, bytecode_file, &bytecode_path))
+             return nullptr;
+ 
+         // Byte arrays avoid JNI's modified UTF-8, which corrupts non-BMP source/input.
+@@ -85,8 +89,10 @@ Java_com_azurekiln_qfli_pyflow_QfliPyNative_nativeRun(
+         if (constructor == nullptr)
+             return nullptr;
+ 
+-        RunResult raw{qfli_py_run(source_text.c_str(), input_text.c_str(), heap_kb,
+-            project_path.c_str(), entry_path.c_str(), compile_only ? 1 : 0)};
++        RunResult raw{qfli_py_execute(source_text.c_str(), input_text.c_str(), heap_kb,
++            project_path.c_str(), entry_path.c_str(), compile_only ? 1 : 0,
++            reinterpret_cast<QfliPyCancel *>(static_cast<intptr_t>(token)),
++            output_path.c_str(), bytecode_path.c_str())};
+         jbyteArray output = Utf8Bytes(env, raw.value.output);
+         if (env->ExceptionCheck())
+             return nullptr;
+@@ -100,3 +106,24 @@ Java_com_azurekiln_qfli_pyflow_QfliPyNative_nativeRun(
+         return nullptr;
+     }
+ }
++
++extern "C" JNIEXPORT jlong JNICALL
++Java_com_azurekiln_qfli_pyflow_QfliPyNative_nativeCreateCancel(JNIEnv *env, jobject)
++{
++    QfliPyCancel *token = qfli_py_cancel_create();
++    if (token == nullptr)
++        ThrowJava(env, "java/lang/IllegalStateException", "Unable to allocate cancellation token");
++    return static_cast<jlong>(reinterpret_cast<intptr_t>(token));
++}
++
++extern "C" JNIEXPORT void JNICALL
++Java_com_azurekiln_qfli_pyflow_QfliPyNative_nativeCancel(JNIEnv *, jobject, jlong token)
++{
++    qfli_py_cancel_request(reinterpret_cast<QfliPyCancel *>(static_cast<intptr_t>(token)));
++}
++
++extern "C" JNIEXPORT void JNICALL
++Java_com_azurekiln_qfli_pyflow_QfliPyNative_nativeFreeCancel(JNIEnv *, jobject, jlong token)
++{
++    qfli_py_cancel_free(reinterpret_cast<QfliPyCancel *>(static_cast<intptr_t>(token)));
++}
+diff --git a/native/src/qfli_py_platform.c b/native/src/qfli_py_platform.c
+index 0f7a1ec..3ec4099 100644
+--- a/native/src/qfli_py_platform.c
++++ b/native/src/qfli_py_platform.c
+@@ -8,6 +8,7 @@
+ #endif
+ 
+ #include "qfli_py_platform.h"
++#include "qfli_py_bridge.h"
+ 
+ #include <errno.h>
+ #include <limits.h>
+@@ -16,6 +17,17 @@
+ #include <sys/stat.h>
+ #include <time.h>
+ 
++struct qfli_py_cancel {
++    volatile long requested;
++};
++
++QfliPyCancel *qfli_py_cancel_create(void)
++{
++    return calloc(1, sizeof(QfliPyCancel));
++}
++
++void qfli_py_cancel_free(QfliPyCancel *token) { free(token); }
++
+ #if defined(_WIN32)
+ 
+ #define WIN32_LEAN_AND_MEAN
+@@ -23,6 +35,16 @@
+ #include <io.h>
+ #include <wchar.h>
+ 
++void qfli_py_cancel_request(QfliPyCancel *token)
++{
++    if (token != NULL) InterlockedExchange(&token->requested, 1);
++}
++
++int qfli_py_cancel_requested(QfliPyCancel *token)
++{
++    return token != NULL && InterlockedCompareExchange(&token->requested, 0, 0) != 0;
++}
++
+ static SRWLOCK runtime_lock = SRWLOCK_INIT;
+ 
+ void qfli_py_runtime_lock(void) { AcquireSRWLockExclusive(&runtime_lock); }
+@@ -342,6 +364,16 @@ void qfli_py_sleep_us(uint64_t us)
+ #else
+ 
+ #include <pthread.h>
++
++void qfli_py_cancel_request(QfliPyCancel *token)
++{
++    if (token != NULL) __atomic_store_n(&token->requested, 1, __ATOMIC_RELEASE);
++}
++
++int qfli_py_cancel_requested(QfliPyCancel *token)
++{
++    return token != NULL && __atomic_load_n(&token->requested, __ATOMIC_ACQUIRE) != 0;
++}
+ #include <unistd.h>
+ 
+ static pthread_mutex_t runtime_lock = PTHREAD_MUTEX_INITIALIZER;
+diff --git a/test/python_lifecycle_test.dart b/test/python_lifecycle_test.dart
+new file mode 100644
+index 0000000..45eba9a
+--- /dev/null
++++ b/test/python_lifecycle_test.dart
+@@ -0,0 +1,307 @@
++import 'dart:async';
++import 'dart:io';
++
++import 'package:flutter/services.dart';
++import 'package:flutter_test/flutter_test.dart';
++import 'package:path/path.dart' as p;
++import 'package:qfli_python/python_ffi.dart';
++import 'package:qfli_python/python_runner.dart';
++
++void main() {
++  TestWidgetsFlutterBinding.ensureInitialized();
++  const channel = MethodChannel('qfli_py/native');
++  late Directory project;
++  late String entry;
++  setUp(() {
++    project = Directory.systemTemp.createTempSync('qfli_python_lifecycle');
++    entry = p.join(project.path, 'main.py');
++  });
++  tearDown(() {
++    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
++        .setMockMethodCallHandler(channel, null);
++    project.deleteSync(recursive: true);
++  });
++
++  test(
++    'channel returns a handle while run is pending and routes stop by id',
++    () async {
++      File(entry).writeAsStringSync('while True: pass');
++      final pending = Completer<Object?>();
++      final calls = <MethodCall>[];
++      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
++          .setMockMethodCallHandler(channel, (call) async {
++            calls.add(call);
++            switch (call.method) {
++              case 'available':
++                return {'available': true, 'runControl': true};
++              case 'prepareRun':
++                return 'unique-run';
++              case 'run':
++                return pending.future;
++              case 'cancel':
++                expect((call.arguments as Map)['runId'], 'unique-run');
++                pending.complete({
++                  'exitCode': 130,
++                  'output': 'before\n',
++                  'error': 'KeyboardInterrupt\n',
++                });
++                return true;
++            }
++            return null;
++          });
++      const runner = PythonProgramRunner(
++        transport: PythonNativeTransport.methodChannel,
++      );
++      final result = await runner
++          .run(projectPath: project.path, entryFile: entry)
++          .timeout(const Duration(seconds: 2));
++      expect(pending.isCompleted, isFalse);
++      await result!.cancel!();
++      expect(await result.stdout.toList(), ['before']);
++      expect(await result.stderr.toList(), ['KeyboardInterrupt']);
++      expect(await result.exitCode, 130);
++      await result.cancel!();
++      expect(calls.where((call) => call.method == 'cancel').length, 1);
++      expect(
++        (calls.firstWhere((call) => call.method == 'run').arguments
++            as Map)['runId'],
++        'unique-run',
++      );
++    },
++  );
++
++  test(
++    'pending native failure closes both streams and retains not-run status',
++    () async {
++      File(entry).writeAsStringSync('print(1)');
++      final pending = Completer<Object?>();
++      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
++          .setMockMethodCallHandler(channel, (call) async {
++            if (call.method == 'available') {
++              return {'available': true, 'runControl': true};
++            }
++            if (call.method == 'prepareRun') return 'failure-run';
++            return pending.future;
++          });
++      const runner = PythonProgramRunner(
++        transport: PythonNativeTransport.methodChannel,
++      );
++      final result = await runner.run(
++        projectPath: project.path,
++        entryFile: entry,
++      );
++      pending.completeError(
++        PlatformException(code: 'NATIVE_FAILURE', message: 'native detail'),
++      );
++      expect(await result!.stdout.toList(), isEmpty);
++      expect(await result.stderr.toList(), [contains('native detail')]);
++      expect(await result.exitCode, PythonProgramRunner.notRunExitCode);
++    },
++  );
++
++  if (!Platform.isWindows && !Platform.isLinux) return;
++  final library = p.join(
++    Directory.current.path,
++    'native',
++    'build',
++    Platform.operatingSystem,
++    Platform.isWindows ? 'qfli_py_ffi.dll' : 'libqfli_py_ffi.so',
++  );
++  group(
++    'real MicroPython lifecycle',
++    () {
++      late PythonFfiBackend backend;
++      setUp(() => backend = PythonFfiBackend(libraryPath: library));
++
++      PythonFfiExecution start(String source, {String bytecode = ''}) =>
++          backend.start(
++            source: source,
++            stdin: '',
++            heapKb: 8192,
++            projectPath: project.path,
++            entryFile: entry,
++            bytecodeFile: bytecode,
++          );
++
++      Future<void> waitForFile(String name) async {
++        final file = File(p.join(project.path, name));
++        final deadline = DateTime.now().add(const Duration(seconds: 5));
++        while (!file.existsSync()) {
++          if (DateTime.now().isAfter(deadline)) {
++            fail('Native worker did not create $name');
++          }
++          await Future<void>.delayed(const Duration(milliseconds: 10));
++        }
++      }
++
++      for (final code in ['while True: pass', 'import time\ntime.sleep(60)']) {
++        test('stop executing $code and preserve prior output', () async {
++          final execution = start(
++            "print('before')\nopen('started', 'w').close()\n$code",
++          );
++          try {
++            await waitForFile('started');
++          } finally {
++            await execution.cancel();
++          }
++          await execution.cancel();
++          final result = await execution.result.timeout(
++            const Duration(seconds: 3),
++          );
++          expect(result['exitCode'], 130);
++          expect(result['output'], 'before\n');
++          expect(result['error'], contains('KeyboardInterrupt'));
++          await execution.cancel();
++          final next = await start('print(42)').result;
++          expect(next['exitCode'], 0);
++          expect(next['output'], '42\n');
++        });
++      }
++
++      test('pre-start cancellation prevents source side effects', () async {
++        final execution = start("open('must-not-exist', 'w').close()");
++        await execution.cancel();
++        expect((await execution.result)['exitCode'], 130);
++        expect(
++          File(p.join(project.path, 'must-not-exist')).existsSync(),
++          isFalse,
++        );
++      });
++
++      test('queued cancellation cannot stop another run', () async {
++        final first = start(
++          "open('first-started', 'w').close()\nwhile True: pass",
++        );
++        PythonFfiExecution? second;
++        try {
++          await waitForFile('first-started');
++          second = start("open('must-not-exist', 'w').close()");
++          await second.cancel();
++          var completed = false;
++          unawaited(first.result.then((_) => completed = true));
++          await Future<void>.delayed(const Duration(milliseconds: 50));
++          expect(completed, isFalse);
++        } finally {
++          await first.cancel();
++        }
++        expect((await first.result)['exitCode'], 130);
++        expect((await second.result)['exitCode'], 130);
++        expect(
++          File(p.join(project.path, 'must-not-exist')).existsSync(),
++          isFalse,
++        );
++      });
++
++      test('runner exposes real stop before native completion', () async {
++        File(entry).writeAsStringSync("print('before')\nwhile True: pass");
++        final runner = PythonProgramRunner(libraryPath: library);
++        final result = await runner
++            .run(projectPath: project.path, entryFile: entry)
++            .timeout(const Duration(seconds: 3));
++        expect(result!.cancel, isNotNull);
++        await result.cancel!();
++        expect(await result.exitCode.timeout(const Duration(seconds: 3)), 130);
++        await result.stdout.drain<void>();
++        expect(await result.stderr.toList(), [contains('KeyboardInterrupt')]);
++      });
++
++      test(
++        'upstream artifacts run after deleting entry and imported source',
++        () async {
++          final helper = File(p.join(project.path, 'helper.py'))
++            ..writeAsStringSync('value = 7');
++          File(entry).writeAsStringSync(
++            'import helper, sys\n'
++            'def twice(value):\n    return value * 2\n'
++            'with open("result.txt", "w") as f:\n    f.write(input())\n'
++            'print(twice(helper.value), open("result.txt").read())\n'
++            'print(__file__, sys.argv[0])\n',
++          );
++          File(
++            p.join(project.path, 'input.txt'),
++          ).writeAsStringSync('\u4F60\u597D\u{1F680}\n');
++          final runner = PythonProgramRunner(libraryPath: library);
++          final helperCompilation = await runner.compile(
++            projectPath: project.path,
++            entryFile: helper.path,
++          );
++          expect(
++            helperCompilation.success,
++            isTrue,
++            reason: helperCompilation.error,
++          );
++          final compilation = await runner.compile(
++            projectPath: project.path,
++            entryFile: entry,
++          );
++          expect(compilation.success, isTrue, reason: compilation.error);
++          final artifact = File(compilation.artifactPath);
++          expect(artifact.readAsBytesSync().take(3), [77, 6, 0]);
++          expect(
++            File(p.join(project.path, 'result.txt')).existsSync(),
++            isFalse,
++          );
++          helper.deleteSync();
++          File(entry).deleteSync();
++          final result = await runner.run(
++            projectPath: project.path,
++            entryFile: artifact.path,
++          );
++          expect(await result!.stdout.toList(), [
++            '14 \u4F60\u597D\u{1F680}',
++            '${artifact.path} ${artifact.path}',
++          ]);
++          expect(await result.stderr.toList(), isEmpty);
++          expect(await result.exitCode, 0);
++        },
++      );
++
++      test('failed compilation retains previous artifact', () async {
++        final source = File(entry)..writeAsStringSync('print(42)');
++        final runner = PythonProgramRunner(libraryPath: library);
++        final good = await runner.compile(
++          projectPath: project.path,
++          entryFile: entry,
++        );
++        expect(good.success, isTrue, reason: good.error);
++        final artifact = File(good.artifactPath);
++        final before = artifact.readAsBytesSync();
++        source.writeAsStringSync('def broken(:');
++        final bad = await runner.compile(
++          projectPath: project.path,
++          entryFile: entry,
++        );
++        expect(bad.success, isFalse);
++        expect(bad.error, contains('SyntaxError'));
++        expect(bad.artifactPath, isEmpty);
++        expect(artifact.readAsBytesSync(), before);
++      });
++
++      test('invalid bytecode fails then a fresh source run succeeds', () async {
++        final artifact = File(p.join(project.path, 'bad.mpy'))
++          ..writeAsBytesSync([77, 5, 0, 31]);
++        final result = await start('', bytecode: artifact.path).result;
++        expect(result['exitCode'], 1);
++        expect(result['error'], contains('incompatible .mpy file'));
++        expect((await start('print(42)').result)['output'], '42\n');
++      });
++
++      test('artifact writing obeys project boundaries', () async {
++        final outside = '${project.path}-outside.mpy';
++        final result = await backend.run(
++          source: 'print(42)',
++          stdin: '',
++          heapKb: 8192,
++          projectPath: project.path,
++          entryFile: entry,
++          compileOnly: true,
++          artifactOutput: outside,
++        );
++        expect(result['exitCode'], 1);
++        expect(result['error'], contains('EACCES'));
++        expect(File(outside).existsSync(), isFalse);
++      });
++    },
++    skip: File(library).existsSync() ? false : 'Native library is unavailable.',
++  );
++}
+diff --git a/test/python_tools_page_test.dart b/test/python_tools_page_test.dart
+index 8c68479..8459f04 100644
+--- a/test/python_tools_page_test.dart
++++ b/test/python_tools_page_test.dart
+@@ -1,3 +1,4 @@
++import 'dart:async';
+ import 'dart:convert';
+ import 'dart:io';
+ 
+@@ -42,6 +43,94 @@ void main() {
+   });
+ 
+   for (final size in [const Size(360, 800), const Size(1200, 800)]) {
++    testWidgets('compile and stop workflow at $size', (tester) async {
++      tester.view.physicalSize = size;
++      tester.view.devicePixelRatio = 1;
++      addTearDown(tester.view.resetPhysicalSize);
++      addTearDown(tester.view.resetDevicePixelRatio);
++      final pending = Completer<Object?>();
++      final calls = <MethodCall>[];
++      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
++          .setMockMethodCallHandler(channel, (call) async {
++            calls.add(call);
++            switch (call.method) {
++              case 'available':
++                return {
++                  'available': true,
++                  'runControl': true,
++                  'bytecode': true,
++                };
++              case 'compile':
++                File(
++                  (call.arguments as Map)['artifactOutput'] as String,
++                ).writeAsBytesSync([77, 6, 0, 31]);
++                return {'exitCode': 0};
++              case 'prepareRun':
++                return 'tools-run';
++              case 'run':
++                return pending.future;
++              case 'cancel':
++                expect((call.arguments as Map)['runId'], 'tools-run');
++                pending.complete({
++                  'exitCode': 130,
++                  'output': 'before\n',
++                  'error': 'KeyboardInterrupt\n',
++                });
++                return true;
++            }
++            return null;
++          });
++      await tester.runAsync(() async {
++        await tester.pumpWidget(
++          MaterialApp(
++            home: PythonToolsPage(
++              store: store,
++              runner: const PythonProgramRunner(
++                transport: PythonNativeTransport.methodChannel,
++              ),
++            ),
++          ),
++        );
++        for (var attempt = 0; attempt < 100; attempt++) {
++          await tester.pump();
++          if (find.byType(LinearProgressIndicator).evaluate().isEmpty) break;
++          await Future<void>.delayed(const Duration(milliseconds: 10));
++        }
++      });
++      await tester.tap(find.byTooltip('编译'));
++      await tester.runAsync(() async {
++        for (var attempt = 0; attempt < 100; attempt++) {
++          await tester.pump();
++          if (find.text('编译完成').evaluate().isNotEmpty &&
++              find.byType(LinearProgressIndicator).evaluate().isEmpty) {
++            break;
++          }
++          await Future<void>.delayed(const Duration(milliseconds: 10));
++        }
++      });
++      await tester.pumpAndSettle();
++      expect(find.text('编译完成'), findsOneWidget);
++      expect(
++        File(p.join(directory.path, 'src', 'main.mpy')).existsSync(),
++        isTrue,
++      );
++      await tester.tap(find.widgetWithText(FilledButton, '运行'));
++      await tester.pumpAndSettle();
++      expect(pending.isCompleted, isFalse);
++      await tester.tap(find.byTooltip('停止运行'));
++      await tester.pumpAndSettle();
++      expect(find.text('运行结束 · 退出码 130'), findsOneWidget);
++      expect(find.text('before\nKeyboardInterrupt'), findsOneWidget);
++      expect(tester.takeException(), isNull);
++      expect(calls.map((call) => call.method), [
++        'available',
++        'compile',
++        'available',
++        'prepareRun',
++        'run',
++        'cancel',
++      ]);
++    });
+     testWidgets('syntax workflow at $size', (tester) async {
+       tester.view.physicalSize = size;
+       tester.view.devicePixelRatio = 1;

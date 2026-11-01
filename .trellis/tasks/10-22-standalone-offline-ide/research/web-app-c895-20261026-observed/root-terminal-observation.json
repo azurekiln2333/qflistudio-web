@@ -1,0 +1,39 @@
+{
+  "observedUtc": "2026-10-26T09:58:16.818849+00:00",
+  "originalExecChunk": "8484c4",
+  "originalSession": 71189,
+  "terminalToolChunk": "229ce0",
+  "actualOriginalToolTerminal": true,
+  "actualOriginalExitCode": 0,
+  "validationRoot": {
+    "pid": 82672,
+    "threadId": 83464,
+    "createdSuspended": true,
+    "assignedBeforeResume": true,
+    "terminal": true,
+    "creationFiletime100ns": "134374821414952833",
+    "jobActiveProcesses": 0,
+    "exitCode": 0
+  },
+  "finalSenderRoot": {
+    "pid": 23080,
+    "threadId": 34436,
+    "createdSuspended": true,
+    "assignedBeforeResume": true,
+    "terminal": true,
+    "creationFiletime100ns": "134374822437902519",
+    "jobActiveProcesses": 0,
+    "exitCode": 0
+  },
+  "finalSenderDelivered": true,
+  "heldJobs": 0,
+  "gate": "PASS",
+  "successorGrant": false,
+  "coordinatorAcceptance": {
+    "globalSeq": 904,
+    "fullProofSeconds": 158.019,
+    "actualPublisherToolTranscriptUtc": "2026-10-26T09:58:19.362Z",
+    "actualOriginalTerminalTranscriptUtc": "2026-10-26T09:57:32.369Z",
+    "within180": true
+  }
+}

@@ -1,0 +1,524 @@
+{
+  "schemaVersion": 5,
+  "kind": "web-relay-readiness-input",
+  "window": "c864",
+  "sourceOnly": true,
+  "execution": false,
+  "checkedUtc": "2026-10-26T07:25:24.782583+00:00",
+  "historicalParent": {
+    "directory": "web-relay-input-20261026",
+    "status": "historical, preserved, not rewritten",
+    "manifestSha256": "226CB055D74439B6B7319D9796AEC62D70329144FDAB35FFEBBFD295AC7DA91A",
+    "fullInputsSha256": "2DDB7E3846BAE9550DAEF5574CC21169407EDD8932373CAF088F1F115E9C572C",
+    "coreHead": "64f0aa75a773c632a1101ce16e1900615b274960",
+    "productHead": "26b5d14fa1ec8df46f4331625bf72fef6aea7f27"
+  },
+  "authoritative": {
+    "fullInputs": {
+      "path": "app-full-inputs.json",
+      "present": true,
+      "sha256": "F8D2AB9E2F9785919B372B9283A88277F0E0CCDF1F6EC77816F58A821AD5714A",
+      "filesCount": 332,
+      "filesSha256": "7B87BB2676D7E90892536BCAB0158132064A19660972D93B0B08450A3937F7B5",
+      "declaredFilesSha256": "7B87BB2676D7E90892536BCAB0158132064A19660972D93B0B08450A3937F7B5",
+      "filesSha256MatchesCapture": true,
+      "perFileHashCase": "lowercase hexdigest from the frozen snapshot",
+      "coreHead": "5b3c48c7d1c1822d0ee348b68eb6b33f3bba54d0",
+      "processesStarted": [
+        "git -C core rev-parse HEAD"
+      ],
+      "mainGuardHeld": true
+    },
+    "parentFreeze": {
+      "repo": "qfli_c",
+      "commit": "0851e565920e746c4c093d85dfe612a4646f3b7c",
+      "path": ".trellis/tasks/10-22-offline-standalone-ide/research/terminal-recovery-20261026/core-lib-config-freeze.json",
+      "sha256": "863F97CEB34FCB491780F1BA4AC38DADF472E1BA28C0CF0F7A522F89BA4E04D0",
+      "match": true,
+      "kind": "current-workspace-source-binding-not-tested-acceptance",
+      "captureHead": "2f9039a3ba95449679b17257b0313c1ee3644a2c",
+      "boundFiles": 164,
+      "liveCheck": {
+        "checked": 164,
+        "unchanged": 163,
+        "changed": [
+          {
+            "path": "lib/services/process_supervisor.dart",
+            "parentSha256": "25BA430CE7C0A6E2740C506CE6B0319EEECD31C90A3DC20B53A005861D8F54A1",
+            "liveSha256": "095DE8C17C66DC206FE170B3F99B7447D8660F183085ECB338F97484FF0E5BFC"
+          }
+        ],
+        "missing": [],
+        "claimsOldHashMatch": false,
+        "note": "The parent freeze stays a historical binding. Only the supervisor replacement is live."
+      },
+      "supervisorReplacement": {
+        "path": "lib/services/process_supervisor.dart",
+        "parentSha256": "25BA430CE7C0A6E2740C506CE6B0319EEECD31C90A3DC20B53A005861D8F54A1",
+        "currentSha256": "095DE8C17C66DC206FE170B3F99B7447D8660F183085ECB338F97484FF0E5BFC",
+        "liveSha256": "095DE8C17C66DC206FE170B3F99B7447D8660F183085ECB338F97484FF0E5BFC",
+        "exact": true,
+        "unchangedExpected": 163,
+        "observedUnchanged": 163
+      }
+    },
+    "coreCheckpoint": {
+      "head": "5b3c48c7d1c1822d0ee348b68eb6b33f3bba54d0",
+      "relation": "Parent freeze capture HEAD 2f is historical metadata. Its bound working bytes stay historical too, with exactly one supervisor replacement. This checkpoint is the current core."
+    }
+  },
+  "frozenPins": [
+    {
+      "role": "observer",
+      "path": ".trellis/tasks/10-22-standalone-offline-ide/research/run-web-observed-relay-window.py",
+      "pinnedSha256": "D1943BD1E622FC3CA5FE327E1473A141B3AF992CF48FC61F078F3140FC6552B3",
+      "liveSha256": "D1943BD1E622FC3CA5FE327E1473A141B3AF992CF48FC61F078F3140FC6552B3",
+      "bytes": 26038,
+      "match": true
+    },
+    {
+      "role": "test",
+      "path": ".trellis/tasks/10-22-standalone-offline-ide/research/test_web_observed_relay_window.py",
+      "pinnedSha256": "81D61C8B0F639222725DF141AB9E63FD07280C9C053EBC065775BB777E60DEDC",
+      "liveSha256": "81D61C8B0F639222725DF141AB9E63FD07280C9C053EBC065775BB777E60DEDC",
+      "bytes": 23212,
+      "match": true
+    },
+    {
+      "role": "wrapper",
+      "path": ".trellis/tasks/10-22-standalone-offline-ide/research/run-web-relay-window.py",
+      "pinnedSha256": "401F61D44495DD0A8B681A25746263E589203A9555F30C49106ECA791DB0FDB3",
+      "liveSha256": "401F61D44495DD0A8B681A25746263E589203A9555F30C49106ECA791DB0FDB3",
+      "bytes": 60258,
+      "match": true
+    },
+    {
+      "role": "authorization",
+      "path": ".trellis/tasks/10-22-standalone-offline-ide/research/web_relay_authorization.py",
+      "pinnedSha256": "84445442FED9B9382555E02B8812C6321CBD7C7EC5026FF13904C5F5897A1DE4",
+      "liveSha256": "84445442FED9B9382555E02B8812C6321CBD7C7EC5026FF13904C5F5897A1DE4",
+      "bytes": 30119,
+      "match": true
+    },
+    {
+      "role": "runner",
+      "path": ".trellis/tasks/10-22-standalone-offline-ide/research/run-web-app-window.py",
+      "pinnedSha256": "D80C46E1B1CF2ABE7E7A582E61016AC36266354242DE198A5623628659922A19",
+      "liveSha256": "D80C46E1B1CF2ABE7E7A582E61016AC36266354242DE198A5623628659922A19",
+      "bytes": 17492,
+      "match": true
+    },
+    {
+      "role": "worker",
+      "path": ".trellis/tasks/10-22-standalone-offline-ide/research/run-web-app-worker.ps1",
+      "pinnedSha256": "074AC02216BAB95E8DA23D87DCA7D1567BE5F2FCC4722D43E53D059227FB8B78",
+      "liveSha256": "074AC02216BAB95E8DA23D87DCA7D1567BE5F2FCC4722D43E53D059227FB8B78",
+      "bytes": 3814,
+      "match": true
+    },
+    {
+      "role": "helper",
+      "path": ".trellis/tasks/10-22-standalone-offline-ide/research/run-web-owned-window.py",
+      "pinnedSha256": "9DF7A94399AAE38951337D61693D65DE6E3CEF438D02D4E51C787242DFDA7FBE",
+      "liveSha256": "9DF7A94399AAE38951337D61693D65DE6E3CEF438D02D4E51C787242DFDA7FBE",
+      "bytes": 12228,
+      "match": true
+    }
+  ],
+  "frozenMatch": true,
+  "formatterPaths": [
+    {
+      "path": "lib/services/owned_preview_policy.dart",
+      "bytes": 16038,
+      "sha256": "9F0319AFD64E20322BDEFD7085A1927E3FDA28F4E6F33A70AE317B0C39715802",
+      "repairFile": true
+    },
+    {
+      "path": "lib/services/owned_preview_resource_broker.dart",
+      "bytes": 11793,
+      "sha256": "56FD917C3B4706E9DCF7B6328EC55F0E1DE5C76A6825190F98C90606E6AF13D5",
+      "repairFile": true
+    },
+    {
+      "path": "test/owned_preview_policy_test.dart",
+      "bytes": 17688,
+      "sha256": "9324590B14B57BEA5483C3AAA6FEE2DF9F0F89AAD0BAF1C47B17CD667062B639",
+      "repairFile": true
+    },
+    {
+      "path": "test/owned_preview_resource_broker_test.dart",
+      "bytes": 19030,
+      "sha256": "FFB4E6EC0BBB532374BC5C25E3A04DC7EEE558FD13D8E83F0EDFC39151ACC3F8",
+      "repairFile": true
+    },
+    {
+      "path": "test/web_offline_browser_test.dart",
+      "bytes": 9073,
+      "sha256": "506C39720B1EA9BADD7BF716C2B790CBB7E2B773EE1D896E34612A7F4C29D098",
+      "repairFile": false
+    }
+  ],
+  "repairFiles": [
+    {
+      "path": "lib/services/owned_preview_policy.dart",
+      "bytes": 16038,
+      "sha256": "9F0319AFD64E20322BDEFD7085A1927E3FDA28F4E6F33A70AE317B0C39715802",
+      "repairFile": true
+    },
+    {
+      "path": "lib/services/owned_preview_resource_broker.dart",
+      "bytes": 11793,
+      "sha256": "56FD917C3B4706E9DCF7B6328EC55F0E1DE5C76A6825190F98C90606E6AF13D5",
+      "repairFile": true
+    },
+    {
+      "path": "test/owned_preview_policy_test.dart",
+      "bytes": 17688,
+      "sha256": "9324590B14B57BEA5483C3AAA6FEE2DF9F0F89AAD0BAF1C47B17CD667062B639",
+      "repairFile": true
+    },
+    {
+      "path": "test/owned_preview_resource_broker_test.dart",
+      "bytes": 19030,
+      "sha256": "FFB4E6EC0BBB532374BC5C25E3A04DC7EEE558FD13D8E83F0EDFC39151ACC3F8",
+      "repairFile": true
+    }
+  ],
+  "repairStatus": {
+    "owned_preview_resource_broker_test.dart": "UNRUN for the combined candidate. The fixture cleanup is new and has never run. The production broker bytes did run in C843 and the gate failed there.",
+    "combinedCandidate": "UNRUN. Production bytes plus the fixture cleanup have not run together, so no new pass is claimed.",
+    "brokerProductionBytes": "Exercised in C843 as 320 PASS and 1 FAIL, a failed gate. Those bytes are not a pass."
+  },
+  "product": {
+    "root": "D:\\MyNewProjects\\qfli_web",
+    "head": "d863397122f2a3f0e3f6df5cbe066873f959d902",
+    "shortHead": "d863397",
+    "branch": "feat/offline-web-ide",
+    "subject": "docs(web): record observed app validation results",
+    "headCommitFiles": [
+      {
+        "status": "A",
+        "path": ".trellis/tasks/10-22-standalone-offline-ide/research/web-c843-validation-20261026.md",
+        "bytes": 4215,
+        "sha256": "D242E25003C2C369F7E253019BBEC65683608FAABC401AAF6E4AB8AC9AE58548"
+      },
+      {
+        "status": "M",
+        "path": "README.en.md",
+        "bytes": 9874,
+        "sha256": "571C3C938523180C95A11FEE7BEF90E40BFD9F4BEF28CBE18972E3A86D978FF0"
+      },
+      {
+        "status": "M",
+        "path": "README.md",
+        "bytes": 8468,
+        "sha256": "9F57B0366C04D6940FC604B7CD18FB5225909DA34C6C18491E065D4BE20AEDB6"
+      },
+      {
+        "status": "M",
+        "path": "README.zh-Hant.md",
+        "bytes": 8597,
+        "sha256": "91FCE643E1897D0AD2EBD14199458F0E6776D1B3A1C898AE1087EB0851656013"
+      }
+    ],
+    "researchOnly": false,
+    "nonResearchFiles": [
+      "README.en.md",
+      "README.md",
+      "README.zh-Hant.md"
+    ]
+  },
+  "core": {
+    "head": "5b3c48c7d1c1822d0ee348b68eb6b33f3bba54d0",
+    "branch": "main",
+    "statusEntries": 42,
+    "wipFilesHashed": 42,
+    "wipDirectoryEntries": [],
+    "malformedStatusLines": [],
+    "completeWipFiles": true,
+    "wipRollupSha256": "8BC8E2F34EFF374971EEBD1103F21F715A41674683963E776C9440356DB599F6",
+    "wip": [
+      {
+        "code": " M",
+        "path": ".trellis/spec/frontend/index.md",
+        "bytes": 2454,
+        "sha256": "FCC0F48939A7FE51E4ED7A11EF9F7EF8E08CAEBD7B7BD587C7F7F1DA11FDFC7D"
+      },
+      {
+        "code": " M",
+        "path": "AGENTS.md",
+        "bytes": 1620,
+        "sha256": "E90D8FAC57F63F93FFB72FFE8EA9BF4E8F72B42D55111C50A43038F61296809A"
+      },
+      {
+        "code": " M",
+        "path": "assets/content/examples.json",
+        "bytes": 2286562,
+        "sha256": "DF0555C005D4230AD8248FC0D0A44073D393E60FC3AE152254BE3CA20F4306B6"
+      },
+      {
+        "code": " M",
+        "path": "assets/content/tutorials.json",
+        "bytes": 4729105,
+        "sha256": "7D858D27E440CB0DE93CBFA2CD2469ED99005C3CEDF6A846D95EBBB355F694BA"
+      },
+      {
+        "code": " M",
+        "path": "assets/tutorials/java.json",
+        "bytes": 1036492,
+        "sha256": "E9B89F7488BDE9AFB75C870EB3C450CB94234AA075E61160B8A737D8F1732732"
+      },
+      {
+        "code": " M",
+        "path": "assets/tutorials/python.json",
+        "bytes": 494254,
+        "sha256": "E669AC3D463A887BC90949818292950FD5CB516BD0827AC72AA76B5BF1637B13"
+      },
+      {
+        "code": " M",
+        "path": "lib/content/local_content_adapter.dart",
+        "bytes": 4879,
+        "sha256": "550F0156A9FA39C9853EEA7C867B3CE53913D0AFA3150655F69C19902C4D8416"
+      },
+      {
+        "code": " M",
+        "path": "lib/pages/home_page.dart",
+        "bytes": 50071,
+        "sha256": "84CDFC0F3E6FD16C001E2200B45447A470FE66E7EFF363BBB54773F02085BE3C"
+      },
+      {
+        "code": " M",
+        "path": "lib/pages/local_content_pages.dart",
+        "bytes": 33899,
+        "sha256": "82D0BE20BF537410BD1B37C10372AB9B781A3A4F61708BAF8EA166B1D45652B6"
+      },
+      {
+        "code": "??",
+        "path": "lib/pages/offline_text_tool_pages.dart",
+        "bytes": 31263,
+        "sha256": "217AC3CDDE8F320604C144BE6D36E9FF315619603920E2B04D7B53D54C8D5ED2"
+      },
+      {
+        "code": " M",
+        "path": "lib/pages/points_page.dart",
+        "bytes": 21948,
+        "sha256": "41C0EB63CBD0BBB3F3367E8D5F0478DE1BBB47103C6BE8E360D14930D54E0AB7"
+      },
+      {
+        "code": " M",
+        "path": "lib/pages/tasks_page.dart",
+        "bytes": 11276,
+        "sha256": "2A65482B0AF228656896CB4C236F5DCCD569115DBFCC67F9BD64F042077FE61F"
+      },
+      {
+        "code": " M",
+        "path": "lib/pages/tools_grid.dart",
+        "bytes": 8731,
+        "sha256": "B12C17A4B58E70CBD8165D880249BEF2D969F74F1FFF8B06911A57406C8A89E1"
+      },
+      {
+        "code": "??",
+        "path": "lib/services/points_feed.dart",
+        "bytes": 17363,
+        "sha256": "3E95BBD7CD114F9ECCFAAAEAEBD2ECFFE35194E96B7984F2858F728DB76873D3"
+      },
+      {
+        "code": " M",
+        "path": "lib/services/task_activity_service.dart",
+        "bytes": 15823,
+        "sha256": "D0675696EBA2551360809658BB1A89957EE029BC0FA2F1A989D83F2FB2E18EA7"
+      },
+      {
+        "code": "??",
+        "path": "lib/tools/offline_text_tools.dart",
+        "bytes": 35937,
+        "sha256": "DF348963CB872FC310533A773B202EB909FBD8BEC1D05A86ED2BEEDA35D7D7AF"
+      },
+      {
+        "code": "??",
+        "path": "scripts/ste-lint-zh.py",
+        "bytes": 20114,
+        "sha256": "4571E2C4C1C8D79062593C598999F207E390CF006F3F29A16D84107600C907CF"
+      },
+      {
+        "code": " M",
+        "path": "test/java_content_render_test.dart",
+        "bytes": 18968,
+        "sha256": "229B98B41520281E643359CA115D03252C329FC955464D04427D2CC1738D665C"
+      },
+      {
+        "code": " M",
+        "path": "test/java_content_test.dart",
+        "bytes": 17750,
+        "sha256": "1649C41EDB0733BD3DEA841AD3ACDD9C7FE72D4AFA0D73EB8746BAF38A30DB9F"
+      },
+      {
+        "code": " M",
+        "path": "test/local_content_filters_test.dart",
+        "bytes": 15805,
+        "sha256": "B75CEFF4181F3F9AF80BD5B2C21E5629AA7178BD6DA95B56F829966D032547CB"
+      },
+      {
+        "code": "??",
+        "path": "test/main_editor_short_height_test.dart",
+        "bytes": 4608,
+        "sha256": "300A66770F6BD7187042249D0341752046324E08B4713838E4C20A2B651E9E75"
+      },
+      {
+        "code": "??",
+        "path": "test/main_saved_workspaces_tab_test.dart",
+        "bytes": 7225,
+        "sha256": "BF33D4C1D1629FA1FF92ABEE2C730069FB6D1D4A7F0BC4406F0576A644FD698E"
+      },
+      {
+        "code": "??",
+        "path": "test/main_workspace_actions_test.dart",
+        "bytes": 15895,
+        "sha256": "2F5670CDEC7E9A7BFB6ED52AB196AC897A78B9602C17BB9B8D64E5E71FEE8FFC"
+      },
+      {
+        "code": "??",
+        "path": "test/offline_text_tools_test.dart",
+        "bytes": 8587,
+        "sha256": "05E6253595F42BB5DD7932FD198BED42294F5B23A02CC07A2156527C75956276"
+      },
+      {
+        "code": "??",
+        "path": "test/points_feed_test.dart",
+        "bytes": 24122,
+        "sha256": "89AE1121F048A7BB1ECE6454EB7C24ED13BD0A0A249F0367246E1B6ADF1E5C95"
+      },
+      {
+        "code": "??",
+        "path": "test/points_page_test.dart",
+        "bytes": 12835,
+        "sha256": "E2E4208C075C543452D778C84507266CBF5D2A93D89F56C94117CD5FCEE85C66"
+      },
+      {
+        "code": " M",
+        "path": "test/python_content_render_test.dart",
+        "bytes": 3805,
+        "sha256": "7236E3BB38A51EC2744FD85B9D341E7981DB2688A6EC650222A696AC97AD6001"
+      },
+      {
+        "code": " M",
+        "path": "test/python_content_test.dart",
+        "bytes": 12110,
+        "sha256": "2228B2DFD881AFE7D502C943C457A7FC89CB6327345396EB160161C370172CED"
+      },
+      {
+        "code": " M",
+        "path": "test/task_activity_service_test.dart",
+        "bytes": 12529,
+        "sha256": "AB4433A20A4EC2D915E1DB011AD48CD7CF7167F501CB5F482D94C47027A6B936"
+      },
+      {
+        "code": "??",
+        "path": "test/tasks_page_checkin_test.dart",
+        "bytes": 11287,
+        "sha256": "414BD27AD6B8FA282CCF99ACBA032B05F03815E97E511B6E391F2785FA96D9AA"
+      },
+      {
+        "code": " M",
+        "path": "test/tools_grid_test.dart",
+        "bytes": 19732,
+        "sha256": "9D7D0FBAAF38AF07B455CC821DEE48AE27A316F5A666AB87EB108A7EABFF6D21"
+      },
+      {
+        "code": " M",
+        "path": "tool/generate_python_content.dart",
+        "bytes": 10739,
+        "sha256": "181CC29E59EB5218811FCF80A15EA79CB11A5DA0F7D72A4A3A45B8C84C9D03D7"
+      },
+      {
+        "code": " M",
+        "path": "tool/java_content/java_topics_collections.dart",
+        "bytes": 133476,
+        "sha256": "696CDDB217A8AEA83080AD2EB55F2B9445CAD43AB45DD4C09A8196A3A4F2CFBF"
+      },
+      {
+        "code": " M",
+        "path": "tool/java_content/java_topics_io_time.dart",
+        "bytes": 205964,
+        "sha256": "BCD407E131FEEB6A646E9AA0921B8AE710B2BD4906930577FEA3A1123C3AD2A7"
+      },
+      {
+        "code": "??",
+        "path": "tool/python_content/content_identity.dart",
+        "bytes": 678,
+        "sha256": "7124FD67D70B63B5280172936FC131DA3A2D683778C886583114ADF5B0034D0B"
+      },
+      {
+        "code": "??",
+        "path": "tool/python_content/export_inventory.dart",
+        "bytes": 7629,
+        "sha256": "A648E31FD81CBD0736722287E7D757CEAF7EC4A85F4AACBBBEE2F4A428C3959A"
+      },
+      {
+        "code": " M",
+        "path": "tool/python_content/python_topic.dart",
+        "bytes": 3147,
+        "sha256": "9354B0BD19849E0B1CCB614445FBC3CE377B50A7EF13085B4DCC081244E560EC"
+      },
+      {
+        "code": " M",
+        "path": "tool/python_content/python_topics_advanced.dart",
+        "bytes": 270338,
+        "sha256": "8935044175B3550E5C25E1B9150C04BC2417BCB137269FA03866207C5E2B9EB2"
+      },
+      {
+        "code": " M",
+        "path": "tool/python_content/topics_basics.dart",
+        "bytes": 28592,
+        "sha256": "429159F34FDBB3261F31484548DF218E84E4758F8F158BC787A11BE7648CE50B"
+      },
+      {
+        "code": " M",
+        "path": "tool/python_content/topics_containers_functions.dart",
+        "bytes": 46206,
+        "sha256": "2DF4B81A0117B14C52F6AE0951CC9C74FFBD001BF92C9BCC95E76F719CB10D03"
+      },
+      {
+        "code": " M",
+        "path": "tool/python_content/topics_modules_oop.dart",
+        "bytes": 43798,
+        "sha256": "51E3DD2127F5BA63BC7C571AD48115109C480BF8E1EFED753E9112DD457BFED9"
+      },
+      {
+        "code": " M",
+        "path": "tool/verify_python_content.dart",
+        "bytes": 1811,
+        "sha256": "D41E8BAB5E00B51AA5A22E0AF8A8A6E1F6B07E16AD0E9BD2CB86F985AC596F82"
+      }
+    ],
+    "untrackedExpansion": "git status --porcelain --untracked-files=all"
+  },
+  "permittedChanges": {
+    "available": true,
+    "parentFiles": 332,
+    "currentFiles": 332,
+    "added": [],
+    "removed": [],
+    "changed": [
+      "../qfli_studio_core/lib/services/process_supervisor.dart",
+      "test/owned_preview_resource_broker_test.dart"
+    ],
+    "allowed": [
+      "../qfli_studio_core/lib/services/process_supervisor.dart",
+      "lib/services/process_supervisor.dart",
+      "test/owned_preview_resource_broker_test.dart"
+    ],
+    "unexpectedChanges": [],
+    "permittedOnly": true
+  },
+  "notProven": [
+    "No formatter, test, analysis, content or gate phase ran for this input.",
+    "No reviewed authorization record was created, read or consumed.",
+    "No READY publication, channel message, grant or successor was made.",
+    "The frozen supervisor was imported only to call snapshot(). Its main is guarded.",
+    "load_helper, run and execute were never called; no Job and no channel.",
+    "The combined candidate, production bytes plus the fixture cleanup, is UNRUN.",
+    "The broker production bytes were exercised in C843 and the gate failed there: 320 PASS, 1 FAIL. No new pass is claimed.",
+    "The historical 164 freeze is not a 164-hash match today."
+  ]
+}

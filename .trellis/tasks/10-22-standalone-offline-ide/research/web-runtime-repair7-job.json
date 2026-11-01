@@ -1,0 +1,34 @@
+{
+  "grant": "Note441-Web-ready",
+  "nextOwner": "java-offline-1022",
+  "startedUtc": "2026-10-24T01:47:56.981148+00:00",
+  "errors": [],
+  "deadlineReached": true,
+  "root": {
+    "pid": 70588,
+    "threadId": 82796,
+    "createdSuspended": true,
+    "assignedBeforeResume": true,
+    "terminal": true,
+    "creationFiletime100ns": "134372800770064941",
+    "jobActiveProcesses": 0,
+    "exitCode": 124
+  },
+  "terminalConfirmed": true,
+  "status": "RELEASE",
+  "elapsedSeconds": 96.127,
+  "publication": {
+    "root": {
+      "pid": 69816,
+      "threadId": 29508,
+      "createdSuspended": true,
+      "assignedBeforeResume": true,
+      "terminal": true,
+      "creationFiletime100ns": "134372801731588594",
+      "jobActiveProcesses": 0,
+      "exitCode": 0
+    },
+    "terminal": true,
+    "delivered": true
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "grantSeq": 782,
+  "grant": "Web-relay-format-app-20261026-01",
+  "execSession": 39231,
+  "actualExecTerminal": true,
+  "observedExitCode": 1,
+  "wrapper": {
+    "pid": 75072,
+    "creationFiletime100ns": "134374558013668585"
+  },
+  "phases": {
+    "accept": {
+      "pid": 22424,
+      "exit": 0,
+      "terminal": true,
+      "active": 0
+    },
+    "sourceFormat": {
+      "pid": 61980,
+      "exit": 0,
+      "terminal": true,
+      "active": 0
+    },
+    "supervisor": {
+      "pid": 64460,
+      "exit": 1,
+      "terminal": true,
+      "active": 0
+    },
+    "relay": {
+      "pid": 22092,
+      "exit": 0,
+      "terminal": true,
+      "active": 0
+    }
+  },
+  "resourcesReleased": true,
+  "assessment": {
+    "gate": "FAIL",
+    "ownership": "RELEASE_READY",
+    "publication": "DELIVERED",
+    "budget": "PROVISIONAL_WITHIN"
+  },
+  "observedUtc": "2026-10-26T02:46:00.033300+00:00",
+  "controlPlaneOnly": true,
+  "selfTerminalClaim": false
+}

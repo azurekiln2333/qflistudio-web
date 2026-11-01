@@ -1,0 +1,180 @@
+{
+  "production": {
+    "path": "ohos\\entry\\build\\default\\outputs\\default\\entry-default-unsigned.hap",
+    "bytes": 80682576,
+    "sha256": "7b16610e9efe667eb3c838a204fab1c53441f8d17e4e997c0a13325a455cd346",
+    "bundleName": "com.azurekiln.qfli.webforge",
+    "moduleName": "entry",
+    "abilityName": "EntryAbility",
+    "versionCode": 1,
+    "versionName": "1.0.0",
+    "buildMode": "release",
+    "compileSdkVersion": "26.0.0.105",
+    "minAPIVersion": 50100018,
+    "targetAPIVersion": 60101024,
+    "bytecodeSha256": "a0c2298197b34f30f7d2e8c39d1734cd358e0e12f2d5a93b0464e3d5e9a5748f",
+    "catalogs": {
+      "examples.json": {
+        "path": "resources/rawfile/flutter_assets/assets/content/examples.json",
+        "bytes": 796590,
+        "sha256": "2d8f8c0aa321f3e861af5f46cd0a9b2b1430010b513d3c3eea106c0eca2eeb1c"
+      },
+      "tutorials.json": {
+        "path": "resources/rawfile/flutter_assets/assets/content/tutorials.json",
+        "bytes": 1389546,
+        "sha256": "10e750b7bd8fa8f1cb9d252831bce224248c0075589f5367c4312e37104acb36"
+      }
+    },
+    "nativeLibraries": [
+      {
+        "path": "libs/arm64-v8a/libapp.so",
+        "sha256": "30a2e2031bd288ea01f94a4bde010ad4ecbfc7f1d95cad60194b438c2306a7c5"
+      },
+      {
+        "path": "libs/arm64-v8a/libc++_shared.so",
+        "sha256": "f69947af100b652e349ae51e4a4888bcc7a327db9085272d318176ef1782bf0f"
+      },
+      {
+        "path": "libs/arm64-v8a/libflutter.so",
+        "sha256": "fbcb8c4a297bbd32fd2300e86406ffe3b4e033dd7b2404a09508a08936a7b14f"
+      },
+      {
+        "path": "libs/arm64-v8a/libqfli_nginx_napi.so",
+        "sha256": "ce3ce6e8a6460068842a30354230e54f9c89c533a53b227f1653b9b930d0f57a"
+      },
+      {
+        "path": "libs/arm64-v8a/libqfli_web_syntax.so",
+        "sha256": "0b4f4d0a7ba0a87ac1054b2ba6dda92a3035f0068367d6e508e13530e6d3915a"
+      },
+      {
+        "path": "libs/x86_64/libapp.so",
+        "sha256": "3ccb264d497b839130d62dcd2607e4f07a63cecc695736e012550b9581b3ca43"
+      },
+      {
+        "path": "libs/x86_64/libc++_shared.so",
+        "sha256": "09b9e3a97d3c01260b5e269e2ce15fe4d3b7c787b99dc4378295d4f35e2fa006"
+      },
+      {
+        "path": "libs/x86_64/libflutter.so",
+        "sha256": "2f32aef5923032bcf49011e70abf24a47411de650893e0318aee1d11b14ac20d"
+      },
+      {
+        "path": "libs/x86_64/libqfli_nginx_napi.so",
+        "sha256": "8760fd882bae72337b7cbb48e77da0ef1a1c9d8315c530aace8833f31355448a"
+      },
+      {
+        "path": "libs/x86_64/libqfli_web_syntax.so",
+        "sha256": "af8b77723749336425989887e38d342ef000fc66d8df0ab2c451221d6dc771bf"
+      }
+    ],
+    "status": "passed",
+    "flutterLibraries": [
+      {
+        "path": "libs/arm64-v8a/libapp.so",
+        "bytes": 14205872,
+        "sha256": "30a2e2031bd288ea01f94a4bde010ad4ecbfc7f1d95cad60194b438c2306a7c5",
+        "machine": 183
+      },
+      {
+        "path": "libs/arm64-v8a/libflutter.so",
+        "bytes": 16286544,
+        "sha256": "fbcb8c4a297bbd32fd2300e86406ffe3b4e033dd7b2404a09508a08936a7b14f",
+        "machine": 183
+      },
+      {
+        "path": "libs/x86_64/libapp.so",
+        "bytes": 13697968,
+        "sha256": "3ccb264d497b839130d62dcd2607e4f07a63cecc695736e012550b9581b3ca43",
+        "machine": 62
+      },
+      {
+        "path": "libs/x86_64/libflutter.so",
+        "bytes": 18459040,
+        "sha256": "2f32aef5923032bcf49011e70abf24a47411de650893e0318aee1d11b14ac20d",
+        "machine": 62
+      }
+    ],
+    "flutterRuntime": {
+      "status": "passed"
+    },
+    "syntaxLibraries": [
+      {
+        "path": "libs/arm64-v8a/libqfli_web_syntax.so",
+        "bytes": 947808,
+        "sha256": "0b4f4d0a7ba0a87ac1054b2ba6dda92a3035f0068367d6e508e13530e6d3915a",
+        "machine": 183,
+        "entry": 0,
+        "loadAlignment": [
+          16384,
+          16384,
+          16384,
+          16384
+        ],
+        "exports": [
+          "_init",
+          "_fini",
+          "qfli_web_syntax_version",
+          "qfli_web_syntax_check"
+        ]
+      },
+      {
+        "path": "libs/x86_64/libqfli_web_syntax.so",
+        "bytes": 1056384,
+        "sha256": "af8b77723749336425989887e38d342ef000fc66d8df0ab2c451221d6dc771bf",
+        "machine": 62,
+        "entry": 0,
+        "loadAlignment": [
+          16384,
+          16384,
+          16384,
+          16384
+        ],
+        "exports": [
+          "_init",
+          "_fini",
+          "qfli_web_syntax_version",
+          "qfli_web_syntax_check"
+        ]
+      }
+    ],
+    "signedInstallation": "not verified by archive inspection"
+  },
+  "test": {
+    "path": "ohos\\entry\\build\\default\\outputs\\ohosTest\\entry-ohosTest-unsigned.hap",
+    "bytes": 165686366,
+    "sha256": "52629b271a34c598141a075422a246d77f6040a08adcebd59beb909c586afb8d",
+    "bundleName": "com.azurekiln.qfli.webforge",
+    "moduleName": "entry_test",
+    "abilityName": "TestAbility",
+    "versionCode": 1,
+    "versionName": "1.0.0",
+    "buildMode": "debug",
+    "compileSdkVersion": "26.0.0.105",
+    "minAPIVersion": 50100018,
+    "targetAPIVersion": 60101024,
+    "bytecodeSha256": "197a837758a35fe0c5871abd0ab2d2fcc86bb579f259804e36b4fa544549fd37",
+    "catalogs": {
+      "examples.json": {
+        "path": "resources/rawfile/ohos_catalog/examples.json",
+        "bytes": 796590,
+        "sha256": "2d8f8c0aa321f3e861af5f46cd0a9b2b1430010b513d3c3eea106c0eca2eeb1c"
+      },
+      "tutorials.json": {
+        "path": "resources/rawfile/ohos_catalog/tutorials.json",
+        "bytes": 1389546,
+        "sha256": "10e750b7bd8fa8f1cb9d252831bce224248c0075589f5367c4312e37104acb36"
+      }
+    },
+    "nativeLibraries": [
+      {
+        "path": "libs/arm64-v8a/libflutter.so",
+        "sha256": "42ce03569da7e956c02381ca625e52ee9203074250e0d724012a44ce3c41eb0b"
+      },
+      {
+        "path": "libs/x86_64/libflutter.so",
+        "sha256": "84f72baf693ee885146bf26ae962a88fd3b81488a54b2a99044fe3ea761bd9a1"
+      }
+    ],
+    "status": "passed"
+  }
+}

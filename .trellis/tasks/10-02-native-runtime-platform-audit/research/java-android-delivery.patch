@@ -1,0 +1,733 @@
+diff --git a/native/openjdk/README.md b/native/openjdk/README.md
+index 99dd128..0f88405 100644
+--- a/native/openjdk/README.md
++++ b/native/openjdk/README.md
+@@ -6,7 +6,7 @@ JDK. Generated images and package assets are ignored by Git.
+ 
+ | Target | ABI | VM | Execution in the app |
+ | --- | --- | --- | --- |
+-| Android API 28+ | ARM64 | HotSpot server | Installed native launchers |
++| Android API 28+ | ARM64, x86_64 | HotSpot server | Installed native launchers |
+ | HarmonyOS | ARM64, x86_64 | Zero | A native child loads the packaged JVM |
+ 
+ Build recipes and pinned input details:
+@@ -90,3 +90,12 @@ staged file and contained the symbol table reported missing by the native
+ bridge. This is a failed Android runtime check; 16 KB compatibility must be
+ fixed before repeating it. See the [Android verification details](android/README.md).
+ The normal app was restored after testing.
++
++## Android x86_64 Verification On 2026-10-02
++
++The new 16 KiB aligned x86_64 image passed all eight in-app JDK checks on
++emulator-5560, API 37. The retained upstream spawn implementation is rebuilt
++with 16 KiB alignment; the pinned old binary package alone is incompatible.
++The complete image's 46 native files passed architecture, LOAD alignment and
++dependency checks. Nineteen Flutter tests passed on Windows, including actual
++host-JDK execution. Android ARM execution still needs a matching device.
+diff --git a/native/openjdk/android/README.md b/native/openjdk/android/README.md
+index 360cf9c..b4b10f0 100644
+--- a/native/openjdk/android/README.md
++++ b/native/openjdk/android/README.md
+@@ -1,6 +1,6 @@
+ # Android OpenJDK 17
+ 
+-This builds the native, headless OpenJDK 17.0.20 toolchain for Android ARM64
++This builds the native, headless OpenJDK 17.0.20 toolchain for Android ARM64 and x86_64
+ (API 28 or newer). Compilation uses HotSpot and the OpenJDK Java modules.
+ 
+ ## Build
+@@ -15,6 +15,7 @@ Windows archives contain those target files; the compiler runs on Linux.
+ bash native/openjdk/android/build.sh \
+   --ndk-dir /mnt/d/ProgramData/Android/Sdk/ndk/27.0.12077973 \
+   --boot-jdk /usr/lib/jvm/java-17-openjdk-amd64 \
++  --abi x86_64 \
+   --work-dir /root/qfli-android-openjdk \
+   --cache-dir /mnt/d/MyNewProjects/qfli_java/build
+ ```
+@@ -24,14 +25,19 @@ OpenJDK configure. `--jobs` defaults to 8. The application ID defaults to
+ `com.azurekiln.qfli.jvmx`; changing `--app-id` requires a new work directory
+ because the Termux path patches embed that application prefix.
+ 
++The default ABI is arm64-v8a. Use a separate work directory for each ABI.
+ Inputs are fixed to the source archive SHA-256, the Termux commit
+ `d0f94da1e578a0c9550a84d408bc8ed0003882ec`, the Git blob hashes in
+-`termux-patches.lock`, and the package hashes in `dependencies.lock`.
++`termux-patches.lock`, and the package hashes in `dependencies.lock` or
++`dependencies-x86_64.lock`. The retained upstream [spawn source](spawn/README.md)
++is rebuilt because the pinned binary package has 4 KiB LOAD alignment.
+ `headless-fontmanager.patch` selects the headless AWT library when applying
+ Termux's fontmanager link fix. The common `app-layout.patch` lets the launcher
+ and VM resolve the provisioned JDK data through `QFLI_JAVA_HOME`.
+ 
+-The output is `WORK_DIR/source/build/linux-aarch64-server-release/images/jdk`.
++The output is `WORK_DIR/source/build/linux-CPU-server-release/images/jdk`,
++where CPU is aarch64 or x86_64. Native links use 16 KiB page alignment;
++staging rejects any incompatible launcher, helper or shared library.
+ The script adds the Android compatibility libraries and NDK C++ runtime to its
+ `lib` directory. The image retains OpenJDK's modules, command-line tools,
+ licenses, and source archive. It has no X11 GUI backend.
+@@ -65,6 +71,17 @@ native-library packaging path with library extraction enabled, provisions
+ modules and configuration in `files/usr`, and sets the Java home and library
+ search path. The Android image cannot be used as a HarmonyOS runtime.
+ 
+-Stage the dereferenced image with `stage.ps1 -Platform android -Abi arm64-v8a`
+-before running `flutter build apk --debug --target-platform android-arm64`.
++On 2026-10-02, the x86_64 image passed all eight application-native checks on
++emulator-5560 (API 37, 16 KiB pages): real Java/javac versions, multiple sources,
++stdin, UTF-8, compiler diagnostics, exit status and cancellation. All 46 native
++files in the image matched x86_64 and had 16 KiB LOAD alignment and congruence;
++all DT_NEEDED dependencies were bundled or Android system libraries. The only
++incompatible input was the old spawn package, repaired by rebuilding the retained
++upstream source with the recipe's toolchain. No ARM device or API 28 emulator is
++available here; their execution remains unverified.
++
++Stage the dereferenced image with `stage.ps1 -Platform android -Abi ABI`
++before building for the corresponding Flutter target (android-arm64 or
++android-x64). The app selects data from the installed launcher's ELF machine,
++using APIs available at the minimum Android version.
+ See the [shared staging instructions](../README.md).
+diff --git a/native/openjdk/android/build.sh b/native/openjdk/android/build.sh
+index d516d15..abe6edc 100644
+--- a/native/openjdk/android/build.sh
++++ b/native/openjdk/android/build.sh
+@@ -131,6 +131,11 @@ cp "$here/clang-wrapper.sh" "$toolchain/android-clang++"
+ chmod 755 "$toolchain/android-clang" "$toolchain/android-clang++"
+ printf 'host_cc=%q\nhost_cxx=%q\nsysroot=%q\nresource=%q\ntriple=%q\n' \
+   "$(command -v clang)" "$(command -v clang++)" "$sysroot" "$resource" "$triple" > "$toolchain/toolchain.env"
++# The pinned Termux spawn package predates Android's 16 KiB page support.
++"$toolchain/android-clang++" -O2 -fPIC -shared \
++  -Wl,-soname,libandroid-spawn.so \
++  -Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384 \
++  "$here/spawn/posix_spawn.cpp" -o "$deps/lib/libandroid-spawn.so"
+ llvm_args=()
+ for pair in AR:ar NM:nm OBJCOPY:objcopy OBJDUMP:objdump STRIP:strip CXXFILT:cxxfilt; do
+   name=${pair%%:*}; executable=$(command -v "llvm-${pair#*:}-18")
+@@ -161,6 +166,8 @@ for lib in libandroid-shmem.so libandroid-spawn.so libandroid-sysv-semaphore.so
+   cp -L "$deps/lib/$lib" "$image/lib/$lib"
+ done
+ cp "$sysroot/usr/lib/$triple/libc++_shared.so" "$image/lib/"
++mkdir -p "$image/legal/qfli-android-spawn"
++cp "$here/spawn/LICENSE" "$image/legal/qfli-android-spawn/"
+ for tool in java javac jar javap jshell; do test -x "$image/bin/$tool"; done
+ readelf -l "$image/bin/java" | grep '/system/bin/linker64'
+ printf 'Android %s JDK image: %s\n' "$abi" "$image"
+diff --git a/native/openjdk/android/spawn/LICENSE b/native/openjdk/android/spawn/LICENSE
+new file mode 100644
+index 0000000..5828550
+--- /dev/null
++++ b/native/openjdk/android/spawn/LICENSE
+@@ -0,0 +1,25 @@
++Copyright (C) 2017 The Android Open Source Project
++All rights reserved.
++
++Redistribution and use in source and binary forms, with or without
++modification, are permitted provided that the following conditions
++are met:
++ * Redistributions of source code must retain the above copyright
++   notice, this list of conditions and the following disclaimer.
++ * Redistributions in binary form must reproduce the above copyright
++   notice, this list of conditions and the following disclaimer in
++   the documentation and/or other materials provided with the
++   distribution.
++
++THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
++FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
++COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
++INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
++BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
++OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
++AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
++OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
++OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
++SUCH DAMAGE.
+diff --git a/native/openjdk/android/spawn/README.md b/native/openjdk/android/spawn/README.md
+new file mode 100644
+index 0000000..b22016a
+--- /dev/null
++++ b/native/openjdk/android/spawn/README.md
+@@ -0,0 +1,16 @@
++# Android Spawn Compatibility Library
++
++These unmodified files are retained from termux/termux-packages commit
++`d0f94da1e578a0c9550a84d408bc8ed0003882ec`, under
++`packages/libandroid-spawn`. The upstream implementation originates in
++Android's Bionic and uses the BSD license in LICENSE.
++
++The pinned binary package has 4 KiB LOAD alignment. build.sh rebuilds the
++same upstream library with 16 KiB linker alignment for each target ABI.
++The matching header preserves the existing spawn ABI used by OpenJDK.
++
++| File | SHA-256 |
++| --- | --- |
++| posix_spawn.cpp | 5267405b1b14fcbe885bd815d9bd5dde94144dc90b319d6f4be17e47f43bcad3 |
++| posix_spawn.h | 5cc27528237cf17727709eaab624f20878b71013b2eb265e3a6e6dae1e4294a0 |
++| LICENSE | 511ce23b36ca7dd3858570d8ee3054ceed18e12d284f96661d030a82590a5954 |
+diff --git a/native/openjdk/android/spawn/posix_spawn.cpp b/native/openjdk/android/spawn/posix_spawn.cpp
+new file mode 100644
+index 0000000..1ddc8d4
+--- /dev/null
++++ b/native/openjdk/android/spawn/posix_spawn.cpp
+@@ -0,0 +1,381 @@
++/*
++ * Copyright (C) 2017 The Android Open Source Project
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ *  * Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ *  * Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in
++ *    the documentation and/or other materials provided with the
++ *    distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
++ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
++ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
++ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
++ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
++ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
++ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
++ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
++ * SUCH DAMAGE.
++ */
++
++#include <errno.h>
++#include <fcntl.h>
++#include <signal.h>
++#include <stdlib.h>
++#include <string.h>
++#include <unistd.h>
++
++#include <android/fdsan.h>
++
++#include "posix_spawn.h"
++
++// Bionic "private/ScopedSignalBlocker.h" + one macro needed
++#define BIONIC_DISALLOW_COPY_AND_ASSIGN(TypeName) \
++  TypeName(const TypeName&) = delete;             \
++    void operator=(const TypeName&) = delete
++
++class ScopedSignalBlocker {
++ public:
++  // Block all signals.
++  explicit ScopedSignalBlocker() {
++    sigset_t set;
++    sigfillset(&set);
++    sigprocmask(SIG_BLOCK, &set, &old_set_);
++  }
++
++  // Block just the specified signal.
++  explicit ScopedSignalBlocker(int signal) {
++    sigset_t set = {};
++    sigaddset(&set, signal);
++    sigprocmask(SIG_BLOCK, &set, &old_set_);
++  }
++
++  ~ScopedSignalBlocker() {
++    reset();
++  }
++
++  void reset() {
++    sigprocmask(SIG_SETMASK, &old_set_, nullptr);
++  }
++
++  sigset_t old_set_;
++
++  BIONIC_DISALLOW_COPY_AND_ASSIGN(ScopedSignalBlocker);
++};
++
++// Bionic "private/SigSetConverter.h"
++union SigSetConverter {
++  int bsd;
++  sigset_t sigset;
++  sigset64_t sigset64;
++};
++
++enum Action {
++  kOpen,
++  kClose,
++  kDup2
++};
++
++struct __posix_spawn_file_action {
++  __posix_spawn_file_action* next;
++
++  Action what;
++  int fd;
++  int new_fd;
++  char* path;
++  int flags;
++  mode_t mode;
++
++  void Do() {
++    if (what == kOpen) {
++      fd = open(path, flags, mode);
++      if (fd == -1) _exit(127);
++      // If it didn't land where we wanted it, move it.
++      if (fd != new_fd) {
++        if (dup2(fd, new_fd) == -1) _exit(127);
++        close(fd);
++      }
++    } else if (what == kClose) {
++      // Failure to close is ignored.
++      close(fd);
++    } else {
++      if (dup2(fd, new_fd) == -1) _exit(127);
++    }
++  }
++};
++
++struct __posix_spawn_file_actions {
++  __posix_spawn_file_action* head;
++  __posix_spawn_file_action* last;
++
++  void Do() {
++    for (__posix_spawn_file_action* action = head; action != nullptr; action = action->next) {
++      action->Do();
++    }
++  }
++};
++
++struct __posix_spawnattr {
++  short flags;
++  pid_t pgroup;
++  sched_param schedparam;
++  int schedpolicy;
++  SigSetConverter sigmask;
++  SigSetConverter sigdefault;
++};
++
++static void ApplyAttrs(short flags, const posix_spawnattr_t* attr) {
++  // POSIX: "If POSIX_SPAWN_SETSIGDEF is set ... signals in sigdefault ...
++  // shall be set to their default actions in the child process."
++  // POSIX: "Signals set to be caught by the calling process shall be
++  // set to the default action in the child process."
++  bool use_sigdefault = ((flags & POSIX_SPAWN_SETSIGDEF) != 0);
++  const struct sigaction default_sa = { .sa_handler = SIG_DFL };
++  for (int s = 1; s < _NSIG; ++s) {
++    bool reset = false;
++    if (use_sigdefault && sigismember(&(*attr)->sigdefault.sigset, s)) {
++      reset = true;
++    } else {
++      struct sigaction current;
++      if (sigaction(s, nullptr, &current) == -1) _exit(127);
++      reset = (current.sa_handler != SIG_IGN && current.sa_handler != SIG_DFL);
++    }
++    if (reset && sigaction(s, &default_sa, nullptr) == -1) _exit(127);
++  }
++
++  if ((flags & POSIX_SPAWN_SETPGROUP) != 0 && setpgid(0, (*attr)->pgroup) == -1) _exit(127);
++  if ((flags & POSIX_SPAWN_SETSID) != 0 && setsid() == -1) _exit(127);
++
++  // POSIX_SPAWN_SETSCHEDULER overrides POSIX_SPAWN_SETSCHEDPARAM, but it is not an error
++  // to set both.
++  if ((flags & POSIX_SPAWN_SETSCHEDULER) != 0) {
++    if (sched_setscheduler(0, (*attr)->schedpolicy, &(*attr)->schedparam) == -1) _exit(127);
++  } else if ((flags & POSIX_SPAWN_SETSCHEDPARAM) != 0) {
++    if (sched_setparam(0, &(*attr)->schedparam) == -1) _exit(127);
++  }
++
++  if ((flags & POSIX_SPAWN_RESETIDS) != 0) {
++    if (seteuid(getuid()) == -1 || setegid(getgid()) == -1) _exit(127);
++  }
++
++  if ((flags & POSIX_SPAWN_SETSIGMASK) != 0) {
++    if (sigprocmask(SIG_SETMASK, &(*attr)->sigmask.sigset, nullptr)) _exit(127);
++  }
++}
++
++static int posix_spawn(pid_t* pid_ptr,
++                       const char* path,
++                       const posix_spawn_file_actions_t* actions,
++                       const posix_spawnattr_t* attr,
++                       char* const argv[],
++                       char* const env[],
++                       int exec_fn(const char* path, char* const argv[], char* const env[])) {
++  // See http://man7.org/linux/man-pages/man3/posix_spawn.3.html
++  // and http://pubs.opengroup.org/onlinepubs/9699919799/functions/posix_spawn.html
++
++  ScopedSignalBlocker ssb;
++
++  short flags = attr ? (*attr)->flags : 0;
++  bool use_vfork = ((flags & POSIX_SPAWN_USEVFORK) != 0) || (actions == nullptr && flags == 0);
++
++  pid_t pid = use_vfork ? vfork() : fork();
++  if (pid == -1) return errno;
++
++  if (pid == 0) {
++    // Child.
++    ApplyAttrs(flags, attr);
++    if (actions) (*actions)->Do();
++    if ((flags & POSIX_SPAWN_SETSIGMASK) == 0) ssb.reset();
++    exec_fn(path, argv, env ? env : environ);
++    _exit(127);
++  }
++
++  // Parent.
++  if (pid_ptr) *pid_ptr = pid;
++  return 0;
++}
++
++int posix_spawn(pid_t* pid, const char* path, const posix_spawn_file_actions_t* actions,
++                const posix_spawnattr_t* attr, char* const argv[], char* const env[]) {
++  return posix_spawn(pid, path, actions, attr, argv, env, execve);
++}
++
++int posix_spawnp(pid_t* pid, const char* file, const posix_spawn_file_actions_t* actions,
++                 const posix_spawnattr_t* attr, char* const argv[], char* const env[]) {
++  return posix_spawn(pid, file, actions, attr, argv, env, execvpe);
++}
++
++int posix_spawnattr_init(posix_spawnattr_t* attr) {
++  *attr = reinterpret_cast<__posix_spawnattr*>(calloc(1, sizeof(__posix_spawnattr)));
++  return (*attr == nullptr) ? errno : 0;
++}
++
++int posix_spawnattr_destroy(posix_spawnattr_t* attr) {
++  free(*attr);
++  *attr = nullptr;
++  return 0;
++}
++
++int posix_spawnattr_setflags(posix_spawnattr_t* attr, short flags) {
++  if ((flags & ~(POSIX_SPAWN_RESETIDS | POSIX_SPAWN_SETPGROUP | POSIX_SPAWN_SETSIGDEF |
++                 POSIX_SPAWN_SETSIGMASK | POSIX_SPAWN_SETSCHEDPARAM | POSIX_SPAWN_SETSCHEDULER |
++                 POSIX_SPAWN_USEVFORK | POSIX_SPAWN_SETSID)) != 0) {
++    return EINVAL;
++  }
++  (*attr)->flags = flags;
++  return 0;
++}
++
++int posix_spawnattr_getflags(const posix_spawnattr_t* attr, short* flags) {
++  *flags = (*attr)->flags;
++  return 0;
++}
++
++int posix_spawnattr_setpgroup(posix_spawnattr_t* attr, pid_t pgroup) {
++  (*attr)->pgroup = pgroup;
++  return 0;
++}
++
++int posix_spawnattr_getpgroup(const posix_spawnattr_t* attr, pid_t* pgroup) {
++  *pgroup = (*attr)->pgroup;
++  return 0;
++}
++
++int posix_spawnattr_setsigmask(posix_spawnattr_t* attr, const sigset_t* mask) {
++  (*attr)->sigmask.sigset = *mask;
++  return 0;
++}
++
++int posix_spawnattr_setsigmask64(posix_spawnattr_t* attr, const sigset64_t* mask) {
++  (*attr)->sigmask.sigset64 = *mask;
++  return 0;
++}
++
++int posix_spawnattr_getsigmask(const posix_spawnattr_t* attr, sigset_t* mask) {
++  *mask = (*attr)->sigmask.sigset;
++  return 0;
++}
++
++int posix_spawnattr_getsigmask64(const posix_spawnattr_t* attr, sigset64_t* mask) {
++  *mask = (*attr)->sigmask.sigset64;
++  return 0;
++}
++
++int posix_spawnattr_setsigdefault(posix_spawnattr_t* attr, const sigset_t* mask) {
++  (*attr)->sigdefault.sigset = *mask;
++  return 0;
++}
++
++int posix_spawnattr_setsigdefault64(posix_spawnattr_t* attr, const sigset64_t* mask) {
++  (*attr)->sigdefault.sigset64 = *mask;
++  return 0;
++}
++
++int posix_spawnattr_getsigdefault(const posix_spawnattr_t* attr, sigset_t* mask) {
++  *mask = (*attr)->sigdefault.sigset;
++  return 0;
++}
++
++int posix_spawnattr_getsigdefault64(const posix_spawnattr_t* attr, sigset64_t* mask) {
++  *mask = (*attr)->sigdefault.sigset64;
++  return 0;
++}
++
++int posix_spawnattr_setschedparam(posix_spawnattr_t* attr, const struct sched_param* param) {
++  (*attr)->schedparam = *param;
++  return 0;
++}
++
++int posix_spawnattr_getschedparam(const posix_spawnattr_t* attr, struct sched_param* param) {
++  *param = (*attr)->schedparam;
++  return 0;
++}
++
++int posix_spawnattr_setschedpolicy(posix_spawnattr_t* attr, int policy) {
++  (*attr)->schedpolicy = policy;
++  return 0;
++}
++
++int posix_spawnattr_getschedpolicy(const posix_spawnattr_t* attr, int* policy) {
++  *policy = (*attr)->schedpolicy;
++  return 0;
++}
++
++int posix_spawn_file_actions_init(posix_spawn_file_actions_t* actions) {
++  *actions = reinterpret_cast<__posix_spawn_file_actions*>(calloc(1, sizeof(**actions)));
++  return (*actions == nullptr) ? errno : 0;
++}
++
++int posix_spawn_file_actions_destroy(posix_spawn_file_actions_t* actions) {
++  __posix_spawn_file_action* a = (*actions)->head;
++  while (a) {
++    __posix_spawn_file_action* last = a;
++    a = a->next;
++    free(last->path);
++    free(last);
++  }
++  free(*actions);
++  *actions = nullptr;
++  return 0;
++}
++
++static int posix_spawn_add_file_action(posix_spawn_file_actions_t* actions,
++                                       Action what,
++                                       int fd,
++                                       int new_fd,
++                                       const char* path,
++                                       int flags,
++                                       mode_t mode) {
++  __posix_spawn_file_action* action =
++      reinterpret_cast<__posix_spawn_file_action*>(malloc(sizeof(*action)));
++  if (action == nullptr) return errno;
++
++  action->next = nullptr;
++  if (path != nullptr) {
++    action->path = strdup(path);
++    if (action->path == nullptr) {
++      free(action);
++      return errno;
++    }
++  } else {
++    action->path = nullptr;
++  }
++  action->what = what;
++  action->fd = fd;
++  action->new_fd = new_fd;
++  action->flags = flags;
++  action->mode = mode;
++
++  if ((*actions)->head == nullptr) {
++    (*actions)->head = (*actions)->last = action;
++  } else {
++    (*actions)->last->next = action;
++    (*actions)->last = action;
++  }
++
++  return 0;
++}
++
++int posix_spawn_file_actions_addopen(posix_spawn_file_actions_t* actions,
++                                     int fd, const char* path, int flags, mode_t mode) {
++  if (fd < 0) return EBADF;
++  return posix_spawn_add_file_action(actions, kOpen, -1, fd, path, flags, mode);
++}
++
++int posix_spawn_file_actions_addclose(posix_spawn_file_actions_t* actions, int fd) {
++  if (fd < 0) return EBADF;
++  return posix_spawn_add_file_action(actions, kClose, fd, -1, nullptr, 0, 0);
++}
++
++int posix_spawn_file_actions_adddup2(posix_spawn_file_actions_t* actions, int fd, int new_fd) {
++  if (fd < 0 || new_fd < 0) return EBADF;
++  return posix_spawn_add_file_action(actions, kDup2, fd, new_fd, nullptr, 0, 0);
++}
+diff --git a/native/openjdk/android/spawn/posix_spawn.h b/native/openjdk/android/spawn/posix_spawn.h
+new file mode 100644
+index 0000000..4220389
+--- /dev/null
++++ b/native/openjdk/android/spawn/posix_spawn.h
+@@ -0,0 +1,90 @@
++/*
++ * Copyright (C) 2017 The Android Open Source Project
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ *  * Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ *  * Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in
++ *    the documentation and/or other materials provided with the
++ *    distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
++ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
++ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
++ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
++ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
++ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
++ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
++ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
++ * SUCH DAMAGE.
++ */
++
++#ifndef _SPAWN_H_
++#define _SPAWN_H_
++
++#include <sys/cdefs.h>
++#include <sys/types.h>
++#include <sched.h>
++#include <signal.h>
++
++__BEGIN_DECLS
++
++#define POSIX_SPAWN_RESETIDS 1
++#define POSIX_SPAWN_SETPGROUP 2
++#define POSIX_SPAWN_SETSIGDEF 4
++#define POSIX_SPAWN_SETSIGMASK 8
++#define POSIX_SPAWN_SETSCHEDPARAM 16
++#define POSIX_SPAWN_SETSCHEDULER 32
++#if defined(__USE_GNU)
++#define POSIX_SPAWN_USEVFORK 64
++#define POSIX_SPAWN_SETSID 128
++#endif
++
++typedef struct __posix_spawnattr* posix_spawnattr_t;
++typedef struct __posix_spawn_file_actions* posix_spawn_file_actions_t;
++
++int posix_spawn(pid_t* __pid, const char* __path, const posix_spawn_file_actions_t* __actions, const posix_spawnattr_t* __attr, char* const __argv[], char* const __env[]) __INTRODUCED_IN(24);
++int posix_spawnp(pid_t* __pid, const char* __file, const posix_spawn_file_actions_t* __actions, const posix_spawnattr_t* __attr, char* const __argv[], char* const __env[]) __INTRODUCED_IN(24);
++
++int posix_spawnattr_init(posix_spawnattr_t* __attr) __INTRODUCED_IN(24);
++int posix_spawnattr_destroy(posix_spawnattr_t* __attr) __INTRODUCED_IN(24);
++
++int posix_spawnattr_setflags(posix_spawnattr_t* __attr, short __flags) __INTRODUCED_IN(24);
++int posix_spawnattr_getflags(const posix_spawnattr_t* __attr, short* __flags) __INTRODUCED_IN(24);
++
++int posix_spawnattr_setpgroup(posix_spawnattr_t* __attr, pid_t __pgroup) __INTRODUCED_IN(24);
++int posix_spawnattr_getpgroup(const posix_spawnattr_t* __attr, pid_t* __pgroup) __INTRODUCED_IN(24);
++
++int posix_spawnattr_setsigmask(posix_spawnattr_t* __attr, const sigset_t* __mask) __INTRODUCED_IN(24);
++int posix_spawnattr_setsigmask64(posix_spawnattr_t* __attr, const sigset64_t* __mask) __INTRODUCED_IN(24);
++int posix_spawnattr_getsigmask(const posix_spawnattr_t* __attr, sigset_t* __mask) __INTRODUCED_IN(24);
++int posix_spawnattr_getsigmask64(const posix_spawnattr_t* __attr, sigset64_t* __mask) __INTRODUCED_IN(24);
++
++int posix_spawnattr_setsigdefault(posix_spawnattr_t* __attr, const sigset_t* __mask) __INTRODUCED_IN(24);
++int posix_spawnattr_setsigdefault64(posix_spawnattr_t* __attr, const sigset64_t* __mask) __INTRODUCED_IN(24);
++int posix_spawnattr_getsigdefault(const posix_spawnattr_t* __attr, sigset_t* __mask) __INTRODUCED_IN(24);
++int posix_spawnattr_getsigdefault64(const posix_spawnattr_t* __attr, sigset64_t* __mask) __INTRODUCED_IN(24);
++
++int posix_spawnattr_setschedparam(posix_spawnattr_t* __attr, const struct sched_param* __param) __INTRODUCED_IN(24);
++int posix_spawnattr_getschedparam(const posix_spawnattr_t* __attr, struct sched_param* __param) __INTRODUCED_IN(24);
++
++int posix_spawnattr_setschedpolicy(posix_spawnattr_t* __attr, int __policy) __INTRODUCED_IN(24);
++int posix_spawnattr_getschedpolicy(const posix_spawnattr_t* __attr, int* __policy) __INTRODUCED_IN(24);
++
++int posix_spawn_file_actions_init(posix_spawn_file_actions_t* __actions) __INTRODUCED_IN(24);
++int posix_spawn_file_actions_destroy(posix_spawn_file_actions_t* __actions) __INTRODUCED_IN(24);
++
++int posix_spawn_file_actions_addopen(posix_spawn_file_actions_t* __actions, int __fd, const char* __path, int __flags, mode_t __mode) __INTRODUCED_IN(24);
++int posix_spawn_file_actions_addclose(posix_spawn_file_actions_t* __actions, int __fd) __INTRODUCED_IN(24);
++int posix_spawn_file_actions_adddup2(posix_spawn_file_actions_t* __actions, int __fd, int __new_fd) __INTRODUCED_IN(24);
++
++__END_DECLS
++
++#endif
+diff --git a/native/openjdk/stage.ps1 b/native/openjdk/stage.ps1
+index 91b4026..420bcd9 100644
+--- a/native/openjdk/stage.ps1
++++ b/native/openjdk/stage.ps1
+@@ -30,6 +30,11 @@ function Assert-AndroidElf([string]$Path) {
+         if ([BitConverter]::ToUInt32($bytes, $entry) -ne 1) { continue }
+         $alignment = [BitConverter]::ToUInt64($bytes, $entry + 48)
+         if ($alignment -lt 16384) { throw "Android ELF lacks 16 KB LOAD alignment: $Path" }
++        $offset = [BitConverter]::ToUInt64($bytes, $entry + 8)
++        $address = [BitConverter]::ToUInt64($bytes, $entry + 16)
++        if ($offset % 16384 -ne $address % 16384) {
++            throw "Android ELF lacks 16 KB LOAD offset congruence: $Path"
++        }
+     }
+ }
+ if ($Platform -eq 'android') {
+diff --git a/android/app/src/main/kotlin/com/example/qflistudio/c/JdkRuntime.kt b/android/app/src/main/kotlin/com/example/qflistudio/c/JdkRuntime.kt
+index 41777b8..b534a08 100644
+--- a/android/app/src/main/kotlin/com/example/qflistudio/c/JdkRuntime.kt
++++ b/android/app/src/main/kotlin/com/example/qflistudio/c/JdkRuntime.kt
+@@ -3,6 +3,7 @@ package com.azurekiln.qfli.jvmx
+ import android.content.Context
+ import android.system.Os
+ import org.json.JSONObject
++import java.io.DataInputStream
+ import java.io.File
+ import java.nio.file.Files
+ import java.util.zip.ZipInputStream
+@@ -11,7 +12,9 @@ internal class JdkRuntime(private val context: Context) {
+     fun prepare(): Map<String, String> {
+         val nativeDir = context.applicationInfo.nativeLibraryDir
+         val java = File(nativeDir, "libqfli_java.so")
+-        val header = java.inputStream().use { it.readNBytes(20) }
++        val header = DataInputStream(java.inputStream()).use { input ->
++            ByteArray(20).also { input.readFully(it) }
++        }
+         check(header.size == 20 && header[0] == 0x7f.toByte() &&
+             header[1] == 'E'.code.toByte() && header[2] == 'L'.code.toByte() &&
+             header[3] == 'F'.code.toByte() && header[4] == 2.toByte() && header[5] == 1.toByte()) {
+diff --git a/.trellis/spec/backend/mobile-jdk.md b/.trellis/spec/backend/mobile-jdk.md
+index 447e851..ac68ba6 100644
+--- a/.trellis/spec/backend/mobile-jdk.md
++++ b/.trellis/spec/backend/mobile-jdk.md
+@@ -30,7 +30,9 @@ with `path` and `library`. Installation uses `files/usr-install` then replaces
+ `files/usr`; `.qfli-jdk-id` caches only extracted data. Version probes still run
+ on each fresh app process, and successful preparation is cached per Dart isolate.
+ 
+-Android executes installed `libqfli_java.so` and `libqfli_javac.so`, with native
++Android supports arm64-v8a and x86_64 and selects its data ABI from the installed
++launcher's ELF64 machine (183 or 62). Read the header using DataInputStream APIs
++available at minSdk 28. Android executes installed `libqfli_java.so` and `libqfli_javac.so`, with native
+ library extraction enabled. It creates data-directory links to installed code.
+ OHOS uses a forked native child and `dlopen`/`JLI_Launch`, without ELF exec or
+ symlinks. `args` includes `java` as argv[0]. Javac is the module entry
+@@ -46,6 +48,7 @@ re-exec in this mode; JVM exit bypasses inherited host exit handlers.
+ | Condition | Behavior |
+ | --- | --- |
+ | Wrong ELF ABI during staging | staging fails |
++| Any Android launcher/helper/SO LOAD has alignment below 16384 or incongruent offset/address modulo 16384 | staging fails |
+ | Unsupported manifest version, missing modules/library | `JDK_PREPARE_FAILED` |
+ | Null/relative layout path | Dart `FormatException` |
+ | Version command fails or has no expected version text | preparation fails; unavailable |
+@@ -60,6 +63,9 @@ re-exec in this mode; JVM exit bypasses inherited host exit handlers.
+ - Base: empty stdin is EOF, temp compiler output is removed on completion.
+ - Bad: malformed source produces javac diagnostics and never starts main.
+ - Bad: an ELF-only build passes packaging but execution is denied on device.
++- Bad: the JVM is aligned but the pinned libandroid-spawn.so package is not.
++  Rebuild the retained upstream spawn source with both 16 KiB linker flags;
++  package its BSD license in legal/qfli-android-spawn. All dependencies must pass.
+ 
+ ## 6. Required Verification
+ 
+@@ -75,6 +81,11 @@ the normal app after the smoke entry. Keep generated runtime assets out of Git.
+ Wrong: infer availability from bundled filenames or a zero exit code alone.
+ Correct: verify actual Java and javac version text before setting availability.
+ 
++Wrong: treat the launcher's 16 KiB alignment as evidence for the whole image.
++Correct: inspect every packaged native input, dependency closure, and real
++in-app execution on a device using that page size. The 2026-10-02 x86_64
++image passed all eight smoke checks on the API 37, 16 KiB emulator.
++
+ Wrong: reuse Android binaries on OHOS or request executable anonymous memory
+ for Zero's entry records.
+ Correct: cross compile for OHOS libc and mark Zero entry storage non-executable.

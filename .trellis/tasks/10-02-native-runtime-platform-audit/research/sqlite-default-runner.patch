@@ -1,0 +1,11 @@
+diff --git a/lib/sql_runner.dart b/lib/sql_runner.dart
+--- a/lib/sql_runner.dart
++++ b/lib/sql_runner.dart
+@@ -221,6 +221,6 @@
+ /// SQL 版 App 的运行后端。
+ class SqlProgramRunner implements ProgramRunner {
+-  const SqlProgramRunner({this.engine = const NativeMySqlEngine()});
++  const SqlProgramRunner({this.engine = const NativeLocalSqlEngine()});
+ 
+   final SqlProgramEngine engine;
+ 

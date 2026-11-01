@@ -1,0 +1,106 @@
+diff --git a/.trellis/spec/backend/dart-native-runtime.md b/.trellis/spec/backend/dart-native-runtime.md
+new file mode 100644
+index 0000000..e2d1df5
+--- /dev/null
++++ b/.trellis/spec/backend/dart-native-runtime.md
+@@ -0,0 +1,80 @@
++# Native Dart Runtime Contract
++
++## 1. Scope / Trigger
++
++Use this contract for desktop run, compilation, SDK discovery or packaging.
++The desktop uses the official SDK's C++ VM. Mobile still uses dart_eval and
++does not have an established native Dart engine. Compiler front-end code in
++the SDK is Dart code hosted by the native VM; do not describe all SDK code as C.
++
++## 2. Signatures
++
++`NativeDartToolchain({String? executable})` owns `resolveExecutable()`,
++`run(projectPath, entryFile)` and `compileKernel(projectPath, entryFile)`.
++Run returns the existing `ProgramRunResult`; compilation returns `Uint8List`.
++`DartTools.compile` selects native Kernel on desktop; `compilePortable` selects
++the legacy evaluator explicitly. `CompiledDartProgram.extension` owns the
++artifact suffix and the tools page must use it when writing the file.
++
++## 3. Contracts
++
++- SDK discovery: explicit executable, QFLI_DART_SDK, DART_SDK, packaged SDK,
++  FLUTTER_ROOT, then native executable/Flutter SDK candidates in PATH.
++- Windows/Linux package the complete SDK under `data/dart-sdk/`. macOS uses
++  `Contents/Helpers/dart-sdk/{arm64,x64}` selected by the current ABI.
++- Run validates canonical project/entry containment, executes the SDK, captures
++  stdout and stderr independently, preserves native exit codes and uses 130 for
++  cancelled runs. Never switch to dart_eval after a desktop SDK failure.
++- Use an existing project package_config.json. Dependency-free self-package
++  imports may use an owned temporary standard configuration; remove it after
++  execution or failure. Unresolved dependencies require SDK package resolution.
++- Native compilation emits .dill. Read its bytes before deleting the owned
++  compilation directory. A kernel artifact must execute without the source.
++- CMake SDK selection uses QFLI_DART_SDK or the build Flutter SDK. Reject
++  incomplete SDKs and cross-builds; include snapshots, libraries and license.
++- macOS architecture SDKs use QFLI_DART_SDK_ARM64/QFLI_DART_SDK_X64. Check each
++  binary architecture, sign Mach-O files before the outer application, and grant
++  executable helpers sandbox inheritance and JIT rights. Apple execution is
++  unverified until an Apple application build and runtime check pass.
++
++## 4. Validation & Error Matrix
++
++| Condition | Result |
++| --- | --- |
++| Missing explicit executable or SDK | Specific file/state error; no evaluator fallback |
++| Canonical entry outside project | ArgumentError before starting a process |
++| Missing entry | FileSystemException |
++| Dependencies without package configuration | Dependency resolution error |
++| Invalid source | Native compiler stderr and nonzero status |
++| Program failure | Native stderr and native nonzero exit code |
++| Active run stopped | VM terminates; exit 130; owned temporary files removed |
++| Native Kernel compile fails | StateError; no successful artifact |
++| SDK missing core library or VM | Packaging fails |
++| macOS SDK of wrong architecture | Architecture check fails |
++
++## 5. Good / Base / Bad Cases
++
++Good: dart:io writes and rereads a real file; a compiled .dill runs after its
++source is deleted; self-package imports resolve offline; stop ends an infinite
++program. Base: a single-file template prints its actual output. Bad: call EVC
++native Kernel, silently use dart_eval on desktop, or return a byte-read Future
++while the finally block deletes the artifact.
++
++## 6. Tests Required
++
++`native_dart_toolchain_test.dart` exercises VM IO, async code, native exit codes,
++compile failure, cancellation and source-independent Kernel execution.
++`dart_app_test.dart` covers imports, errors, Run dispatch and cancellation.
++`dart_tools_page_test.dart` compiles and reloads the actual Kernel artifact and
++checks run/stop UI states. Keep explicit portable-EVC coverage separately.
++Run `flutter analyze --no-pub` and `flutter test --no-pub`. Validate installed SDK
++execution separately from the source SDK. Report absent platform environments
++as skips and never infer macOS/Linux execution from Windows tests.
++
++## 7. Wrong vs Correct
++
++Wrong: `return artifact.readAsBytes();` in a try whose finally deletes its parent.
++Correct: `return await artifact.readAsBytes();` so cleanup occurs after the read.
++
++Wrong: treat the presence of another product's task as a runtime pass.
++Correct: inspect build, packaging, bridge and real engine execution evidence.
+diff --git a/.trellis/spec/backend/index.md b/.trellis/spec/backend/index.md
+index 1c0b4c4..bbb5955 100644
+--- a/.trellis/spec/backend/index.md
++++ b/.trellis/spec/backend/index.md
+@@ -19,6 +19,15 @@ This directory contains guidelines for backend development. Fill in each file wi
+ | [Error Handling](./error-handling.md) | Error types, handling strategies | To fill |
+ | [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | To fill |
+ | [Logging Guidelines](./logging-guidelines.md) | Structured logging, log levels | To fill |
++| [Native Dart Runtime](./dart-native-runtime.md) | Official desktop VM, SDK packaging and Kernel compilation | Implemented on desktop; mobile native port pending |
++
++## Pre-Development Checklist
++
++- Read Native Dart Runtime before changing execution, compilation or platform packaging.
++
++## Quality Check
++
++- Run static analysis and the full app suite; require real SDK execution for native claims.
+ 
+ ---
+ 

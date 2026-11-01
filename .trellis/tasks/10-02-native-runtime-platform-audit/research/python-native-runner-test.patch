@@ -1,0 +1,53 @@
+diff --git a/test/python_ffi_test.dart b/test/python_ffi_test.dart
+--- a/test/python_ffi_test.dart
++++ b/test/python_ffi_test.dart
+@@ -124,4 +124,50 @@
+       expect(await result.stdout.toList(), [contains(missingLibrary)]);
+     });
+   }
++
++  if (Platform.isWindows || Platform.isLinux) {
++    final nativeLibrary = File(
++      p.join(
++        Directory.current.path,
++        'native',
++        'build',
++        Platform.operatingSystem,
++        Platform.isWindows ? 'qfli_py_ffi.dll' : 'libqfli_py_ffi.so',
++      ),
++    );
++    test(
++      'default runner compiles and runs a real multi-file native project',
++      () async {
++        final source = Directory(p.join(project.path, 'src'))..createSync();
++        File(p.join(source.path, 'helper.py')).writeAsStringSync('value = 7');
++        File(p.join(project.path, 'input.txt')).writeAsStringSync('Ada\n');
++        final entry = File(p.join(source.path, 'main.py'))
++          ..writeAsStringSync(
++            'import helper, sys\n'
++            'with open("runner-result.txt", "w") as output:\n'
++            '    output.write(input() + "-" + str(helper.value))\n'
++            'print(open("runner-result.txt").read())\n'
++            'sys.stderr.write("runner-ok")\n',
++          );
++        const runner = PythonProgramRunner();
++        final syntax = await runner.checkSyntax(
++          projectPath: project.path,
++          entryFile: entry.path,
++        );
++        expect(syntax.success, isTrue, reason: syntax.error);
++        final artifact = File(p.join(project.path, 'runner-result.txt'));
++        expect(artifact.existsSync(), isFalse);
++        final result = await runner.run(
++          projectPath: project.path,
++          entryFile: entry.path,
++        );
++        expect(await result!.stdout.toList(), ['Ada-7']);
++        expect(await result.stderr.toList(), ['runner-ok']);
++        expect(await result.exitCode, 0);
++        expect(artifact.readAsStringSync(), 'Ada-7');
++      },
++      skip: nativeLibrary.existsSync() ? false : 'Build the native C library first.',
++    );
++  }
+ }

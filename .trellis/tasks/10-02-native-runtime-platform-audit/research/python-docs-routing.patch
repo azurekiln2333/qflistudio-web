@@ -1,0 +1,62 @@
+diff --git a/.trellis/spec/backend/index.md b/.trellis/spec/backend/index.md
+--- a/.trellis/spec/backend/index.md
++++ b/.trellis/spec/backend/index.md
+@@ -16,6 +16,7 @@
+ |-------|-------------|--------|
+ | [Native Python Runtime](./native-python-runtime.md) | C VM, file I/O, MethodChannel and verification contracts | Implemented |
++| [Python FFI](./python-ffi.md) | Desktop/Apple packaging, C ownership and Windows reader contract | Implemented |
+ | [Android Build](./android-build.md) | NDK, JVM budgets, APK and emulator verification | Implemented |
+ | [Directory Structure](./directory-structure.md) | Module organization and file layout | To fill |
+ | [Database Guidelines](./database-guidelines.md) | ORM patterns, queries, migrations | To fill |
+@@ -45,6 +46,7 @@
+ Read `native-python-runtime.md` for changes in native C/C++, ArkTS bridges,
+ or the Python runner. Read `../frontend/python-workflow.md` when UI is involved.
++Read `python-ffi.md` for FFI, desktop/Apple packaging and Windows port changes.
+ 
+ ## Quality Check
+ 
+diff --git a/native/README.md b/native/README.md
+--- a/native/README.md
++++ b/native/README.md
+@@ -7,6 +7,9 @@
+ Dart → MethodChannel('qfli_py/native') → Kotlin/JNI 或 ArkTS/NAPI → libqfli_py.so → MicroPython
+ ```
+ 
++Windows/Linux 和 iOS/macOS 使用同一引擎的本地 FFI 插件。打包、调用路径和
++实际验证结果见 [Native Python Platforms](PLATFORMS.md)。
++
+ ## Android
+ 
+ Android 与鸿蒙使用同一份 C VM、bridge、HAL、标准流和项目文件接口。
+diff --git a/.trellis/tasks/09-30-native-python-runtime/implement.md b/.trellis/tasks/09-30-native-python-runtime/implement.md
+--- a/.trellis/tasks/09-30-native-python-runtime/implement.md
++++ b/.trellis/tasks/09-30-native-python-runtime/implement.md
+@@ -5,14 +5,20 @@
+ - [x] Audit real platform registration/packaging and available toolchains.
+-- [ ] Port the shared C engine's lock/clock/paths/import reader to Windows.
+-- [ ] Package the same C engine through a desktop/Apple FFI plugin.
+-- [ ] Connect Dart compile/run/probe using the existing FFI/isolate pattern.
+-- [ ] Run real C/FFI checks on available Windows/Linux; skip unavailable Apple
+-  platform tests. Recheck Android after shared C changes.
++- [x] Port the shared C engine's lock/clock/paths/import reader to Windows.
++- [x] Package the same C engine through a desktop/Apple FFI plugin.
++- [x] Connect Dart compile/run/probe using the existing FFI/isolate pattern.
++- [x] Windows native build and 34 real FFI cases; Linux SO and 65 real C cases.
++- [x] Rebuild Android x86_64 after shared C changes; Apple target hosts absent.
++- [ ] Install and run the fresh APK; automatic approval review returned HTTP 503.
+ - [ ] Perform full-scope review, document platform evidence and commit scoped work.
+ 
+ Windows has MinGW64 GCC 4.9.2 and SDK CMake/Ninja for native execution tests;
+ Visual Studio/MSVC was not found, so complete Flutter Windows builds are not
+-currently available. WSL presence/toolchains require a permitted live check.
++currently available. WSL native execution was verified in qfli-java-build.
+ No Apple host/Xcode is available; do not run fabricated Apple target tests.
+ Sibling language repositories have their own active platform tasks.
++
++On 2026-10-02, default-runner validation additionally confirmed real project
++imports, input.txt, stdout/stderr, native compile-only without file effects and
++persisted native file output. All 43 preceding Flutter tests passed; the new
++default-runner case passed separately. Static analysis was clean.
+ 
+ ## Earlier Runtime Batches
+ 

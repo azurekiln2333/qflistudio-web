@@ -83,8 +83,8 @@ Read the result with `adb -s emulator-5560 logcat -d -v brief -s QfliPyNative
 AndroidRuntime`. The native self-check covers the installed engine/JNI bridge;
 it is separate from the Windows default-runner Flutter test.
 
-The current Python API has no cancellation hook or reusable bytecode output.
-These are unresolved requirements, not verified capabilities.
+This initial checkpoint preceded cancellation and reusable bytecode output.
+Both were subsequently delivered as 2f5ed81 and verified below.
 
 ## Lua
 
@@ -253,9 +253,10 @@ with the new recipe before claiming its 16 KiB compatibility.
   recovered, so manual image export and review-service repair are no longer
   prerequisites for the Java slice.
 
-The audit remains in progress. Native Dart iOS, Rust target builds, Java/Web iOS,
-local Oracle MySQL outside OHOS, outstanding language delivery and unavailable
-target validation must not be reported as complete.
+The audit remains in progress. This historical checkpoint preceded the Android
+Dart, Oracle and Rust delivery slices. Consult platform-matrix.md for their
+current status; outstanding implementation and delivery requirements prevent
+whole-goal completion.
 
 ## Android Dart Delivery
 
@@ -318,3 +319,103 @@ tools-artifact.png, tools-stop.png and owning-editor-run.png.
 Android ARM runtime, Apple execution and full Windows GUI builds were not run:
 the devices/Xcode/MSVC toolchains are absent. Native iOS Dart remains a real
 implementation gap; this Android delivery does not complete the overall audit.
+
+## Linux Python Lifecycle Follow-up
+
+Rebuilt the owning qfli_python native/desktop target from its delivered 2f5ed81
+source with CMake/GCC in qfli-java-build. Outputs are isolated under
+/root/qfli-python-lifecycle-final; no product source was changed. The fresh SO
+passed all 65 existing linked C checks and 10 actual lifecycle/artifact checks:
+loop and bounded-sleep stop, output preservation, fresh execution, pre-start
+stop without side effects, queued token isolation and stop, upstream compile
+without execution, source-free .mpy reload with stdin, invalid bytecode errors
+and subsequent recovery. Engine identifies as MicroPython 1.24.1 (ecfdd5d).
+
+Reproducible inputs are research/python-linux-lifecycle.py and
+research/python-linux-lifecycle.sh. Logs are
+build/native/platform-audit/python-linux-native-final.log and
+python-linux-lifecycle-final.log. This closes the missing Linux engine evidence
+for cancellation/artifacts; it does not establish a Linux Flutter GUI pass.
+
+## Android Rust Follow-up
+
+Both pinned compiler hosts, Cranelift backends and Miri adapters are source-built
+and packaged in qfli_rust. The x64 isolated native suite passed 5/5, editor
+workflow passed 1/1 and the restored ordinary APK editor executed with exit 0.
+Owning and exact proposed commit source each pass 65 Flutter tests with 8
+missing-input embedded skips, clean analysis and six bootstrap regressions.
+All six dual-ABI owning APK runtime native files match audited package hashes.
+See research/rust-android-verification-2026-10-02.md for earlier failures,
+isolation requirements, remaining commit ownership and unavailable platforms.
+
+## C/C++ Android Device Follow-up
+
+The archived Android task had deferred device execution. An isolated app built
+from committed source exposed a natural-exit pipe race: correct C++ output was
+followed by InterruptedIOException and exit 127. NativeCompilerBridge now avoids
+destroying an already-exited Process until readers have drained its output.
+Process-group cancellation remains active and API 24 compatibility is retained.
+
+All eight actual x64 cases passed after the fix, including mixed sources/header/
+libm/stdin, separate streams, real compiler/link errors, crash isolation, forked
+child stop and fresh execution. The verified Kotlin fix, new native audit tool
+and spec were applied narrowly to qfli_c. Tool analysis is clean and 16 existing
+channel regressions pass. Source commit is pending; see
+research/c-android-verification-2026-10-02.md for failures, storage cleanup,
+test isolation, delivery paths and unavailable targets.
+
+## macOS Oracle Source Integration
+
+Applied 15 clean qfli_sql paths for per-ABI Oracle helper build/package/signing,
+dependency relocation and current-ABI discovery. Owning files match reviewed
+source. Twelve portable validators, eleven actual Windows Oracle lifecycle
+regressions with the injected plugin path and all 51 owning Flutter tests passed;
+changed-source analysis and diff checks are clean. Existing SQL selector/cloud
+work remains separately owned. The macOS source commit awaits its one-shot
+project-required confirmation. No Apple native build/sign/runtime test was run:
+macOS/Xcode/verified Oracle Apple SDKs are absent. See
+research/mysql-macos-verification-2026-10-02.md for exact evidence and limitations.
+
+## Ordinary C++ Android Editor
+
+The normal owning APK now has an actual editor workflow pass. Dual-ABI package
+audits passed; the current x64 split created AndroidCppNative and editor Run
+used Android Clang cpp, printed the actual default greeting and exited 0.
+The original emulator-5560 had insufficient installation space, so a fresh
+task-owned emulator-5562 using the same API 37/16 KiB x64 image established this
+pass. It was stopped after evidence capture; original apps/projects and
+emulator-5560 were preserved. No ordinary-app cleanup was used to make space.
+The source/spec fix still awaits its existing commit decision. Exact build
+failures, APK hash, screenshot, XML and logs are recorded in
+research/c-android-verification-2026-10-02.md.
+
+## Android ARM64 Java Package Recovery
+
+The fresh pinned OpenJDK 17.0.20 ARM64 image completed make images in an
+independent WSL ext4 directory. All 71 exported non-debug ELF files passed ARM64,
+16 KiB LOAD alignment/congruence and bundled/API 28 system dependency checks.
+The new owning ARM64 package's 44 native hashes match the image. All 215 recorded
+x64/OHOS generated input hashes remain unchanged. The ordinary dual-ABI APK
+passes all 89 JDK and three Flutter framework ELF checks, exact Gradle strip
+provenance, both JDK archive/manifest hashes and ZIP alignment. Its default Java
+editor project prints the actual greeting and exits 0 on task-owned x64/API 37/
+16 KiB emulator-5562, including after a separate JDK cold installation. A first
+launch stayed on splash; restart and the cold-install check passed. That first
+observation is not explained or presented as a source fix. Runtime docs and local
+ignored spec were updated; the two tracked documentation paths await their
+commit-plan confirmation. ARM physical execution, API 28 execution and native
+iOS Java remain unavailable or unresolved. Details:
+research/java-arm64-verification-2026-10-02.md.
+
+## Embedded Nginx Source Integration
+
+The upstream single-process event engine now runs through a native lifecycle ABI
+and one owned pthread. Nine real Linux cases and 100 sanitizer/native cleanup
+cycles pass after fixing recursive destruction during active proxy stop. Host
+sigaction state, stdio, descriptors and environment remain intact. iOS static
+archive/Xcode/Swift and shared Dart host source are integrated. Windows 38/38
+tests and product source analysis pass; the current Android x64/API 37/16 KiB
+application smoke emits its complete PASS marker. The ordinary app is restored
+as build 4002 without uninstalling or clearing installed data. Apple build/sign/
+device gates remain unavailable, and the source commit awaits the required plan
+confirmation. See research/nginx-embedded-verification-2026-10-02.md.

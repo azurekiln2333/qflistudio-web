@@ -1,0 +1,16 @@
+diff --git a/.trellis/spec/frontend/sql-workbench.md b/.trellis/spec/frontend/sql-workbench.md
+--- a/.trellis/spec/frontend/sql-workbench.md
++++ b/.trellis/spec/frontend/sql-workbench.md
+@@ -9,8 +9,10 @@
+ ## 2. Signatures
+ 
+ `SqlWorkbenchPage` accepts `repositoryFactory` and `queryLibraryFactory` for
+-boundary tests. Production opens `MySqlWorkspaceRepository.openLocal()` and
+-`SqlQueryLibrary.openDefault()`.
++boundary tests. Production opens `SqlWorkspaceRepository.openDefault()` on
++Android/Windows/Linux/iOS/macOS and `MySqlWorkspaceRepository.openLocal()` on
++the existing OHOS path, plus `SqlQueryLibrary.openDefault()`.
++Compact view controls are located by their tooltips in device tests.
+ 
+ ## 3. Contracts
+ 

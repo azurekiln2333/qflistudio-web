@@ -1,0 +1,289 @@
+{
+ "css-example-035": {
+  "outlineWidth": "0px",
+  "outlineStyle": "none",
+  "outlineColor": "rgb(255, 255, 255)",
+  "outlineOffset": "0px",
+  "focusVisible": false
+ },
+ "css-example-041": {
+  "badgeW": 128,
+  "badgeH": 34.8571,
+  "padding": "8px 16px",
+  "lineHeight": "normal",
+  "fontSize": "16px",
+  "afterW": "0px",
+  "afterH": "0px",
+  "afterTop": "0px",
+  "afterRight": "0px",
+  "borderTopWidth": "8px"
+ },
+ "css-example-123": {
+  "boxW": 200,
+  "boxH": 60,
+  "cssH": "60px",
+  "contain": "layout paint",
+  "scrollH": 200,
+  "clientH": 60,
+  "pY": 76,
+  "innerH": 200
+ },
+ "css-example-125": {
+  "fit": {
+   "w": 120,
+   "css": "120px"
+  },
+  "max": {
+   "w": 139.3304,
+   "css": "139.33px"
+  },
+  "min": {
+   "w": 57.1339,
+   "css": "57.1339px"
+  },
+  "longestWord": "Offline",
+  "canvasLongest": 48.3841,
+  "canvasFullLine": 139.3283,
+  "fullText": "Offline IDE Preview"
+ },
+ "css-example-129": {
+  "tw": {
+   "fontSize": "20px",
+   "h": 23.4286
+  },
+  "bw": {
+   "fontSize": "10px",
+   "h": 11.7143
+  },
+  "tn": {
+   "fontSize": "10px",
+   "h": 11.7143
+  },
+  "bn": {
+   "fontSize": "8px",
+   "h": 9.4286
+  }
+ },
+ "css-example-141": {
+  "withEmphasis": 41.4286,
+  "plain": 36,
+  "lineHeight": "36px",
+  "fontSize": "20px"
+ },
+ "css-example-144": {
+  "brokenBox": {
+   "w": 121.7143,
+   "h": 39.4286
+  },
+  "brokenSpan": {
+   "w": 118.7723,
+   "h": 37.7143
+  },
+  "hyphenBox": {
+   "w": 121.7143,
+   "h": 20.5714
+  },
+  "hyphenSpan": {
+   "w": 234,
+   "h": 18.8571
+  },
+  "hyphens": "auto",
+  "overflowWrap": "anywhere",
+  "hyphenLines": 1,
+  "brokenLines": 2,
+  "lang": "en"
+ },
+ "css-example-145": {
+  "t1": 54.723217,
+  "t2": 54.723217,
+  "p1": 54.723217,
+  "p2": 54.723217,
+  "tnum": "tabular-nums",
+  "pnum": "proportional-nums"
+ },
+ "css-example-147": {
+  "fragments": 3,
+  "borderLeft": "2.85714px",
+  "paddingLeft": "6px",
+  "bg": "rgb(232, 240, 254)",
+  "narrowW": 261.7143,
+  "narrowCssW": "260px",
+  "narrowBorder": "0.857143px",
+  "narrowPadding": "0px"
+ },
+ "css-example-148": {
+  "plainH": 48,
+  "trimH": 28,
+  "fontSize": 40,
+  "lineHeight": "48px",
+  "canvasCapAscent": 29,
+  "canvasXAscent": 20,
+  "canvasXDescent": 0,
+  "canvasFontAscent": 37,
+  "canvasFontDescent": 10,
+  "trim": "trim-both",
+  "edge": "cap alphabetic"
+ },
+ "css-example-156": {
+  "shortW": 200,
+  "shortCssW": "200px",
+  "plainW": 200,
+  "gutter": "stable",
+  "classicGutter": 0,
+  "shortScrollH": 60,
+  "shortClientH": 60
+ },
+ "css-example-157": {
+  "outerX": 300,
+  "outerY": 40,
+  "outerW": 260,
+  "outerH": 200,
+  "innerWidth": 980,
+  "innerHeight": 1990,
+  "overscroll": "contain",
+  "scrollable": true,
+  "docScrollH": 1990,
+  "scrollY": 0,
+  "pointerEvents": "auto",
+  "supports": true
+ },
+ "css-example-158": {
+  "inputW": 97.7143,
+  "inputCssW": "80px",
+  "maxW": "260px",
+  "minW": "80px",
+  "boxSizing": "content-box",
+  "padding": "6px 8px",
+  "border": "0.857143px",
+  "taH": 35.4286
+ },
+ "css-example-131": {
+  "error": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'getBoundingClientRect')"
+ },
+ "css-example-132": {
+  "swatches": [
+   {
+    "w": 60,
+    "h": 60,
+    "x": 0
+   },
+   {
+    "w": 60,
+    "h": 60,
+    "x": 60
+   },
+   {
+    "w": 60,
+    "h": 60,
+    "x": 120
+   },
+   {
+    "w": 60,
+    "h": 60,
+    "x": 180
+   }
+  ]
+ },
+ "css-example-133": {
+  "swatches": [
+   {
+    "w": 80,
+    "h": 40
+   },
+   {
+    "w": 80,
+    "h": 40
+   },
+   {
+    "w": 80,
+    "h": 40
+   }
+  ]
+ },
+ "css-example-135": {
+  "swatches": [
+   {
+    "w": 80,
+    "h": 40
+   },
+   {
+    "w": 80,
+    "h": 40
+   },
+   {
+    "w": 80,
+    "h": 40
+   }
+  ]
+ },
+ "css-example-136": {
+  "error": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'getBoundingClientRect')"
+ },
+ "css-example-137": {
+  "fade": {
+   "w": 200,
+   "h": 40,
+   "cssW": "200px",
+   "cssH": "40px"
+  }
+ },
+ "css-example-138": {
+  "blend": {
+   "w": 120,
+   "h": 120,
+   "cssW": "120px",
+   "cssH": "120px"
+  }
+ },
+ "css-example-139": {
+  "error": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'getBoundingClientRect')"
+ },
+ "css-example-150": {
+  "bar": {
+   "w": 60,
+   "h": 24,
+   "cssW": "60px"
+  }
+ },
+ "css-example-153": {
+  "spinner": {
+   "w": 56.5001,
+   "h": 56.5001,
+   "cssW": "32px",
+   "cssH": "32px"
+  }
+ },
+ "css-example-154": {
+  "rep": {
+   "w": 20,
+   "h": 20
+  },
+  "acc": {
+   "w": 20,
+   "h": 20
+  }
+ },
+ "css-example-155": {
+  "railW": 220,
+  "cssW": "220px",
+  "clientW": 220,
+  "scrollW": 640
+ },
+ "css-example-122": {
+  "error": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'children')"
+ },
+ "css-example-124": {
+  "smallW": 200,
+  "cssW": "200px"
+ },
+ "css-example-126": {
+  "badgeX": 20,
+  "stageX": 0,
+  "delta": 20,
+  "left": "20px"
+ },
+ "css-example-127": {
+  "sideY": 98.8571,
+  "top": "48px"
+ }
+}

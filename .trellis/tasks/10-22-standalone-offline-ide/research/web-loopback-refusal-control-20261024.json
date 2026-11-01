@@ -1,0 +1,27 @@
+{
+  "kind": "lightweight Python own-listener control; no SDK/browser",
+  "observedUtcDate": "2026-10-24",
+  "hostPlatform": "Windows",
+  "address": "127.0.0.1",
+  "port": 61709,
+  "method": "Bind/listen on an OS-assigned port; connect successfully; close client and listener; then connect to the now-closed same endpoint with independent sockets and deadlines.",
+  "observations": [
+    {
+      "timeoutSeconds": 2,
+      "connected": false,
+      "errorType": "TimeoutError",
+      "winerror": null,
+      "errno": null,
+      "elapsedSeconds": 2.0072770999977365
+    },
+    {
+      "timeoutSeconds": 5,
+      "connected": false,
+      "errorType": "ConnectionRefusedError",
+      "winerror": 10061,
+      "errno": 10061,
+      "elapsedSeconds": 2.0320263000030536
+    }
+  ],
+  "limitation": "Python and this host only; this is not a Dart, WebDevServer, widget, native SDK or device acceptance result. The fixture still must observe a strict native refusal in its next coordinated Dart run."
+}

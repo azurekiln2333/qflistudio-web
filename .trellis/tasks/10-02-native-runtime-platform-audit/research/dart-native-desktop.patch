@@ -1,0 +1,763 @@
+diff --git a/lib/dart_runner.dart b/lib/dart_runner.dart
+index be24d70..4ea4212 100644
+--- a/lib/dart_runner.dart
++++ b/lib/dart_runner.dart
+@@ -9,6 +9,7 @@ import 'package:path/path.dart' as p;
+ import 'package:qfli_studio_core/services/studio_profile.dart';
+ 
+ import 'dart_project_sources.dart';
++import 'native_dart_toolchain.dart';
+ 
+ class DartProgramRunner implements ProgramRunner {
+   const DartProgramRunner();
+@@ -21,6 +22,12 @@ class DartProgramRunner implements ProgramRunner {
+     if (p.extension(entryFile).toLowerCase() != '.dart') return null;
+ 
+     try {
++      if (NativeDartToolchain.supported) {
++        return await const NativeDartToolchain().run(
++          projectPath: projectPath,
++          entryFile: entryFile,
++        );
++      }
+       final project = await DartProjectSources.load(
+         projectPath: projectPath,
+         entryFile: entryFile,
+@@ -36,6 +43,10 @@ class DartProgramRunner implements ProgramRunner {
+       return _failed('运行 ${p.basename(entryFile)}', error.message);
+     } on FormatException catch (error) {
+       return _failed('运行 ${p.basename(entryFile)}', error.toString());
++    } on ProcessException catch (error) {
++      return _failed('运行 ${p.basename(entryFile)}', error.message);
++    } on StateError catch (error) {
++      return _failed('运行 ${p.basename(entryFile)}', error.message);
+     }
+   }
+ 
+diff --git a/lib/dart_tools.dart b/lib/dart_tools.dart
+index d48ea71..2a1439e 100644
+--- a/lib/dart_tools.dart
++++ b/lib/dart_tools.dart
+@@ -6,6 +6,7 @@ import 'package:dart_eval/dart_eval.dart';
+ import 'package:dart_style/dart_style.dart';
+ 
+ import 'dart_project_sources.dart';
++import 'native_dart_toolchain.dart';
+ 
+ class DartDiagnostic {
+   const DartDiagnostic({
+@@ -24,10 +25,15 @@ class DartDiagnostic {
+ }
+ 
+ class CompiledDartProgram {
+-  const CompiledDartProgram({required this.bytecode, required this.entryUri});
++  const CompiledDartProgram({
++    required this.bytecode,
++    required this.entryUri,
++    this.extension = '.evc',
++  });
+ 
+   final Uint8List bytecode;
+   final String entryUri;
++  final String extension;
+ }
+ 
+ abstract final class DartTools {
+@@ -53,6 +59,23 @@ abstract final class DartTools {
+   static Future<CompiledDartProgram> compile({
+     required String projectPath,
+     required String entryFile,
++  }) async {
++    if (NativeDartToolchain.supported) {
++      return CompiledDartProgram(
++        bytecode: await const NativeDartToolchain().compileKernel(
++          projectPath: projectPath,
++          entryFile: entryFile,
++        ),
++        entryUri: Uri.file(entryFile).toString(),
++        extension: '.dill',
++      );
++    }
++    return compilePortable(projectPath: projectPath, entryFile: entryFile);
++  }
++
++  static Future<CompiledDartProgram> compilePortable({
++    required String projectPath,
++    required String entryFile,
+   }) async {
+     final project = await DartProjectSources.load(
+       projectPath: projectPath,
+diff --git a/lib/dart_tools_page.dart b/lib/dart_tools_page.dart
+index 28e32b0..9211175 100644
+--- a/lib/dart_tools_page.dart
++++ b/lib/dart_tools_page.dart
+@@ -291,7 +291,11 @@ class _DartToolsPageState extends State<DartToolsPage> {
+       );
+       final relative = p.relative(file, from: project);
+       final artifact = File(
+-        p.join(project, 'build', '${p.withoutExtension(relative)}.evc'),
++        p.join(
++          project,
++          'build',
++          '${p.withoutExtension(relative)}${compiled.extension}',
++        ),
+       );
+       await artifact.parent.create(recursive: true);
+       await artifact.writeAsBytes(compiled.bytecode, flush: true);
+@@ -442,7 +446,7 @@ class _DartToolsPageState extends State<DartToolsPage> {
+                     icon: const Icon(Icons.fact_check_outlined),
+                   ),
+                   IconButton(
+-                    tooltip: '编译 EVC 字节码',
++                    tooltip: '编译',
+                     onPressed: _busy ? null : () => unawaited(_compile()),
+                     icon: const Icon(Icons.memory_outlined),
+                   ),
+diff --git a/lib/main.dart b/lib/main.dart
+index fb3c891..59a77f6 100644
+--- a/lib/main.dart
++++ b/lib/main.dart
+@@ -12,6 +12,7 @@ import 'package:qfli_studio_core/store/settings_store.dart';
+ 
+ import 'dart_runner.dart';
+ import 'dart_tools_page.dart';
++import 'native_dart_toolchain.dart';
+ 
+ /// 本 App 的产品名。窗口标题、任务切换器和应用内顶栏都读它。
+ const String _appTitle = StudioProductCatalog.dartWing;
+@@ -19,7 +20,7 @@ const String _appTitle = StudioProductCatalog.dartWing;
+ /// Dart 版档位：同一套内核 UI，收窄成只服务 Dart。
+ ///
+ /// 单独提出来是为了让测试能直接断言档位，而不必为了一个常量去跑 `main()`。
+-const StudioProfile dartProfile = StudioProfile(
++final StudioProfile dartProfile = StudioProfile(
+   id: 'dart',
+   appTitle: _appTitle,
+   templates: [ProjectTemplate.empty, ProjectTemplate.dart],
+@@ -28,8 +29,10 @@ const StudioProfile dartProfile = StudioProfile(
+   isOffline: true,
+   productKey: StudioProductCatalog.dartWingKey,
+   showHomeTabs: false,
+-  runtimeKind: 'embedded-dart-runtime',
+-  runtimeStatus: 'unavailable',
++  runtimeKind: NativeDartToolchain.supported
++      ? 'official-dart-sdk'
++      : 'dart-eval',
++  runtimeStatus: NativeDartToolchain.supported ? 'requires-sdk' : 'unavailable',
+   supportedFileExtensions: ['.dart'],
+   // main.dart 排在默认入口表前面，保证本版一定先命中它。
+   entryFileNames: ['main.dart', 'src/main.dart'],
+diff --git a/lib/native_dart_toolchain.dart b/lib/native_dart_toolchain.dart
+new file mode 100644
+index 0000000..b1b0457
+--- /dev/null
++++ b/lib/native_dart_toolchain.dart
+@@ -0,0 +1,199 @@
++import 'dart:async';
++import 'dart:convert';
++import 'dart:ffi';
++import 'dart:io';
++import 'dart:typed_data';
++
++import 'package:path/path.dart' as p;
++import 'package:pubspec_parse/pubspec_parse.dart';
++import 'package:qfli_studio_core/services/studio_profile.dart';
++
++class NativeDartToolchain {
++  const NativeDartToolchain({this.executable});
++
++  final String? executable;
++
++  static bool get supported =>
++      Platform.isWindows || Platform.isLinux || Platform.isMacOS;
++
++  Future<String> resolveExecutable() async {
++    if (executable != null) {
++      if (await File(executable!).exists()) return executable!;
++      throw FileSystemException(
++        'Dart SDK executable does not exist',
++        executable,
++      );
++    }
++    final name = Platform.isWindows ? 'dart.exe' : 'dart';
++    final appDirectory = p.dirname(Platform.resolvedExecutable);
++    final macArchitecture = Abi.current() == Abi.macosArm64 ? 'arm64' : 'x64';
++    final sdkRoots = [
++      if (Platform.environment['QFLI_DART_SDK'] case final String root) root,
++      if (Platform.environment['DART_SDK'] case final String root) root,
++      if (Platform.isMacOS)
++        p.join(appDirectory, '..', 'Helpers', 'dart-sdk', macArchitecture)
++      else
++        p.join(appDirectory, 'data', 'dart-sdk'),
++      if (Platform.environment['FLUTTER_ROOT'] case final String root)
++        p.join(root, 'bin', 'cache', 'dart-sdk'),
++    ];
++    final paths = [
++      for (final root in sdkRoots) p.join(root, 'bin', name),
++      for (final directory in (Platform.environment['PATH'] ?? '').split(
++        Platform.isWindows ? ';' : ':',
++      ))
++        if (directory.isNotEmpty) ...[
++          p.join(directory, name),
++          p.join(directory, 'cache', 'dart-sdk', 'bin', name),
++        ],
++    ];
++    for (final path in paths) {
++      if (await File(path).exists()) return p.normalize(p.absolute(path));
++    }
++    throw StateError('没有找到 Dart SDK，请配置本地 SDK。');
++  }
++
++  Future<ProgramRunResult> run({
++    required String projectPath,
++    required String entryFile,
++  }) async {
++    final sdk = await resolveExecutable();
++    final entry = await _entry(projectPath, entryFile);
++    final packages = await _packages(projectPath);
++    late final Process process;
++    try {
++      process = await Process.start(sdk, [
++        '--disable-dart-dev',
++        if (packages.path != null) '--packages=${packages.path}',
++        entry,
++      ], workingDirectory: p.absolute(projectPath));
++    } catch (_) {
++      await packages.dispose();
++      rethrow;
++    }
++    var finished = false;
++    var cancelled = false;
++    final status = process.exitCode.then((code) async {
++      finished = true;
++      await packages.dispose();
++      return cancelled ? 130 : code;
++    });
++    return ProgramRunResult(
++      title: 'Dart SDK: ${p.basename(entry)}',
++      stdout: process.stdout
++          .transform(const Utf8Decoder(allowMalformed: true))
++          .transform(const LineSplitter()),
++      stderr: process.stderr
++          .transform(const Utf8Decoder(allowMalformed: true))
++          .transform(const LineSplitter()),
++      exitCode: status,
++      cancel: () async {
++        if (finished) return;
++        cancelled = process.kill();
++        try {
++          await status.timeout(const Duration(seconds: 3));
++        } on TimeoutException {
++          cancelled = process.kill(ProcessSignal.sigkill) || cancelled;
++          await status;
++        }
++      },
++    );
++  }
++
++  Future<Uint8List> compileKernel({
++    required String projectPath,
++    required String entryFile,
++  }) async {
++    final sdk = await resolveExecutable();
++    final entry = await _entry(projectPath, entryFile);
++    final packages = await _packages(projectPath);
++    final output = await Directory.systemTemp.createTemp('qfli-dart-kernel-');
++    try {
++      final artifact = File(p.join(output.path, 'program.dill'));
++      final process = await Process.start(sdk, [
++        'compile',
++        'kernel',
++        if (packages.path != null) '--packages=${packages.path}',
++        entry,
++        '-o',
++        artifact.path,
++      ], workingDirectory: p.absolute(projectPath));
++      final stdout = process.stdout
++          .transform(const Utf8Decoder(allowMalformed: true))
++          .join();
++      final stderr = process.stderr
++          .transform(const Utf8Decoder(allowMalformed: true))
++          .join();
++      final int code;
++      try {
++        code = await process.exitCode.timeout(const Duration(minutes: 1));
++      } on TimeoutException {
++        process.kill(ProcessSignal.sigkill);
++        await process.exitCode;
++        rethrow;
++      }
++      final errors = await stderr;
++      final messages = await stdout;
++      if (code != 0) throw StateError(errors.isNotEmpty ? errors : messages);
++      return await artifact.readAsBytes();
++    } finally {
++      await packages.dispose();
++      await output.delete(recursive: true);
++    }
++  }
++
++  static Future<String> _entry(String projectPath, String entryFile) async {
++    final root = await Directory(projectPath).resolveSymbolicLinks();
++    final entry = await File(entryFile).resolveSymbolicLinks();
++    if (!p.isWithin(root, entry)) {
++      throw ArgumentError.value(entryFile, 'entryFile', '入口文件不在项目目录内');
++    }
++    return entry;
++  }
++
++  static Future<_PackageConfiguration> _packages(String projectPath) async {
++    final root = p.absolute(projectPath);
++    final existing = File(p.join(root, '.dart_tool', 'package_config.json'));
++    if (await existing.exists()) return _PackageConfiguration(existing.path);
++    final manifest = File(p.join(root, 'pubspec.yaml'));
++    if (!await manifest.exists()) return const _PackageConfiguration(null);
++    final pubspec = Pubspec.parse(await manifest.readAsString());
++    if (pubspec.dependencies.isNotEmpty || pubspec.devDependencies.isNotEmpty) {
++      throw StateError('项目依赖尚未解析，请先通过 Dart SDK 获取依赖。');
++    }
++    // Self-package imports work offline without rewriting the user's manifest.
++    final temporary = await Directory.systemTemp.createTemp(
++      'qfli-dart-packages-',
++    );
++    final config = File(p.join(temporary.path, 'package_config.json'));
++    try {
++      await config.writeAsString(
++        jsonEncode({
++          'configVersion': 2,
++          'packages': [
++            {
++              'name': pubspec.name,
++              'rootUri': Directory(root).uri.toString(),
++              'packageUri': 'lib/',
++            },
++          ],
++        }),
++      );
++      return _PackageConfiguration(config.path, temporary);
++    } catch (_) {
++      await temporary.delete(recursive: true);
++      rethrow;
++    }
++  }
++}
++
++class _PackageConfiguration {
++  const _PackageConfiguration(this.path, [this.temporary]);
++
++  final String? path;
++  final Directory? temporary;
++
++  Future<void> dispose() async {
++    if (temporary != null) await temporary!.delete(recursive: true);
++  }
++}
+diff --git a/linux/CMakeLists.txt b/linux/CMakeLists.txt
+index c4cc981..86e3297 100644
+--- a/linux/CMakeLists.txt
++++ b/linux/CMakeLists.txt
+@@ -91,6 +91,8 @@ install(CODE "
+ set(INSTALL_BUNDLE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/data")
+ set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+ 
++include("${CMAKE_CURRENT_SOURCE_DIR}/../native/dart-sdk/bundle.cmake")
++
+ install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
+   COMPONENT Runtime)
+ 
+diff --git a/macos/Runner.xcodeproj/project.pbxproj b/macos/Runner.xcodeproj/project.pbxproj
+index df025eb..a0503f3 100644
+--- a/macos/Runner.xcodeproj/project.pbxproj
++++ b/macos/Runner.xcodeproj/project.pbxproj
+@@ -209,6 +209,7 @@
+ 				33CC10EB2044A3C60003C045 /* Resources */,
+ 				33CC110E2044A8840003C045 /* Bundle Framework */,
+ 				3399D490228B24CF009A79C7 /* ShellScript */,
++				44415254564D000000000001 /* Bundle Dart SDK */,
+ 			);
+ 			buildRules = (
+ 			);
+@@ -291,6 +292,18 @@
+ /* End PBXResourcesBuildPhase section */
+ 
+ /* Begin PBXShellScriptBuildPhase section */
++		44415254564D000000000001 /* Bundle Dart SDK */ = {
++			isa = PBXShellScriptBuildPhase;
++			alwaysOutOfDate = 1;
++			buildActionMask = 2147483647;
++			files = ();
++			inputPaths = ();
++			name = "Bundle Dart SDK";
++			outputPaths = ();
++			runOnlyForDeploymentPostprocessing = 0;
++			shellPath = /bin/bash;
++			shellScript = "bash \"$PROJECT_DIR/../native/dart-sdk/bundle_macos.sh\"\n";
++		};
+ 		3399D490228B24CF009A79C7 /* ShellScript */ = {
+ 			isa = PBXShellScriptBuildPhase;
+ 			alwaysOutOfDate = 1;
+diff --git a/native/dart-sdk/.gitattributes b/native/dart-sdk/.gitattributes
+new file mode 100644
+index 0000000..dfdb8b7
+--- /dev/null
++++ b/native/dart-sdk/.gitattributes
+@@ -0,0 +1 @@
++*.sh text eol=lf
+diff --git a/native/dart-sdk/DartVM.entitlements b/native/dart-sdk/DartVM.entitlements
+new file mode 100644
+index 0000000..a284b4c
+--- /dev/null
++++ b/native/dart-sdk/DartVM.entitlements
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
++<plist version="1.0">
++<dict>
++    <key>com.apple.security.app-sandbox</key>
++    <true/>
++    <key>com.apple.security.inherit</key>
++    <true/>
++    <key>com.apple.security.cs.allow-jit</key>
++    <true/>
++</dict>
++</plist>
+diff --git a/native/dart-sdk/README.md b/native/dart-sdk/README.md
+new file mode 100644
+index 0000000..e4293b0
+--- /dev/null
++++ b/native/dart-sdk/README.md
+@@ -0,0 +1,42 @@
++# Native Dart SDK
++
++Desktop execution and Kernel compilation use the official Dart SDK. Its VM is
++C++; the compiler front end and SDK commands include official Dart code running
++on that VM. This integration does not substitute dart_eval for native execution.
++
++## Packaging
++
++Windows/Linux CMake installs the complete SDK, including snapshots, platform
++libraries, license and version, into `data/dart-sdk/`. Set `QFLI_DART_SDK` (CMake
++cache or environment) to select an SDK; the default is the build Flutter SDK's
++`bin/cache/dart-sdk`. Cross-builds are rejected so a host VM is not mispackaged.
++
++macOS embeds SDK trees in `Contents/Helpers/dart-sdk/arm64` and/or `x64` according
++to `ARCHS`. The host architecture can use the Flutter SDK; a universal app also
++needs the other SDK via `QFLI_DART_SDK_ARM64`/`QFLI_DART_SDK_X64`. Each architecture
++is checked, and Mach-O files are signed before the outer application. Executable
++helpers inherit the app sandbox and grant the VM JIT permission. Actual macOS
++build and application execution require an Apple environment and remain unverified.
++
++## Runtime
++
++`NativeDartToolchain` searches configured SDKs, the app bundle, `FLUTTER_ROOT`,
++and the native executable/Flutter SDK in PATH. Desktop Run executes the real VM,
++streams stdout/stderr, preserves native exit codes and returns 130 on stop.
++Compile invokes the official compiler and returns `.dill` bytes; the artifact can
++execute after the source file is removed. Project `package_config.json` is used
++when present. Dependency-free self-package imports receive a temporary standard
++package configuration; unresolved third-party dependencies report an error.
++
++## Verification
++
++Windows SDK 3.11.5 passed native file IO, async execution, Kernel compilation,
++source-independent artifact execution, compiler errors, program exit codes,
++imports and cancellation. All 33 product snapshot tests and static analysis
++passed. The standalone CMake installation was exercised separately from Flutter.
++There is no Visual Studio C++ toolchain for a full Windows UI build. Linux and
++Apple native execution are not established by these Windows checks.
++
++The mobile runner still uses the previous portable evaluator. Native Android,
++iOS and OHOS Dart VM integration is a remaining requirement, not a completed
++native runtime. This desktop patch alone must not close the cross-product goal.
+diff --git a/native/dart-sdk/bundle.cmake b/native/dart-sdk/bundle.cmake
+new file mode 100644
+index 0000000..ee918bd
+--- /dev/null
++++ b/native/dart-sdk/bundle.cmake
+@@ -0,0 +1,24 @@
++set(QFLI_DART_SDK "" CACHE PATH "Dart SDK to bundle with the application")
++if(NOT QFLI_DART_SDK)
++  if(DEFINED ENV{QFLI_DART_SDK})
++    set(QFLI_DART_SDK "$ENV{QFLI_DART_SDK}")
++  else()
++    include("${FLUTTER_MANAGED_DIR}/ephemeral/generated_config.cmake")
++    set(QFLI_DART_SDK "${FLUTTER_ROOT}/bin/cache/dart-sdk")
++  endif()
++endif()
++if(WIN32)
++  set(QFLI_DART_BINARY "dart.exe")
++else()
++  set(QFLI_DART_BINARY "dart")
++endif()
++if(NOT EXISTS "${QFLI_DART_SDK}/bin/${QFLI_DART_BINARY}" OR
++   NOT EXISTS "${QFLI_DART_SDK}/lib/core/core.dart")
++  message(FATAL_ERROR "A complete native Dart SDK is required: ${QFLI_DART_SDK}")
++endif()
++if(CMAKE_CROSSCOMPILING)
++  message(FATAL_ERROR "Bundle the Dart SDK on the target desktop host")
++endif()
++install(DIRECTORY "${QFLI_DART_SDK}/"
++  DESTINATION "${INSTALL_BUNDLE_DATA_DIR}/dart-sdk"
++  USE_SOURCE_PERMISSIONS COMPONENT Runtime)
+diff --git a/native/dart-sdk/bundle_macos.sh b/native/dart-sdk/bundle_macos.sh
+new file mode 100644
+index 0000000..6c60c87
+--- /dev/null
++++ b/native/dart-sdk/bundle_macos.sh
+@@ -0,0 +1,37 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
++destination="${TARGET_BUILD_DIR:?}/${CONTENTS_FOLDER_PATH:?}/Helpers/dart-sdk"
++identity="${EXPANDED_CODE_SIGN_IDENTITY:--}"
++if [[ -z "$identity" ]]; then identity=-; fi
++sign_options=()
++if [[ "$identity" != - ]]; then sign_options+=(--timestamp --options runtime); fi
++for arch in ${ARCHS:-$(uname -m)}; do
++  case "$arch" in
++    arm64) source="${QFLI_DART_SDK_ARM64:-}"; target=arm64 ;;
++    x86_64) source="${QFLI_DART_SDK_X64:-}"; target=x64 ;;
++    *) printf 'Unsupported Dart SDK architecture: %s\n' "$arch" >&2; exit 1 ;;
++  esac
++  if [[ -z "$source" && "$arch" == "$(uname -m)" ]]; then
++    source="${QFLI_DART_SDK:-${FLUTTER_ROOT:?}/bin/cache/dart-sdk}"
++  fi
++  if [[ ! -x "$source/bin/dart" || ! -f "$source/lib/core/core.dart" ]]; then
++    printf 'Provide the complete %s SDK using QFLI_DART_SDK_ARM64 or QFLI_DART_SDK_X64\n' "$arch" >&2
++    exit 1
++  fi
++  lipo -verify_arch "$arch" "$source/bin/dart"
++  mkdir -p "$destination/$target"
++  ditto "$source" "$destination/$target"
++  while IFS= read -r -d '' file; do
++    if /usr/bin/file -b "$file" | /usr/bin/grep -q 'Mach-O'; then
++      entitlements=()
++      if [[ "$file" == "$destination/$target/bin/dart" ||
++            "$file" == "$destination/$target/bin/dartvm" ||
++            "$file" == "$destination/$target/bin/dartaotruntime" ]]; then
++        entitlements=(--entitlements "$root/native/dart-sdk/DartVM.entitlements")
++      fi
++      codesign --force --sign "$identity" "${sign_options[@]}" "${entitlements[@]}" "$file"
++    fi
++  done < <(find "$destination/$target" -type f -print0)
++done
+diff --git a/test/dart_app_test.dart b/test/dart_app_test.dart
+index 612a21b..a560d66 100644
+--- a/test/dart_app_test.dart
++++ b/test/dart_app_test.dart
+@@ -174,7 +174,7 @@ void main() {
+         entryFile: p.join(project.path, 'main.dart'),
+       ))!;
+       expect(await result.stderr.toList(), isNotEmpty);
+-      expect(await result.exitCode, kProgramNotRunExitCode);
++      expect(await result.exitCode, isNonZero);
+     });
+ 
+     test('运行时异常进入 stderr', () async {
+@@ -184,7 +184,7 @@ void main() {
+         entryFile: p.join(project.path, 'main.dart'),
+       ))!;
+       expect((await result.stderr.toList()).join('\n'), contains('boom'));
+-      expect(await result.exitCode, 1);
++      expect(await result.exitCode, isNonZero);
+     });
+ 
+     test('无限循环可以取消', () async {
+diff --git a/test/dart_tools_page_test.dart b/test/dart_tools_page_test.dart
+index 367444b..95ed8ce 100644
+--- a/test/dart_tools_page_test.dart
++++ b/test/dart_tools_page_test.dart
+@@ -1,11 +1,8 @@
+ import 'dart:io';
+-import 'dart:typed_data';
+-
+-import 'package:dart_eval/dart_eval.dart';
+ import 'package:flutter/material.dart';
+ import 'package:flutter_test/flutter_test.dart';
+ import 'package:path/path.dart' as p;
+-import 'package:qfli_dart/dart_project_sources.dart';
++import 'package:qfli_dart/native_dart_toolchain.dart';
+ import 'package:qfli_dart/dart_tools_page.dart';
+ import 'package:qfli_dart/main.dart' show dartProfile;
+ import 'package:qfli_studio_core/pages/quick_tools_page.dart';
+@@ -183,8 +180,9 @@ void main() {
+     expect(find.byIcon(Icons.error_outline), findsWidgets);
+     expect(tester.widget<TextField>(find.byType(TextField)).readOnly, isFalse);
+ 
+-    await tester.enterText(find.byType(TextField), 'int main() => 42;');
+-    await tester.tap(find.byTooltip('编译 EVC 字节码'));
++    const compiledSource = 'void main() { print(42); }';
++    await tester.enterText(find.byType(TextField), compiledSource);
++    await tester.tap(find.byTooltip('编译'));
+     await tester.pump();
+     expect(tester.widget<TextField>(find.byType(TextField)).readOnly, isTrue);
+     expect(
+@@ -203,19 +201,20 @@ void main() {
+       reason: 'Bytecode write and flush must finish successfully',
+     );
+     final project = store.projects.first;
+-    final artifact = File(p.join(project.path, 'build', 'src', 'main.evc'));
++    final artifact = File(p.join(project.path, 'build', 'src', 'main.dill'));
+     final result = await tester.runAsync(() async {
+-      final source = await DartProjectSources.load(
++      final run = await const NativeDartToolchain().run(
+         projectPath: project.path,
+-        entryFile: mainFile.path,
+-      );
+-      final runtime = Runtime(
+-        ByteData.sublistView(await artifact.readAsBytes()),
++        entryFile: artifact.path,
+       );
+-      return runtime.executeLib(source.entryUri, 'main');
++      final errors = run.stderr.toList();
++      final output = await run.stdout.toList();
++      expect(await errors, isEmpty);
++      expect(await run.exitCode, 0);
++      return output;
+     });
+-    expect(result, 42);
+-    expect(await tester.runAsync(mainFile.readAsString), 'int main() => 42;');
++    expect(result, ['42']);
++    expect(await tester.runAsync(mainFile.readAsString), compiledSource);
+   });
+ 
+   testWidgets('Run saves edits and displays actual output and exit status', (
+@@ -409,7 +408,7 @@ void main() {
+       size: const Size(320, 640),
+       textScale: 1.8,
+     );
+-    for (final tooltip in ['保存', '格式化 Dart', '语法检查', '编译 EVC 字节码', '运行']) {
++    for (final tooltip in ['保存', '格式化 Dart', '语法检查', '编译', '运行']) {
+       await tester.ensureVisible(find.byTooltip(tooltip));
+       final rect = tester.getRect(find.byTooltip(tooltip));
+       expect(rect.left, greaterThanOrEqualTo(0));
+diff --git a/test/dart_tools_test.dart b/test/dart_tools_test.dart
+index 2007cc4..3907458 100644
+--- a/test/dart_tools_test.dart
++++ b/test/dart_tools_test.dart
+@@ -28,7 +28,7 @@ void main() {
+       await mainFile.parent.create(recursive: true);
+       await mainFile.writeAsString('int main() => 42;');
+ 
+-      final compiled = await DartTools.compile(
++      final compiled = await DartTools.compilePortable(
+         projectPath: project.path,
+         entryFile: mainFile.path,
+       );
+diff --git a/test/native_dart_toolchain_test.dart b/test/native_dart_toolchain_test.dart
+new file mode 100644
+index 0000000..7ef0297
+--- /dev/null
++++ b/test/native_dart_toolchain_test.dart
+@@ -0,0 +1,97 @@
++import 'dart:io';
++
++import 'package:flutter_test/flutter_test.dart';
++import 'package:path/path.dart' as p;
++import 'package:qfli_dart/native_dart_toolchain.dart';
++
++void main() {
++  const toolchain = NativeDartToolchain();
++  late Directory project;
++
++  setUp(() async {
++    project = await Directory.systemTemp.createTemp('qfli-native-dart-test-');
++  });
++  tearDown(() async => project.delete(recursive: true));
++
++  Future<String> source(String content) async {
++    final file = File(p.join(project.path, 'main.dart'));
++    await file.writeAsString(content);
++    return file.path;
++  }
++
++  test('native VM supports real file IO and asynchronous execution', () async {
++    final entry = await source(
++      "import 'dart:io'; Future<void> main() async { await File('result.txt').writeAsString('native'); print(await File('result.txt').readAsString()); }",
++    );
++    final run = await toolchain.run(
++      projectPath: project.path,
++      entryFile: entry,
++    );
++    final errors = run.stderr.toList();
++    expect(await run.stdout.toList(), ['native']);
++    expect(await errors, isEmpty);
++    expect(await run.exitCode, 0);
++    expect(
++      await File(p.join(project.path, 'result.txt')).readAsString(),
++      'native',
++    );
++  });
++
++  test('official compiler generates a reusable kernel program', () async {
++    final entry = await source("void main() { print('kernel execution'); }");
++    final artifact = File(p.join(project.path, 'program.dill'));
++    await artifact.writeAsBytes(
++      await toolchain.compileKernel(
++        projectPath: project.path,
++        entryFile: entry,
++      ),
++    );
++    await File(entry).delete();
++    final run = await toolchain.run(
++      projectPath: project.path,
++      entryFile: artifact.path,
++    );
++    final errors = run.stderr.toList();
++    expect(await run.stdout.toList(), ['kernel execution']);
++    expect(await errors, isEmpty);
++    expect(await run.exitCode, 0);
++  });
++
++  test('compile errors fail without producing a runnable artifact', () async {
++    final entry = await source('void main( {');
++    expect(
++      toolchain.compileKernel(projectPath: project.path, entryFile: entry),
++      throwsStateError,
++    );
++  });
++
++  test('program exit codes are preserved', () async {
++    final entry = await source("import 'dart:io'; void main() { exit(42); }");
++    final run = await toolchain.run(
++      projectPath: project.path,
++      entryFile: entry,
++    );
++    final output = run.stdout.toList();
++    final errors = run.stderr.toList();
++    expect(await run.exitCode, 42);
++    await output;
++    await errors;
++  });
++
++  test('an active native program can be stopped', () async {
++    final entry = await source(
++      "void main() { print('ready'); while (true) {} }",
++    );
++    final run = await toolchain.run(
++      projectPath: project.path,
++      entryFile: entry,
++    );
++    final errors = run.stderr.toList();
++    await run.stdout
++        .firstWhere((line) => line == 'ready')
++        .timeout(const Duration(seconds: 15));
++    await run.cancel!();
++    expect(await run.exitCode, 130);
++    await errors;
++  });
++}
+diff --git a/windows/CMakeLists.txt b/windows/CMakeLists.txt
+index a8a0730..9b55052 100644
+--- a/windows/CMakeLists.txt
++++ b/windows/CMakeLists.txt
+@@ -72,6 +72,8 @@ endif()
+ set(INSTALL_BUNDLE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/data")
+ set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}")
+ 
++include("${CMAKE_CURRENT_SOURCE_DIR}/../native/dart-sdk/bundle.cmake")
++
+ install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
+   COMPONENT Runtime)
+ 
