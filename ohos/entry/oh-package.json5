@@ -7,7 +7,8 @@
   "author": "",
   "license": "",
   "dependencies": {
-    "libqfli_nginx_napi.so": "file:./src/main/cpp/types/libqfli_nginx_napi"
+    "libqfli_nginx_napi.so": "file:./src/main/cpp/types/libqfli_nginx_napi",
+    "libqfli_web_cdp_transport.so": "file:./src/main/cpp/types/libqfli_web_cdp_transport"
   },
 }
 

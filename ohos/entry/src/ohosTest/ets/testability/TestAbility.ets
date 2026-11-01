@@ -12,11 +12,16 @@ export default class TestAbility extends UIAbility {
   private debugging: boolean = false;
   private tcpPort: number = 0;
   private stopping: boolean = false;
+  private selfCdpProof: boolean = false;
 
   onCreate(want: Want): void {
     if (this.stopRequested(want)) return;
     try {
       const mode = want.parameters?.['qfliCatalogCdp'];
+      this.selfCdpProof = want.parameters?.['qfliSelfCdpProof'] === true;
+      if (this.selfCdpProof && mode !== 'unix') {
+        throw new Error('Same-process CDP proof requires explicit unix mode');
+      }
       if (mode !== 'tcp' && mode !== 'unix') {
         hilog.info(0x0000, 'QfliCatalog', 'CDP disabled; opt in with qfliCatalogCdp=tcp or unix');
         return;
@@ -47,7 +52,8 @@ export default class TestAbility extends UIAbility {
   onWindowStageCreate(windowStage: window.WindowStage): void {
     if (this.stopping) return;
     try {
-      windowStage.loadContent('testability/pages/Index', (failure: BusinessError) => {
+      const page = this.selfCdpProof ? 'testability/pages/SelfCdp' : 'testability/pages/Index';
+      windowStage.loadContent(page, (failure: BusinessError) => {
         if (failure.code) {
           this.disableDebugging();
           hilog.error(0x0000, 'QfliCatalog', 'Catalog page failed: %{public}s', `${failure.message}`);

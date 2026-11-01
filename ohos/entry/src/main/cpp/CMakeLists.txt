@@ -9,6 +9,20 @@ set(CMAKE_CXX_STANDARD 17)
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../../../../native/web_syntax"
   "${CMAKE_CURRENT_BINARY_DIR}/web_syntax")
 
+# Independent raw self-socket transport. No listener, ArkWeb enablement, protocol
+# implementation or debugger capability is introduced by packaging this library.
+add_library(qfli_web_cdp_transport SHARED
+  web_cdp_transport.cpp
+  web_cdp_transport_napi.cpp)
+set_target_properties(qfli_web_cdp_transport PROPERTIES
+  CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES
+  CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN YES)
+target_compile_options(qfli_web_cdp_transport PRIVATE -Wall -Wextra)
+target_link_libraries(qfli_web_cdp_transport PRIVATE libace_napi.z.so pthread)
+if(OHOS)
+  target_link_options(qfli_web_cdp_transport PRIVATE "-Wl,-z,max-page-size=16384")
+endif()
+
 # The embedded engine is produced per ABI by
 #   scripts/build_nginx_embedded.sh ohos <out> <sdk-native-root> <abi>
 # and retained as a plain static archive (no executableBinaryPaths). Selecting
