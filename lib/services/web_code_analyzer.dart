@@ -62,6 +62,10 @@ class WebCodeAnalyzer implements CodeAnalyzer {
     if (language.isEmpty) {
       return const CodeAnalysisResult(unavailableReason: '当前语言未提供 Web 离线语法后端');
     }
+    if (language == 'javascript' &&
+        p.extension(active.path).toLowerCase() == '.jsx') {
+      return const CodeAnalysisResult(unavailableReason: '当前未提供 JSX 离线语法后端');
+    }
     final text = active.text;
     final path = active.path;
     final libraryPath = nativeLibraryPath;

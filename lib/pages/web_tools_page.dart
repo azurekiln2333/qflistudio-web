@@ -34,17 +34,14 @@ class WebToolsPage extends StatelessWidget {
     final tabs = <({String label, Widget body})>[
       (label: '服务器', body: WebServerToolsView(store: store)),
       (label: '编解码', body: const WebCodecToolsView()),
-      if (!_offlineOnly)
-        (label: 'HTTP', body: const _HttpTool()),
+      if (!_offlineOnly) (label: 'HTTP', body: const _HttpTool()),
     ];
     return DefaultTabController(
       length: tabs.length,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Web 工具'),
-          bottom: TabBar(
-            tabs: [for (final tab in tabs) Tab(text: tab.label)],
-          ),
+          bottom: TabBar(tabs: [for (final tab in tabs) Tab(text: tab.label)]),
         ),
         body: TabBarView(children: [for (final tab in tabs) tab.body]),
       ),
@@ -190,6 +187,7 @@ class _WebServerToolsViewState extends State<WebServerToolsView> {
                   child: DropdownButtonFormField<String>(
                     key: ValueKey(path),
                     initialValue: path,
+                    isExpanded: true,
                     decoration: const InputDecoration(
                       labelText: '项目',
                       border: OutlineInputBorder(),
@@ -329,6 +327,7 @@ class _WebProjectSettingsDialogState extends State<_WebProjectSettingsDialog> {
   final _proxies = <_ProxyDraft>[];
   final _removedProxies = <_ProxyDraft>[];
   Map<String, dynamic> _original = {};
+
   /// API 代理会转发到任意外部主机，离线产品不展示也不改写这一节。
   late final bool _showProxy = !_offlineOnly;
   bool _spaFallback = false;

@@ -288,6 +288,27 @@ void main() {
     expect(large.unavailableReason, contains('大小限制'));
   });
 
+  test('JSX files are unavailable to the JavaScript backend', () async {
+    final analyzer = WebCodeAnalyzer(
+      nativeLibraryPath: p.join(project.path, 'missing-library'),
+    );
+    for (final (name, source) in [
+      ('component.jsx', 'const view = <div />;'),
+      ('component.JSX', 'const value = 1;'),
+    ]) {
+      final result = await analyzer.analyze(
+        request(source, name: name, language: 'javascript'),
+      );
+      expect(result.unavailableReason, contains('JSX'), reason: name);
+      expect(result.diagnostics, isEmpty, reason: name);
+    }
+    final languageOverride = await analyzer.analyze(
+      request('a { color: red; }', name: 'notes.txt', language: 'css'),
+    );
+    expect(languageOverride.unavailableReason, isNull);
+    expect(languageOverride.diagnostics, isEmpty);
+  });
+
   group(
     'real native QuickJS parser',
     () {

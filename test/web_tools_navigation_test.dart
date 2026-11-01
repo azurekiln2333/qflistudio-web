@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:qfli_studio_core/app.dart';
 import 'package:qfli_studio_core/models/project.dart';
+import 'package:qfli_studio_core/pages/profile_page.dart';
 import 'package:qfli_studio_core/services/studio_profile.dart';
 import 'package:qfli_studio_core/store/auth_store.dart';
 import 'package:qfli_studio_core/store/project_store.dart';
@@ -188,6 +189,14 @@ void main() {
 
     await selectPage(tester, Icons.person_outline);
     // 离线产品下「我的」隐藏登录/账号区，但本地设置入口仍在。
+    await tester.scrollUntilVisible(
+      find.text('设置'),
+      200,
+      scrollable: find.descendant(
+        of: find.byType(ProfileTab),
+        matching: find.byType(Scrollable),
+      ),
+    );
     expect(find.text('设置'), findsOneWidget);
     expect(find.text('未登录'), findsNothing);
 

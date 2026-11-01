@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:qfli_studio_core/app.dart';
 import 'package:qfli_studio_core/services/project_templates.dart';
@@ -49,8 +51,10 @@ Widget _buildWebTools(ProjectStore store) => WebToolsPage(store: store);
 Widget _buildWebToolsTab(ProjectStore store, VoidCallback onOpenTerminal) =>
     WebToolsOverview(store: store, onOpenTerminal: onOpenTerminal);
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+Future<void> main() async {
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  final nativeStartup = !kIsWeb && defaultTargetPlatform == TargetPlatform.ohos;
+  if (nativeStartup) binding.deferFirstFrame();
 
   // 在 runApp 之前定档。
   StudioProfile.current = webProfile;
@@ -59,17 +63,53 @@ void main() async {
   final auth = AuthStore();
   final settings = SettingsStore();
   final ready = ValueNotifier<bool>(false);
-  // 先 runApp 品牌启动页（与原生遮罩同色，无白屏），数据后台并行加载。
   runApp(QfliApp(store: store, auth: auth, settings: settings, ready: ready));
-  // 首帧提交后再做磁盘/插件初始化，避免与首帧构建争用主 isolate。
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    unawaited(
-      AppBootstrap.run(
+
+  const platformChannel = MethodChannel('qflistudio/platform');
+  Future<void> reportProgress(double progress) async {
+    try {
+      await platformChannel.invokeMethod<void>('startupProgress', {
+        'progress': progress,
+      });
+    } on PlatformException catch (error) {
+      debugPrint('Startup progress unavailable: ${error.code}');
+    } on MissingPluginException {
+      // Entry shells without the native progress bridge still finish startup.
+    }
+  }
+
+  Future<void> completeStartup() async {
+    try {
+      final minimumDisplay = nativeStartup
+          ? Future<void>.delayed(const Duration(milliseconds: 1100))
+          : Future<void>.value();
+      if (nativeStartup) {
+        // Let the ArkUI splash subscribe before reporting local initialization.
+        await Future<void>.delayed(const Duration(milliseconds: 160));
+        unawaited(reportProgress(0.05));
+      }
+      await AppBootstrap.run(
         store: store,
         auth: auth,
         settings: settings,
         ready: ready,
-      ),
-    );
+        onProgress: nativeStartup
+            ? (progress) => unawaited(reportProgress(0.05 + progress * 0.95))
+            : null,
+      );
+      await Future.wait([
+        minimumDisplay,
+        if (nativeStartup)
+          Future<void>.delayed(const Duration(milliseconds: 320)),
+      ]);
+      // Keep the native splash until the destination has completed layout.
+      if (nativeStartup) await binding.endOfFrame;
+    } finally {
+      if (nativeStartup) binding.allowFirstFrame();
+    }
+  }
+
+  binding.addPostFrameCallback((_) {
+    unawaited(completeStartup());
   });
 }
