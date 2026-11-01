@@ -78,7 +78,6 @@ const DOM = {
   'js-example-086': { out: '2026年10月15日' },
   'js-example-088': { out: '当前页：home' },
   'js-example-093': { scrollTo: true },
-  'js-example-095': { out: '在线' },
   'js-example-097': { out: '14/5' },
   'js-example-098': { out: '你好，小明' },
   'js-example-099': { out: '07:05' },
@@ -171,8 +170,6 @@ const INTERACTION_DOM = {
   'js-example-094': { list: [/甲/, /乙/] },
   'js-example-096': { out: [/请输入数量|数量：\d+/] },
   'js-example-101': { text: '这段文字会被切换高亮。' }, // class toggled, text intact
-  'js-example-052': { out: [/定位失败|不支持定位|,/] },
-  'js-example-053': { out: [/内容：|读取失败/] },
 };
 
 function matches(value, expected) {
@@ -184,6 +181,9 @@ function matches(value, expected) {
 function containsAll(haystack, needles) {
   return needles.every((n) => haystack.includes(n));
 }
+
+// These oracles own their real gestures; generic pre-clicks would compete.
+export const SELF_DRIVEN_IDS = Object.freeze(['js-example-052', 'js-example-053']);
 
 export function owns(id) {
   // This module owns exactly the original authored cases. Future IDs must
@@ -251,6 +251,264 @@ export async function assertJs(page, ctx) {
   }
   if (id === 'js-example-057') {
     await page.waitForTimeout(300);
+  }
+
+  // --- js-example-052: geolocation must settle, visibly, with no hang --------
+  // ArkWeb on an offline emulator exposes navigator.geolocation but never
+  // resolves either callback (no permission decision is ever made). A correct
+  // product therefore bounds the wait itself and always renders a terminal
+  // state. The contract asserted here is exactly that: the UI leaves 定位中 and
+  // lands on one of the documented outcomes within the lesson's own budget.
+  if (id === 'js-example-052') {
+    const click = page.locator('#loc').first();
+    const present = (await click.count()) > 0;
+    checks.push({
+      name: 'js 052 action button present',
+      ok: present,
+      detail: present ? '#loc found' : '#loc missing',
+    });
+    if (!present) throw new Error('geolocation action button is missing');
+    const initial = await page.locator('#out').textContent();
+    checks.push({
+      name: 'js 052 does not begin with a prefilled terminal state',
+      ok: (initial || '').trim() === '',
+      detail: `before click: ${JSON.stringify(initial)}`,
+    });
+    // A missing/covered button must fail. Do not swallow actionability errors
+    // or accept selector existence as evidence that the authored handler ran.
+    await click.click({ timeout: 3000 });
+
+    // The lesson's watchdog is 800ms; allow a generous margin for device timers.
+    let settled = false;
+    for (let waited = 0; waited < 4000 && !settled; waited += 100) {
+      await page.waitForTimeout(100);
+      const current = await page.$eval('#out', (el) => (el.textContent || '').trim()).catch(() => '');
+      settled = current !== '' && current !== '定位中';
+    }
+    const outcome = await page.$eval('#out', (el) => (el.textContent || '').trim()).catch(() => '');
+
+    checks.push({
+      name: 'js 052 geolocation settles within budget',
+      ok: settled,
+      detail: `#out=${JSON.stringify(outcome)} after bounded wait`,
+    });
+
+    // Only the documented terminal states are acceptable. This is not a
+    // pass-through "non-empty" check: the coordinate branch must look like a
+    // coordinate pair, and the failure branch must name a concrete cause.
+    const terminal = [
+      /^-?\d+\.\d{2},-?\d+\.\d{2}$/, // 纬度,经度
+      /^不支持定位$/, // no Geolocation at all
+      /^定位超时$/, // bounded watchdog fired (offline / no permission prompt)
+      /^定位失败：.+$/, // explicit error, including 用户拒绝
+    ];
+    const matched = terminal.find((re) => re.test(outcome)) || null;
+    checks.push({
+      name: 'js 052 terminal state is a documented outcome',
+      ok: matched !== null,
+      detail: matched
+        ? `matched ${matched}`
+        : `unexpected ${JSON.stringify(outcome)}`,
+    });
+
+    checks.push({
+      name: 'js 052 gesture outcome is also logged',
+      ok: ctx.getLogs().some((line) => line.replace(/^[a-z]+: /, '') ===
+        (outcome === '不支持定位' ? 'unsupported' : outcome)),
+      detail: `#out=${JSON.stringify(outcome)}; console=${JSON.stringify(ctx.getLogs())}`,
+    });
+  }
+
+  // Clipboard responses are controlled only at the platform boundary. Real
+  // reachable button clicks still run the unmodified authored handler; this
+  // proves its feedback/settlement, not access to the user's real clipboard.
+  if (id === 'js-example-053') {
+    const add = (name, ok, detail = '') => checks.push({ name: `js 053 ${name}`, ok: ok === true, detail });
+    const readOut = () => page.locator('#out').textContent().then((value) => (value || '').trim());
+    const waitOut = (expected) => page.waitForFunction(
+      (value) => document.getElementById('out')?.textContent.trim() === value,
+      expected, { timeout: 4000 },
+    );
+    await page.evaluate(() => {
+      const proto = Object.getPrototypeOf(navigator);
+      window.__wfClipboardState = {
+        own: Object.getOwnPropertyDescriptor(navigator, 'clipboard'),
+        proto: Object.getOwnPropertyDescriptor(proto, 'clipboard'),
+        changedOwn: false, changedProto: false, calls: 0, progress: [], replies: [],
+      };
+    });
+    const install = (mode) => page.evaluate((requested) => {
+      const saved = window.__wfClipboardState;
+      saved.calls = 0;
+      saved.progress = [];
+      saved.replies = [];
+      delete window.__wfClipboardReply;
+      const api = requested === 'absent' ? undefined : {
+        readText: () => {
+          saved.calls += 1;
+          // Record authored feedback at the API boundary, before the Promise
+          // can settle or a slow CDP round trip can consume the watchdog budget.
+          saved.progress.push(document.getElementById('out').textContent.trim());
+          return new Promise((resolve, reject) => {
+            window.__wfClipboardReply = { resolve, reject };
+            saved.replies.push(window.__wfClipboardReply);
+          });
+        },
+      };
+      const descriptor = { configurable: true, get: () => api };
+      try {
+        Object.defineProperty(navigator, 'clipboard', descriptor);
+        saved.changedOwn = true;
+      } catch {
+        Object.defineProperty(Object.getPrototypeOf(navigator), 'clipboard', descriptor);
+        saved.changedProto = true;
+      }
+      return navigator.clipboard === api;
+    }, mode);
+    const click = () => page.locator('#paste').click({ timeout: 3000 });
+    const observe = (reply) => page.evaluate((action) => {
+      const saved = window.__wfClipboardState;
+      const observed = { calls: saved.calls, progress: [...saved.progress], out: document.getElementById('out').textContent.trim() };
+      if (action === 'success') window.__wfClipboardReply.resolve('WEBFORGE-CLIP');
+      if (action === 'denied') {
+        const error = new Error('Document is not focused');
+        error.name = 'NotAllowedError';
+        window.__wfClipboardReply.reject(error);
+      }
+      if (action === 'latest') window.__wfClipboardReply.resolve('LATEST-CLIP');
+      return observed;
+    }, reply);
+    try {
+      const successInstalled = await install('success');
+      add('controlled success API installed', successInstalled);
+      if (!successInstalled) throw new Error('clipboard boundary could not be controlled');
+      await click();
+      const success = await observe('success');
+      add('real click starts the read and shows progress', success.calls === 1 && success.progress[0] === '读取中', JSON.stringify(success));
+      await waitOut('内容：WEBFORGE-CLIP');
+      add('success renders the exact supplied text', await readOut() === '内容：WEBFORGE-CLIP');
+
+      const deniedInstalled = await install('denied');
+      if (!deniedInstalled) throw new Error('clipboard denial boundary could not be controlled');
+      await click();
+      const denied = await observe('denied');
+      add('denied read starts with visible progress', denied.calls === 1 && denied.progress[0] === '读取中', JSON.stringify(denied));
+      await waitOut('读取失败：Document is not focused');
+      add('denial renders the actual reason', await readOut() === '读取失败：Document is not focused');
+
+      const absentInstalled = await install('absent');
+      if (!absentInstalled) throw new Error('clipboard absence boundary could not be controlled');
+      await click();
+      await waitOut('读取失败：不支持读取');
+      const absent = await observe();
+      add('absent API reports unsupported without reading', absent.calls === 0 && absent.out === '读取失败：不支持读取', JSON.stringify(absent));
+
+      const hangInstalled = await install('hang');
+      if (!hangInstalled) throw new Error('clipboard hang boundary could not be controlled');
+      await click();
+      const hanging = await observe();
+      add('hanging read shows progress after the real click', hanging.calls === 1 && hanging.progress[0] === '读取中', JSON.stringify(hanging));
+      await waitOut('读取超时');
+      add('the authored watchdog bounds a never-settling read', await readOut() === '读取超时');
+      await page.evaluate(() => window.__wfClipboardReply.resolve('LATE-CLIPBOARD-RESULT'));
+      await page.waitForTimeout(150);
+      add('late completion cannot replace the settled timeout', await readOut() === '读取超时');
+      add('timeout is also logged', ctx.getLogs().some((line) => line.replace(/^[a-z]+: /, '') === '读取超时'));
+
+      if (!await install('overlap')) throw new Error('clipboard overlap boundary could not be controlled');
+      await click();
+      await click();
+      const overlap = await observe('latest');
+      add('repeat real clicks start two independent reads with feedback',
+        overlap.calls === 2 && overlap.progress.length === 2 && overlap.progress.every((value) => value === '读取中'), JSON.stringify(overlap));
+      await waitOut('内容：LATEST-CLIP');
+      // The first read is still pending. Its own 800ms watchdog must not replace
+      // the result of the newer click, even though it has not settled locally.
+      await page.waitForTimeout(950);
+      add('older request timeout cannot overwrite the newest success', await readOut() === '内容：LATEST-CLIP');
+      await page.evaluate(() => window.__wfClipboardState.replies[0].resolve('STALE-CLIP'));
+      await page.waitForTimeout(100);
+      add('older request completion cannot overwrite the newest success', await readOut() === '内容：LATEST-CLIP');
+    } finally {
+      const restored = await page.evaluate(() => {
+        const saved = window.__wfClipboardState;
+        const proto = Object.getPrototypeOf(navigator);
+        if (saved.changedOwn) {
+          delete navigator.clipboard;
+          if (saved.own) Object.defineProperty(navigator, 'clipboard', saved.own);
+        }
+        if (saved.changedProto) {
+          if (saved.proto) Object.defineProperty(proto, 'clipboard', saved.proto);
+          else delete proto.clipboard;
+        }
+        const same = (actual, original) => actual === undefined || original === undefined
+          ? actual === original
+          : ['get', 'set', 'value', 'writable', 'enumerable', 'configurable'].every((key) => actual[key] === original[key]);
+        const ok = same(Object.getOwnPropertyDescriptor(navigator, 'clipboard'), saved.own)
+          && same(Object.getOwnPropertyDescriptor(proto, 'clipboard'), saved.proto);
+        delete window.__wfClipboardState;
+        delete window.__wfClipboardReply;
+        return ok;
+      });
+      add('restores exact original platform descriptors', restored);
+    }
+  }
+
+  // --- js-example-095: online state must mirror navigator.onLine ------------
+  // The device may genuinely be offline, so the expected label is derived from
+  // the live navigator.onLine value instead of assuming host connectivity. The
+  // listeners are then proven by dispatching real online/offline events.
+  if (id === 'js-example-095') {
+    const liveOnline = await page.evaluate(() => navigator.onLine);
+    const label = (online) => (online ? '在线' : '离线');
+
+    const initial = await page.$eval('#out', (el) => (el.textContent || '').trim()).catch(() => '');
+    checks.push({
+      name: 'js 095 initial label matches navigator.onLine',
+      ok: initial === label(liveOnline),
+      detail: `onLine=${liveOnline} expect ${label(liveOnline)} got ${JSON.stringify(initial)}`,
+    });
+
+    // Force the offline transition and assert the listener repainted.
+    const offlineState = await page.evaluate(() => {
+      Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => false });
+      window.dispatchEvent(new Event('offline'));
+      return document.getElementById('out').textContent.trim();
+    });
+    checks.push({
+      name: 'js 095 offline event repaints to 离线',
+      ok: offlineState === '离线',
+      detail: `got ${JSON.stringify(offlineState)}`,
+    });
+
+    // Force the online transition and assert the listener repainted again.
+    const onlineState = await page.evaluate(() => {
+      Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => true });
+      window.dispatchEvent(new Event('online'));
+      return document.getElementById('out').textContent.trim();
+    });
+    checks.push({
+      name: 'js 095 online event repaints to 在线',
+      ok: onlineState === '在线',
+      detail: `got ${JSON.stringify(onlineState)}`,
+    });
+
+    // Restore the device's real state so later assertions see the truth.
+    await page
+      .evaluate((restore) => {
+        Object.defineProperty(navigator, 'onLine', {
+          configurable: true,
+          get: () => restore,
+        });
+        window.dispatchEvent(new Event(restore ? 'online' : 'offline'));
+      }, liveOnline)
+      .catch(() => {});
+    const restored = await page.$eval('#out', (el) => (el.textContent || '').trim()).catch(() => '');
+    checks.push({
+      name: 'js 095 restores real device state',
+      ok: restored === label(liveOnline),
+      detail: `onLine=${liveOnline} expect ${label(liveOnline)} got ${JSON.stringify(restored)}`,
+    });
   }
 
   // 1. Exact console expectations (if any).

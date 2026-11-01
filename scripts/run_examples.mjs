@@ -366,7 +366,11 @@ for (const ex of examples) {
         ex.code,
       );
       const hasToggle = /:checked|type=["']checkbox/.test(ex.code);
-      if (hasHandler || hasToggle) {
+      // Some platform-bound lessons own their stimulus and controlled API
+      // responses in the semantic oracle. Never pre-click those controls: that
+      // would read the real clipboard or start a second, competing watchdog.
+      const oracleDrivesInteraction = js?.SELF_DRIVEN_IDS?.includes(ex.id) === true;
+      if ((hasHandler || hasToggle) && !oracleDrivesInteraction) {
         ctx.interaction = await driveInteraction(page, ex.code);
         await page.waitForTimeout(150);
       }
@@ -398,7 +402,12 @@ for (const ex of examples) {
       }
     }
   } catch (e) {
-    checks.push({ name: 'page load/setup', ok: false, detail: String(e).split('\n')[0] });
+    checks.push({
+      name: 'page load/setup',
+      ok: false,
+      detail: String(e).split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+        .slice(0, 8).join(' / ').slice(0, 1200),
+    });
   }
 
   // Offline guard result: no external requests of any kind.

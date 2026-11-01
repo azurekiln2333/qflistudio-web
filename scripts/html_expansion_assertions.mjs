@@ -563,8 +563,18 @@ CASES.set('html-example-135', async (page, addCheck) => {
   addCheck('currentSrc is the matching candidate', crop.sourceMatches, JSON.stringify(crop));
   addCheck('image decoded', await page.locator('#fallback').evaluate((el) => el.complete === true && el.naturalWidth > 0));
   addCheck('fallback img still declared', (await attr(page, '#fallback', 'width')) === '120');
-  addCheck('probe selected crop', await text(page, '#state').then((s) =>
-    s.includes(`命中宽屏=${crop.wide}`) && s.includes('source 数=2') && s.includes(`实际宽=${crop.expectedWidth}`)));
+  // The lesson script must report the same values the DOM actually holds. This
+  // is independent of which candidate the engine picked, so a script regression
+  // is caught even if engine selection differs.
+  const probe = await text(page, '#state');
+  addCheck(
+    'probe reports the same crop as the DOM',
+    probe.includes(`实际宽=${crop.width}`) &&
+      probe.includes(`命中宽屏=${crop.wide}`) &&
+      probe.includes('source 数=2') &&
+      probe.includes('已加载=true'),
+    probe,
+  );
 });
 
 CASES.set('html-example-136', async (page, addCheck) => {
@@ -703,9 +713,47 @@ CASES.set('html-example-144', async (page, addCheck) => {
   addCheck('light dom has no h3', await page.locator('#card').evaluate((el) => el.querySelectorAll('h3').length === 0));
   addCheck('slot assigned one node', await page.locator('#card').evaluate((el) => el.shadowRoot.querySelector('slot[name="desc"]').assignedNodes().length === 1));
   addCheck('slot text from host', await page.locator('#card').evaluate((el) => el.shadowRoot.querySelector('slot[name="desc"]').assignedNodes()[0].textContent === '来自宿主页面的插槽内容'));
-  addCheck('host border applied', (await computed(page, '#card', 'borderTopWidth')) === '1px');
+  // `:host { border: 1px solid }` must actually apply, but the computed length is
+  // platform-scaled (ArkWeb 144 reports 0.857143px for 1px under page scale).
+  // Assert exact parity against an identical page-level 1px border measured in
+  // the same environment instead of hardcoding '1px': that is exact, not
+  // tolerant, and proves the shadow declaration was applied rather than a UA
+  // default (UA default border-style is `none`).
+  const parity = await page.evaluate(() => {
+    const control = document.createElement('div');
+    control.style.border = '1px solid #000';
+    document.body.appendChild(control);
+    const style = getComputedStyle(control);
+    const result = { width: style.borderTopWidth, style: style.borderTopStyle };
+    control.remove();
+    return result;
+  });
+  const host = await page.locator('#card').evaluate((el) => {
+    const style = getComputedStyle(el);
+    return {
+      width: style.borderTopWidth,
+      borderStyle: style.borderTopStyle,
+      padding: style.paddingTop,
+      display: style.display,
+    };
+  });
+  addCheck(':host border style is solid', host.borderStyle === 'solid', host.borderStyle);
+  addCheck(
+    ':host border width equals a page-level 1px border',
+    host.width === parity.width && parity.style === 'solid',
+    `${host.width} vs ${parity.width}`,
+  );
+  addCheck(':host padding applied', parseFloat(host.padding) > 0, host.padding);
+  addCheck(':host display is block', host.display === 'block', host.display);
   const probe = await text(page, '#state');
-  addCheck('probe shadow state', probe.includes('shadowRoot=true') && probe.includes('分配节点=1'), probe);
+  addCheck(
+    'probe shadow state',
+    probe.includes('shadowRoot=true') &&
+      probe.includes('分配节点=1') &&
+      probe.includes('外部 h3 数=0') &&
+      probe.includes(`host 边框=${host.width}`),
+    probe,
+  );
 });
 
 CASES.set('html-example-145', async (page, addCheck) => {
@@ -958,6 +1006,47 @@ CASES.set('html-example-160', async (page, addCheck) => {
   await page.locator('#open-help').click();
   await settle(page, 150);
   addCheck('help popover opens', await page.locator('#help').evaluate((el) => el.matches(':popover-open')));
+  // Reachability before interaction: a top-layer popover can be `:popover-open`
+  // and still sit outside the visual viewport (a scaled layout viewport centres
+  // it on the initial containing block). Playwright cannot scroll a
+  // `position: fixed` box into view, so record the geometry that decides it.
+  const reach = await page.evaluate(() => {
+    const button = document.getElementById('close-help');
+    const box = button.getBoundingClientRect();
+    const visual = window.visualViewport;
+    const view = visual
+      ? { left: visual.offsetLeft, top: visual.offsetTop, width: visual.width, height: visual.height }
+      : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    const hit = document.elementFromPoint(cx, cy);
+    return {
+      box: { x: Math.round(box.x), y: Math.round(box.y), w: Math.round(box.width), h: Math.round(box.height) },
+      view: { left: Math.round(view.left), top: Math.round(view.top), w: Math.round(view.width), h: Math.round(view.height) },
+      scale: visual ? Number(visual.scale.toFixed(3)) : 1,
+      insideViewport:
+        box.width > 0 &&
+        box.height > 0 &&
+        cx >= view.left &&
+        cx <= view.left + view.width &&
+        cy >= view.top &&
+        cy <= view.top + view.height,
+      hit: hit ? hit.id || hit.tagName : null,
+    };
+  });
+  addCheck(
+    'close button is reachable',
+    reach.insideViewport && reach.hit === 'close-help',
+    JSON.stringify(reach),
+  );
+  // Real user path 1: light dismiss with Escape.
+  await page.keyboard.press('Escape');
+  await settle(page, 150);
+  addCheck('escape light-dismisses popover', await page.locator('#help').evaluate((el) => !el.matches(':popover-open')));
+  // Real user path 2: the in-popover close button with popovertargetaction=hide.
+  await page.locator('#open-help').click();
+  await settle(page, 150);
+  addCheck('popover reopens', await page.locator('#help').evaluate((el) => el.matches(':popover-open')));
   await page.locator('#close-help').click();
   await settle(page, 150);
   addCheck('help popover closes', await page.locator('#help').evaluate((el) => !el.matches(':popover-open')));

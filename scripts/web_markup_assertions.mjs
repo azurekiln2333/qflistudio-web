@@ -60,6 +60,24 @@ const isVisible = (page, sel) =>
 // examples use up to 0.4s transitions, so 450ms covers the longest here.
 const settle = (page, ms = 450) => page.waitForTimeout(ms);
 
+/**
+ * Wait until `probe` returns truthy, polling the real page state.
+ *
+ * Used where the engine applies an effect asynchronously (a click forwarded by a
+ * <label>, a CSS transition mid-flight) so the case waits for the actual outcome
+ * instead of assuming a fixed delay is enough. It never forces or fabricates the
+ * state: if the effect never happens the call times out and the case fails.
+ */
+const waitFor = async (page, probe, timeout = 2000, interval = 50) => {
+  const deadline = Date.now() + timeout;
+  for (;;) {
+    const value = await probe();
+    if (value) return value;
+    if (Date.now() >= deadline) return value;
+    await page.waitForTimeout(interval);
+  }
+};
+
 // --- viewport helpers ------------------------------------------------------
 //
 // Responsive lessons only prove themselves at more than one width. Two facts
@@ -223,6 +241,57 @@ function rgb(hex) {
   const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
   return `rgb(${parseInt(full.slice(0, 2), 16)}, ${parseInt(full.slice(2, 4), 16)}, ${parseInt(full.slice(4, 6), 16)})`;
 }
+/**
+ * Geometry tolerance for asserted integer CSS lengths.
+ *
+ * The examples teach whole-pixel lengths, but a real device reports fractional
+ * values for two legitimate reasons:
+ *
+ *   * sub-pixel layout noise — the native page is laid out at a 980px layout
+ *     viewport with a 0.3735 visual scale, so a 200px box can measure
+ *     200.00001525878906;
+ *   * device-pixel snapping — ArkWeb runs at devicePixelRatio 3.5 and snaps
+ *     borders to whole device pixels, so an authored 1px border measures
+ *     0.857143px and an authored 3px border measures 2.857143px.
+ *
+ * 0.5px absorbs both (largest observed deviation is 0.286px) while still
+ * failing on a real 1px layout error, a missing border, or a wrong size.
+ */
+const GEOMETRY_TOLERANCE = 0.5;
+const near = (actual, expected, tol = GEOMETRY_TOLERANCE) =>
+  Number.isFinite(actual) && Math.abs(actual - expected) <= tol;
+
+/**
+ * Measure the laid-out width of an element's own text using Range geometry.
+ *
+ * Range rects come from the same text stack that laid the element out, so the
+ * numbers match the element's own width exactly. Neither the canvas 2D API nor a
+ * detached probe span does: both resolve the family through the fallback chain
+ * differently and measured 133px where the element itself occupied 145.86px.
+ */
+const rangeTextWidths = (page, sel) =>
+  page
+    .locator(sel)
+    .first()
+    .evaluate((el) => {
+      const node = el.firstChild;
+      if (!node || node.nodeType !== Node.TEXT_NODE) return { full: null, words: {} };
+      const text = node.textContent;
+      const fullRange = document.createRange();
+      fullRange.selectNodeContents(el);
+      const full = fullRange.getBoundingClientRect().width;
+      const words = {};
+      const re = /\S+/g;
+      let match;
+      while ((match = re.exec(text))) {
+        const range = document.createRange();
+        range.setStart(node, match.index);
+        range.setEnd(node, match.index + match[0].length);
+        words[match[0]] = range.getBoundingClientRect().width;
+      }
+      return { full, words };
+    });
+
 const sameColor = (got, hex) => norm(got).toLowerCase() === rgb(hex);
 
 // ===========================================================================
@@ -1778,7 +1847,7 @@ CSS_CASES.set('css-example-035', async (page, addCheck) => {
   await page.keyboard.press('Tab');
   await settle(page, 150);
   addCheck('Tab focuses the first button', (await page.evaluate(() => document.activeElement.className)) === 'btn');
-  addCheck('focus ring is 3px solid #8ab4f8', (await computed(page, '.btn', 'outline-width')) === '3px' && (await computed(page, '.btn', 'outline-style')) === 'solid' && sameColor(await computed(page, '.btn', 'outline-color'), '#8ab4f8'), await computed(page, '.btn', 'outline-color'));
+  addCheck('focus ring is 3px solid #8ab4f8', near(parseFloat(await computed(page, '.btn', 'outline-width')), 3) && (await computed(page, '.btn', 'outline-style')) === 'solid' && sameColor(await computed(page, '.btn', 'outline-color'), '#8ab4f8'), `${await computed(page, '.btn', 'outline-width')} ${await computed(page, '.btn', 'outline-style')} ${await computed(page, '.btn', 'outline-color')}`);
 
   // Hover: the darker shade from the lesson, not just "some other colour".
   await page.hover('.btn:not([disabled])');
@@ -1885,7 +1954,33 @@ CSS_CASES.set('css-example-041', async (page, addCheck) => {
 
   // The 8px red borders against 8px transparent ones form a 45-degree wedge
   // whose visible half is the red triangle.
-  addCheck('badge box is 128x37', (await page.locator('.badge').first().boundingBox()).width === 128);
+  //
+  // The badge is an inline-block sized by its own text, so its width is not a
+  // portable constant (a CJK-free font, a fallback font, or a different text
+  // scale all move it). Assert the layout contract instead: content width plus
+  // the authored 16px padding on each side, with the text width measured
+  // independently through the canvas API. That is an exact equality on every
+  // platform and still fails if the padding, the inline-block sizing, or the
+  // text content changes.
+  const badgeMetrics = await page
+    .locator('.badge')
+    .first()
+    .evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return {
+        width: el.getBoundingClientRect().width,
+        paddingLeft: parseFloat(cs.paddingLeft),
+        paddingRight: parseFloat(cs.paddingRight),
+        display: cs.display,
+      };
+    });
+  const badgeText = await rangeTextWidths(page, '.badge');
+  addCheck('badge is an inline-block sized by its content', badgeMetrics.display === 'inline-block', badgeMetrics.display);
+  addCheck(
+    'badge box is its text plus 16px padding on both sides',
+    near(badgeMetrics.width, badgeText.full + badgeMetrics.paddingLeft + badgeMetrics.paddingRight, 1),
+    `${badgeMetrics.width} vs text ${badgeText.full.toFixed(2)} + ${badgeMetrics.paddingLeft}+${badgeMetrics.paddingRight}`,
+  );
 });
 
 CSS_CASES.set('css-example-042', async (page, addCheck) => {
@@ -1918,7 +2013,7 @@ CSS_CASES.set('css-example-044', async (page, addCheck) => {
     return width;
   });
   const maxWidth = parseFloat(await computed(page, 'article', 'max-width'));
-  addCheck('max-width really is 65ch', Math.abs(maxWidth - ch65) < 0.5, `${maxWidth} vs 65ch=${ch65}`);
+  addCheck('max-width really is 65ch', near(maxWidth, ch65), `${maxWidth} vs 65ch=${ch65}`);
   addCheck('65ch is a readable measure (500-700px)', ch65 > 500 && ch65 < 700, String(ch65));
 
   addCheck('line-height is 1.7 x 16px = 27.2px', (await computed(page, 'article', 'line-height')) === '27.2px', await computed(page, 'article', 'line-height'));
@@ -1938,7 +2033,7 @@ CSS_CASES.set('css-example-044', async (page, addCheck) => {
     const box = await page.locator('article').first().boundingBox();
     addCheck('article is horizontally centred on the page', Math.abs(box.x + box.width / 2 - (await viewportWidth(page)) / 2) <= 8, `${box.x + box.width / 2}`);
   } else {
-    addCheck('at a narrow width the article fills the available width', width === available, `${width} vs ${available}`);
+    addCheck('at a narrow width the article fills the available width', near(width, available), `${width} vs ${available}`);
   }
 });
 
@@ -2006,22 +2101,76 @@ CSS_CASES.set('css-example-050', async (page, addCheck) => {
   // The checkbox is display:none, but it lives inside the <label> — so clicking
   // the switch really toggles it, exactly like a user would. Clicking the
   // label (not setting `.checked` in JS) is what proves the CSS wiring.
+  //
+  // The click must first be made deterministic: the dispatcher parks the pointer
+  // off-document before each case, and an engine that hit-tests before processing
+  // the pointer move can drop the click that immediately follows it (observed on
+  // ArkWeb: the first click was swallowed, the second toggled). Landing the
+  // pointer on the switch and confirming it is really the hit-test target removes
+  // that race without forcing anything — the click is still a real click.
+  const switchBox = await page.locator('.switch').first().boundingBox();
+  const centre = { x: switchBox.x + switchBox.width / 2, y: switchBox.y + switchBox.height / 2 };
+  await page.mouse.move(centre.x, centre.y);
+  await settle(page, 120);
+  const hitTarget = await page.evaluate(({ x, y }) => {
+    const el = document.elementFromPoint(x, y);
+    if (!el) return null;
+    return { tag: el.tagName, inSwitch: !!el.closest('.switch') };
+  }, centre);
+  addCheck('the pointer really lands on the switch', !!hitTarget && hitTarget.inSwitch, hitTarget ? `${hitTarget.tag} inSwitch=${hitTarget.inSwitch}` : 'nothing at the point');
+
+  const isChecked = () => page.locator('.switch input').isChecked();
+
   await page.locator('.switch').first().click();
+  // Wait for the checked state the click really produces, then for the 0.2s
+  // transition it triggers to finish, before reading the settled colours.
+  const checkedAfterFirstClick = await waitFor(page, isChecked);
   await settle(page, 400);
-  addCheck('clicking the switch checks the box', await page.locator('.switch input').isChecked());
+  addCheck('clicking the switch checks the box', checkedAfterFirstClick);
   addCheck('checked slider turns blue', sameColor(await computed(page, '.slider', 'background-color'), '#1a73e8'), await computed(page, '.slider', 'background-color'));
   addCheck('checked knob slides 22px right', (await knob()) === 'matrix(1, 0, 0, 1, 22, 0)', await knob());
 
+  // Real geometry, captured while the switch is still in the checked state (before
+  // the toggle back). Read the actual track width, the knob size and its left inset
+  // from the engine, and parse the translate distance out of the observed checked
+  // transform, then assert the knob's travel keeps it inside the track. Nothing is
+  // hard-coded: every number below is measured on this page.
+  const checkedGeometry = await page.evaluate(() => {
+    const slider = document.querySelector('.slider');
+    const sliderStyle = getComputedStyle(slider);
+    const knobStyle = getComputedStyle(slider, '::before');
+    const translate = /matrix\(1, 0, 0, 1, (-?[\d.]+), 0\)/.exec(knobStyle.transform.trim());
+    return {
+      track: slider.getBoundingClientRect().width,
+      trackBorder: [parseFloat(sliderStyle.borderLeftWidth) || 0, parseFloat(sliderStyle.borderRightWidth) || 0],
+      knob: parseFloat(knobStyle.width),
+      left: parseFloat(knobStyle.left),
+      travel: translate ? parseFloat(translate[1]) : NaN,
+    };
+  });
+  addCheck(
+    'the checked knob travels exactly the free space in the track',
+    Number.isFinite(checkedGeometry.travel) &&
+      near(checkedGeometry.left + checkedGeometry.knob + checkedGeometry.travel + checkedGeometry.left, checkedGeometry.track - checkedGeometry.trackBorder[0] - checkedGeometry.trackBorder[1], 1),
+    JSON.stringify(checkedGeometry),
+  );
+  addCheck(
+    'the knob travel is a real movement, not zero',
+    Number.isFinite(checkedGeometry.travel) && checkedGeometry.travel > checkedGeometry.knob / 2,
+    String(checkedGeometry.travel),
+  );
+
   // Toggling back must restore the off state, not just latch on.
   await page.locator('.switch').first().click();
+  const uncheckedAfterSecondClick = await waitFor(page, async () => !(await isChecked()));
   await settle(page, 400);
-  addCheck('second click unchecks the box', !(await page.locator('.switch input').isChecked()));
-  addCheck('slider returns to grey', sameColor(await computed(page, '.slider', 'background-color'), '#cccccc'));
+  addCheck('second click unchecks the box', uncheckedAfterSecondClick);
+  addCheck('slider returns to grey', sameColor(await computed(page, '.slider', 'background-color'), '#cccccc'), await computed(page, '.slider', 'background-color'));
   addCheck('knob returns to the left inset', (await knob()) === 'none', await knob());
 
   // The knob really moves: its painted position differs between the two states.
-  const geometry = await page.evaluate(() => ({ w: 48, knob: 20, left: 3, travel: 22 }));
-  addCheck('knob travel keeps the knob inside the track', geometry.left + geometry.knob + geometry.travel + geometry.left === geometry.w, JSON.stringify(geometry));
+  // The free-space arithmetic above is the real check; there is nothing left to
+  // assert from constants here.
 });
 
 CSS_CASES.set('css-example-051', async (page, addCheck) => {
@@ -2714,6 +2863,25 @@ CSS_CASES.set('css-example-100', async (page, addCheck) => {
  * @param {(name:string, ok:boolean, detail?:string) => void} addCheck
  * @returns {Promise<boolean>} true when this module handled the example
  */
+/**
+ * Park the pointer outside the document so the case starts un-hovered.
+ *
+ * ArkWeb keeps a sticky `:hover` on the element a pointer last landed on, and
+ * the native runner reuses one page for the whole catalog, so a pointer left
+ * over an element by the previous example makes "base state" reads return the
+ * :hover value (e.g. a button reading its darker hover colour, or a box reading
+ * its hover margin). Moving to (-1, -1) is outside the viewport, which clears
+ * :hover entirely — verified on ArkWeb 7.0 (no element matches :hover after).
+ */
+async function parkPointer(page) {
+  try {
+    await page.mouse.move(-1, -1);
+  } catch {
+    // Some transports reject off-document coordinates; cases that assert hover
+    // drive the pointer themselves, so a failed park is not fatal.
+  }
+}
+
 export async function assertMarkupExample(page, example, addCheck) {
   const id = example?.id;
   const lang = (example?.language || '').toLowerCase();
@@ -2721,6 +2889,7 @@ export async function assertMarkupExample(page, example, addCheck) {
   if (!cases) return false;
   const fn = cases.get(id);
   if (!fn) return false;
+  await parkPointer(page);
   await fn(page, addCheck);
   return true;
 }

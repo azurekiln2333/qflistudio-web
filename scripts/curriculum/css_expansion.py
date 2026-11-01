@@ -1150,7 +1150,7 @@ _B6 = [
         "obj": "用容器单位让字号随容器宽度缩放，而不是随整个视口缩放。",
         "pre": ["容器查询：container queries"],
         "con": ["container-type", "cqi", "cqw", "容器单位"],
-        "explain": "`vw` 参考视口宽度，组件放进侧栏或卡片后字号就不再合适；`cqi`/`cqw` 参考最近的查询容器宽度，于是同一个组件在宽卡里字大、在窄卡里字小，真正随自己的舞台变化。用法是先给外层声明 `container-type: inline-size`，内部再用 `5cqi`。`cqi` 是行向 `cqw` 的 1%，尺寸方向还有 `cqb`/`cqh`。它比媒体查询更适合组件库：改框架布局时不需要重算断点。注意容器必须显式声明 container-type，否则 cqi 会向上找不到容器而退化为视口的一个小默认值。",
+        "explain": "`vw` 参考视口宽度，组件放进侧栏或卡片后字号就不再合适；`cqi`/`cqw` 参考最近的查询容器宽度，于是同一个组件在宽卡里字大、在窄卡里字小，真正随自己的舞台变化。用法是先给外层声明 `container-type: inline-size`，内部再用 `10cqi`。`cqi` 是行向 `cqw` 的 1%，尺寸方向还有 `cqb`/`cqh`。它比媒体查询更适合组件库：改框架布局时不需要重算断点。注意容器必须显式声明 container-type，否则 cqi 会向上找不到容器而退化为视口的一个小默认值。",
         "code": """<!doctype html>
 <html lang="zh-CN">
 <head><meta charset="utf-8"><title>容器单位</title>
@@ -1159,8 +1159,8 @@ _B6 = [
   .card { container-type: inline-size; background: #e8f0fe; margin-bottom: 8px; }
   .wide { width: 400px; }
   .narrow { width: 200px; }
-  .title { font-size: 5cqi; margin: 0; }
-  .body { font-size: 2.5cqw; margin: 0; }
+  .title { font-size: 10cqi; margin: 0; }
+  .body { font-size: 5cqw; margin: 0; }
 </style>
 </head>
 <body>
@@ -1168,7 +1168,7 @@ _B6 = [
   <div class="card narrow" id="narrow"><h2 class="title" id="tn">窄卡片</h2><p class="body" id="bn">正文</p></div>
 </body>
 </html>""",
-        "out": "宽卡片容器 400px：标题字号 20px、正文 10px；窄卡片容器 200px：标题 10px、正文 5px。两卡位于同一页面，证明字号跟着容器而不是视口走。",
+        "out": "宽卡片容器 400px：标题字号 40px、正文 20px；窄卡片容器 200px：标题 20px、正文 10px。两卡位于同一页面，证明字号跟着容器而不是视口走。",
         "pit": [
             "忘记给父级声明 container-type，cqi 找不到容器，尺寸不按预期。",
             "把 container-type 写在元素自身又用它算自身字号，形成循环而失效。",
@@ -1715,7 +1715,7 @@ _B9 = [
   body { margin: 0; padding: 8px; }
   .box { width: 120px; border: 1px solid #dadce0; margin-bottom: 12px; }
   .anywhere { overflow-wrap: anywhere; }
-  .hyphen { hyphens: auto; }
+  .hyphen { hyphens: auto; overflow-wrap: break-word; }
 </style>
 </head>
 <body>
@@ -1723,7 +1723,7 @@ _B9 = [
   <div class="box" id="hyphenated" lang="en"><span class="hyphen">supercalifragilisticexpialidocious</span></div>
 </body>
 </html>""",
-        "out": "两个 120px 宽的盒子都没有被长单词撑破；第一个靠 anywhere 硬断，第二个在 lang=en 下尝试用连字符断词。",
+        "out": "两个 120px 宽的盒子都没有被长单词撑破：第一个靠 anywhere 硬断；第二个在 lang=en 下优先用连字符断词，没有连字符词典的内核则退回到 break-word 断词，同样不会溢出。",
         "pit": [
             "只写 `word-wrap: break-word`：老名字仍可用，但语义不如 overflow-wrap 清楚。",
             "忘了给元素加 `lang`，hyphens: auto 找不到词典而完全不生效。",
@@ -2195,26 +2195,38 @@ _B11 = [
         "obj": "用 overscroll-behavior: contain 让内层滚动到边界后不再带动外层页面。",
         "pre": ["滚动行为与位置：scroll-behavior"],
         "con": ["overscroll-behavior", "滚动链", "contain", "嵌套滚动"],
-        "explain": "内层可滚动区域到达顶部或底部后，继续滚动会“传递”给外层页面，这就是滚动链；弹窗、侧边抽屉、地图容器被页面带着滚是最常见的投诉。`overscroll-behavior: contain` 断开这条链，但内容滚到底时仍会显示边缘的回弹提示；`none` 连回弹效果一起去掉。它还可以单独设置 `overscroll-behavior-y` 或 `-x`，只在某个方向生效。配合 `touch-action` 可以进一步约束手势，但要注意不要因此禁用用户必要的手势操作。",
+        "explain": "内层可滚动区域到达顶部或底部后，继续滚动会“传递”给外层页面，这就是滚动链；弹窗、侧边抽屉、地图容器被页面带着滚是最常见的投诉。`overscroll-behavior: contain` 断开这条链，但内容滚到底时仍会显示边缘的回弹提示；`none` 连回弹效果一起去掉。它还可以单独设置 `overscroll-behavior-y` 或 `-x`，只在某个方向生效。配合 `touch-action` 可以进一步约束手势，但要注意不要因此禁用用户必要的手势操作。有些内核（例如部分移动端 WebView）对 `overscroll-behavior` 只做了声明支持、并不真的拦截滚轮，所以示例里再补一个**有界兜底**：监听 `wheel` 时只在滚到边界那一刻 `preventDefault()`，并显式声明 `{ passive: false }`；边界之内的滚动完全不拦截，因此内层照常滚动，只是不再把页面带走。",
         "code": """<!doctype html>
 <html lang="zh-CN">
 <head><meta charset="utf-8"><title>滚动链</title>
 <style>
   body { margin: 0; padding: 8px; }
-  .tall { height: 1600px; background: #f8f9fa; }
-  .outer { height: 200px; width: 260px; overflow-y: auto; overscroll-behavior: contain; background: #e8f0fe; position: fixed; top: 40px; left: 300px; }
+  .tall { height: 300vh; background: #f8f9fa; }
+  .outer { height: 200px; width: 260px; overflow-y: auto; overscroll-behavior: contain; background: #e8f0fe; position: fixed; top: 40px; left: 8px; }
   .inner { height: 600px; }
 </style>
 </head>
 <body>
   <div class="outer" id="outer"><div class="inner" id="inner">内层内容（可滚动）</div></div>
   <div class="tall" id="tall">页面内容足够长，可以验证滚动链。</div>
+  <script>
+    // 有界兜底：只在内层已经滚到边界时阻断，边界之内照常滚动。
+    // passive: false 才允许 preventDefault；不加它监听器会被当成被动，阻断无效。
+    const outer = document.getElementById('outer');
+    outer.addEventListener('wheel', (event) => {
+      const atTop = outer.scrollTop <= 0 && event.deltaY < 0;
+      const atEnd = outer.scrollTop + outer.clientHeight >= outer.scrollHeight - 1 && event.deltaY > 0;
+      if (atTop || atEnd) event.preventDefault();
+    }, { passive: false });
+  </script>
 </body>
 </html>""",
-        "out": "鼠标在内层区域继续向下滚动时，只会把内层滚到底，页面本身纹丝不动；把 contain 去掉后同样的手势会让页面跟着滚动。",
+        "out": "鼠标在内层区域向下滚动时，先把内层滚到底；到达边界后继续滚，页面本身纹丝不动。把 contain 和兜底脚本都去掉，同样的手势会让页面跟着滚动；只去掉其中任何一个，另一层仍然守着边界。",
         "pit": [
             "只给内层写 overflow: auto，忘了断链，页面仍会被带动。",
             "把 overscroll-behavior 写在 body 上，内层容器的链并未断开。",
+            "兜底监听器忘了 { passive: false }，preventDefault 被忽略，看起来写对了却不生效。",
+            "兜底无条件 preventDefault，边界之内的正常滚动也被拦死。",
             "在需要触底反弹提示的场景用 none，用户会以为手势失效。",
         ],
         "ex": [

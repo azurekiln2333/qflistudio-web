@@ -1460,10 +1460,14 @@ HTML_EXTRA = [
         "obj": "用 picture 按视口条件切换不同裁剪的图片。",
         "pre": ["响应式图片：srcset 与 sizes", "图片格式选择：webp 与 avif"],
         "con": ["picture", "source media", "艺术指导", "currentSrc", "naturalWidth"],
-        "explain": "`<picture>` 里的 `<source media=\"…\">` 按媒体查询选择图片，这叫艺术指导：不同宽度用不同裁剪比例，而不只是分辨率不同。浏览器按顺序取第一个命中的 source，都不命中时回退到内部 `<img>`。`<img>` 是必需的：它提供 `src`、`alt` 与尺寸，`picture` 本身不显示任何内容。",
+        "explain": "`<picture>` 里的 `<source media=\"…\">` 按媒体查询选择图片，这叫艺术指导：不同宽度用不同裁剪比例，而不只是分辨率不同。浏览器按顺序取第一个命中的 source，都不命中时回退到内部 `<img>`。`<img>` 是必需的：它提供 `src`、`alt` 与尺寸，`picture` 本身不显示任何内容。media 查询针对的是**布局视口**，所以移动页面必须声明 `<meta name=\"viewport\">`：否则布局视口会按默认的 980px 计算，`matchMedia` 会误报“宽屏”，与设备实际宽度对不上。",
         "code": '''<!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><title>picture 艺术指导</title></head>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>picture 艺术指导</title>
+</head>
 <body>
   <picture id="art">
     <source media="(min-width: 600px)"
@@ -1490,11 +1494,11 @@ HTML_EXTRA = [
   </script>
 </body>
 </html>''',
-        "out": "宽视口下显示蓝色“宽屏裁剪”横图，缩小到 600px 以下换成浅蓝“窄屏裁剪”；探测行输出“source 数=2 / 首个 media=(min-width: 600px) / 实际宽=300 / 命中宽屏=true / 已加载=true”。",
+        "out": "宽视口（≥600px）下显示蓝色“宽屏裁剪”横图（300px），300-599px 换成浅蓝“窄屏裁剪”（200px），更窄时回退到默认图；探测行输出 source 数、首个 media、实际宽度与是否命中宽屏（值随视口变化）。",
         "pit": [
             "source 顺序即优先级；若把 min-width:300px 放在 min-width:600px 之前，宽屏也会先命中窄屏裁剪。",
             "picture 里必须有一个 img，否则什么都不会显示。",
-            "source 的 srcset 也需要 data: 或同源地址，指向外部会破坏离线要求。",
+            "移动页面漏写 viewport meta 时布局视口是 980px，media 查询与设备宽度对不上。",
         ],
         "ex": [("把窄屏裁剪的最小宽度改成 400px。", "只改第二个 source 的 media。", "media=\"(min-width: 400px)\"")],
     },
@@ -1842,10 +1846,14 @@ HTML_EXTRA = [
         "obj": "用 template shadowrootmode 直接声明 shadow root 与插槽，无需脚本挂载。",
         "pre": ["自定义数据与模板：template 与 slot", "自定义元素入门"],
         "con": ["template shadowrootmode", "shadowRoot", "slot name", "assignedNodes", ":host"],
-        "explain": "在自定义元素内部放一个 `<template shadowrootmode=\"open\">`，浏览器解析时就直接把它的内容变成元素的 shadow root（即声明式 Shadow DOM），不需要再写 `attachShadow` 的脚本。Shadow 内部用 `<slot name=\"desc\">` 接收宿主页面里 `slot=\"desc\"` 的子元素（light DOM 不会被挪走）。`:host` 选择器可用于给宿主元素样式。",
+        "explain": "在自定义元素内部放一个 `<template shadowrootmode=\"open\">`，浏览器解析时就直接把它的内容变成元素的 shadow root（即声明式 Shadow DOM），不需要再写 `attachShadow` 的脚本。Shadow 内部用 `<slot name=\"desc\">` 接收宿主页面里 `slot=\"desc\"` 的子元素（light DOM 不会被挪走）。`:host` 选择器可用于给宿主元素样式。注意 `:host` 里的长度（如 `1px` 边框）与页面里同样的 1px 声明走同一套缩放，所以读回来的 computed 值与页面控制元素的 1px 边框一致，而不必等于字面值。",
         "code": '''<!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><title>声明式 Shadow DOM</title></head>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>声明式 Shadow DOM</title>
+</head>
 <body>
   <user-card id="card">
     <template shadowrootmode="open">
@@ -1874,11 +1882,11 @@ HTML_EXTRA = [
   </script>
 </body>
 </html>''',
-        "out": "页面上出现一个带边框的卡片，标题蓝色“声明式 Shadow DOM”，下面一行显示外部传入的插槽文本；探测行输出“shadowRoot=true / 内部 h3=声明式 Shadow DOM / 外部 h3 数=0 / 分配节点=1 / 插槽文本=来自宿主页面的插槽内容 / host 边框=1px”。",
+        "out": "页面上出现一个带边框的卡片，标题蓝色“声明式 Shadow DOM”，下面一行显示外部传入的插槽文本；探测行输出 shadowRoot 状态、内部与外部 h3 数量、分配节点数、插槽文本与 :host 实际边框宽度。",
         "pit": [
             "shadowrootmode 模板必须是宿主元素的直接子元素，放深了一层就不会生效。",
             "light DOM 里的 h3 不会被 shadow 选择器影响，两边的样式相互隔离。",
-            "宿主元素自身如果没有 display 声明，:host 的边框仍会应用到元素本身，但布局行为要显式写成 block。",
+            "不要把 :host 的 computed 长度当成字面 px：它和其它 1px 声明一样会随页面缩放变化。",
         ],
         "ex": [("把默认插槽文本改成“未提供描述”。", "只改 slot 内的文字。", "<slot name=\"desc\">未提供描述</slot>")],
     },
@@ -2564,11 +2572,12 @@ HTML_EXTRA = [
         "obj": "把表单校验、表格、状态播报、折叠面板与浮层组合成一个可用的面板。",
         "pre": ["表单错误提示的展示", "表格 caption 与 headers 显式关联"],
         "con": ["组合模式", "form novalidate", "tfoot 合计", "role=status", "popover 帮助"],
-        "explain": "真实页面很少只用一种元素。这个面板把已验证的独立模式拼在一起：`form` + 自定义校验、`table` + `caption`/`tfoot` 合计、`role=\"status\"` 播报总数、`details name` 折叠说明与 `popover` 帮助浮层。所有数据都留在页面内存中，不访问任何网络，新增与校验逻辑都可在离线环境中完整验证。",
+        "explain": "真实页面很少只用一种元素。这个面板把已验证的独立模式拼在一起：`form` + 自定义校验、`table` + `caption`/`tfoot` 合计、`role=\"status\"` 播报总数、`details name` 折叠说明与 `popover` 帮助浮层。所有数据都留在页面内存中，不访问任何网络，新增与校验逻辑都可在离线环境中完整验证。浮层还有两个细节：`popover` 打开后被放进顶层，默认由 UA 样式居中；移动端要自己用 `inset` 把它固定在底部，否则视口一缩放就可能弹到屏幕外面；`:popover-open` 可以给打开状态单独定样式。页面也声明了 `viewport`，让布局视口等于设备宽度，媒体查询、固定定位与固定浮层才用的是同一个视口。",
         "code": '''<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>离线工单面板</title>
   <style>
     body { font-family: sans-serif; }
@@ -2576,6 +2585,8 @@ HTML_EXTRA = [
     th, td { border: 1px solid #c8cdd4; padding: 4px 8px; text-align: left; }
     #title-error { color: #d93025; }
     [popover] { border: 1px solid #c8cdd4; border-radius: 8px; padding: 10px 14px; }
+    #help { inset: auto 12px 12px; margin: 0; max-width: calc(100vw - 24px); }
+    #help:popover-open { display: block; }
   </style>
 </head>
 <body>
@@ -2651,7 +2662,7 @@ HTML_EXTRA = [
   </script>
 </body>
 </html>''',
-        "out": "面板初始显示空工单表（合计 0）、展开的说明与帮助按钮；空标题提交时出现红色“标题不能为空”并把焦点移回输入框；填入“磁盘告警”后新增一行 T-1，合计变 1，状态行播报“共 1 条工单”。",
+        "out": "面板初始显示空工单表（合计 0）、展开的说明与帮助按钮；空标题提交时出现红色“标题不能为空”并把焦点移回输入框；填入“磁盘告警”后新增一行 T-1，合计变 1，状态行播报“共 1 条工单”；点“查看帮助”在底部弹出浮层，按 Esc 或点浮层里的“关闭”都能收起。",
         "pit": [
             "每次提交都重建整个 tbody 会让读屏与焦点丢失，应只追加新行。",
             "校验通过后忘记把 aria-invalid 改回 false，会一直保持错误态。",
