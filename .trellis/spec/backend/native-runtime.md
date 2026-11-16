@@ -123,3 +123,66 @@ The HarmonyOS device evidence above is historical (2026-10-12). The fresh
 available; installation rejects it with 9568320 (no signature file). Do not use
 the old signed artifact as evidence for the new release. Follow
 [Release Verification](./release-verification.md) for current-artifact gates.
+
+## Hosted native build contract
+
+### 1. Scope / Trigger
+
+Changes to native builders, retained sources or CI packaging use
+`.github/workflows/native-build.yml` and `native-ohos-build.yml`.
+
+### 2. Signatures
+
+```text
+python3 scripts/package_native_artifacts.py --platform linux --input build/ci/linux
+python3 scripts/package_native_artifacts.py --platform android --abi ABI --input build/ci/android/ABI
+python3 scripts/package_native_artifacts.py --platform ohos --abi ABI --input build/ci/ohos/ABI
+```
+
+### 3. Contracts
+
+- Linux runs syntax, embedded lifecycle, access-log and portable CDP behavior tests.
+- Android uses NDK `27.0.12077973`. Invoke
+  `$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager`; do not assume PATH contains it.
+- OHOS uses the public Linux native SDK `6.1.0.31` / API 23 with a pinned archive
+  SHA-256. This differs from the local Windows SDK `6.1.0.32`.
+- `ohos_cc.sh` converts paths only for Windows `.exe` under WSL. Native Linux
+  compiler paths remain Unix paths. The OHOS embedded branch respects `AR` and
+  `NM`, which CI points to SDK LLVM tools.
+- Every run compiles new libraries. OHOS replaces checkout prebuilt archives with
+  that run's archives before CMake links NAPI. Do not publish stale tracked outputs.
+- Archives contain only required binaries, public headers, licenses, evidence,
+  a commit/run manifest and relative SHA-256 checksums. A tar.gz preserves mode
+  bits inside the Actions ZIP. Artifact retention is 14 days.
+- Cloud compilation does not clean local caches or bypass app-native compilation.
+  APK/HAP/IPA, app signing and device acceptance remain separate.
+
+### 4. Validation & Error Matrix
+
+| Condition | Result |
+| --- | --- |
+| SDK/source checksum mismatch | Fail before compilation |
+| Missing/empty required binary | Packaging fails |
+| Wrong mobile ELF ABI or LOAD alignment below 16 KiB | Verification fails |
+| Missing OHOS C ABI/NAPI registration | Verification fails |
+| Build or test fails | Keep failure; upload diagnostic logs |
+| Hosted build passes | Claim compilation and named host tests only |
+
+### 5. Good / Base / Bad Cases
+
+Good: fresh dual-ABI OHOS archives feed CMake, ELF/symbol gates pass and artifacts
+upload. Base: native libraries compile without a signed application. Bad: upload
+an old prebuilt library after a failed compile or call a native archive an installer.
+
+### 6. Tests Required
+
+Run actionlint, Python syntax checks, the hosted Linux behavior tests and mobile
+ELF gates. Shell wrapper checks must retain spaces and compiler exit codes.
+Inspect artifact membership and SHA-256 manifests. Use the actual run SHA when
+recording evidence; historical builds cannot prove a later source revision.
+
+### 7. Wrong vs Correct
+
+Wrong: unconditionally call `wslpath` for a Linux SDK, hardcode host `nm`, or assume
+`sdkmanager` is on PATH. Correct: choose path conversion by compiler/host, honor
+`AR`/`NM`, and use the installed Android command-line-tools path.

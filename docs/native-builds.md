@@ -4,6 +4,17 @@
 编译缓存留在托管机上。
 本地只需下载最终产物。
 
+2026-11-17 的首次试跑已通过。
+构建分支是 `ci/native-build-20261117`。
+
+- [Linux 与 Android 成功记录](https://github.com/azurekiln2333/qflistudio-web/actions/runs/43923902421)。
+- [OHOS 成功记录](https://github.com/azurekiln2333/qflistudio-web/actions/runs/43923264898)。
+
+Linux 与 Android 对应提交 `4044058`。
+OHOS 对应提交 `2f98f43`。
+后续提交只修正了 Android SDK 工具路径。
+这些记录不证明后续源码版本通过。
+
 ## 下载
 
 1. 打开仓库的 [Actions 页面](https://github.com/azurekiln2333/qflistudio-web/actions)。
