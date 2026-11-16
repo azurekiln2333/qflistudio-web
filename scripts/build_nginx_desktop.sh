@@ -19,7 +19,10 @@ case "$platform:$(uname -s)" in
     checksum=(sha256sum)
     ;;
   macos:Darwin)
-    compiler="$(xcrun --find clang)"
+    sdk="$(xcrun --sdk macosx --show-sdk-path)"
+    # Nginx probes the compiler before applying --with-cc-opt.
+    export SDKROOT="$sdk"
+    compiler="$(xcrun --sdk macosx --find clang)"
     checksum=(shasum -a 256)
     ld_options="-mmacosx-version-min=${MACOSX_DEPLOYMENT_TARGET:-10.15}"
     for arch in ${ARCHS:-$(uname -m)}; do
