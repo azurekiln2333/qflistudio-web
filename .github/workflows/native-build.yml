@@ -134,7 +134,7 @@ jobs:
 
       - name: Install pinned Android NDK
         run: |
-          sdkmanager --install "ndk;$ANDROID_NDK_VERSION" \
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ANDROID_NDK_VERSION" \
             2>&1 | tee "build/ci/android/$TARGET_ABI/logs/ndk-install.log"
           echo "QFLI_ANDROID_NDK=$ANDROID_HOME/ndk/$ANDROID_NDK_VERSION" >> "$GITHUB_ENV"
 
