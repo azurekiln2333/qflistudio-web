@@ -263,7 +263,10 @@ not certify the current candidate.
 
 ## License
 
+The code in this repository is licensed under GNU GPL v3.0.
+Content with a separate license declaration retains that license.
+See [LICENSE](LICENSE) for the full license text.
+
 - Upstream Nginx license: [vendor/nginx/LICENSE](vendor/nginx/LICENSE).
 - QuickJS uses the MIT license: [vendor/quickjs/LICENSE](vendor/quickjs/LICENSE).
 - The curriculum is original content under CC BY 4.0.
-- Root license: [LICENSE](LICENSE), GPL-3.0.

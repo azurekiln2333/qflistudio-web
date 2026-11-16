@@ -250,7 +250,10 @@ flutter run --debug --no-pub -d DEVICE -t tool/nginx_smoke.dart --no-resident
 
 ## 授權
 
+本儲存庫程式碼採用 GNU GPL v3.0 授權。
+另行聲明授權的內容沿用原授權。
+授權全文見 [LICENSE](LICENSE)。
+
 - 上游 Nginx 授權見 [vendor/nginx/LICENSE](vendor/nginx/LICENSE)。
 - QuickJS 用 MIT 授權，見 [vendor/quickjs/LICENSE](vendor/quickjs/LICENSE)。
 - 課程為原創內容，採用 CC BY 4.0。
-- 根目錄授權見 [LICENSE](LICENSE)，即 GPL-3.0。

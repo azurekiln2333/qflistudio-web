@@ -251,9 +251,12 @@ flutter run --debug --no-pub -d DEVICE -t tool/nginx_smoke.dart --no-resident
 - C843 验收记录见 [web-c843-validation-20261026.md](.trellis/tasks/10-22-standalone-offline-ide/research/web-c843-validation-20261026.md)。
 - C895 验收记录见 [web-c895-validation-20261026.md](.trellis/tasks/10-22-standalone-offline-ide/research/web-c895-validation-20261026.md)。
 
-## 许可
+## 许可证
+
+本仓库代码采用 GNU GPL v3.0 许可证。
+单独声明许可证的内容沿用原许可证。
+许可证全文见 [LICENSE](LICENSE)。
 
 - 上游 Nginx 许可见 [vendor/nginx/LICENSE](vendor/nginx/LICENSE)。
 - QuickJS 用 MIT 许可，见 [vendor/quickjs/LICENSE](vendor/quickjs/LICENSE)。
 - 课程为原创内容，采用 CC BY 4.0。
-- 根目录许可见 [LICENSE](LICENSE)，即 GPL-3.0。
