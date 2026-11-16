@@ -51,7 +51,11 @@ cd "$build/nginx-$version"
   --with-ld-opt="$ld_options" \
   --without-http_gzip_module \
   --without-http_rewrite_module \
-  --without-http_auth_basic_module
+  --without-http_auth_basic_module || {
+    status=$?
+    if [[ -f objs/autoconf.err ]]; then cat objs/autoconf.err >&2; fi
+    exit "$status"
+  }
 make -j"${NGINX_BUILD_JOBS:-2}"
 install -m 755 objs/nginx "$output"
 printf 'Built native Nginx for %s: %s\n' "$platform" "$output"

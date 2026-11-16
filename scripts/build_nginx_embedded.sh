@@ -91,13 +91,22 @@ cd "$build/nginx-$version"
 patch --batch -p1 < "$root/vendor/nginx/patches/embedded.patch"
 patch --batch -p1 < "$root/vendor/nginx/patches/embedded-time-cache.patch"
 flags="-O2 -fPIC -fvisibility=hidden -std=gnu11 -DQFLI_NGINX_EMBEDDED=1"
+if [[ "$platform" == ios ]]; then
+  # Darwin's unnamed POSIX semaphores are unavailable. The cross-target
+  # compile-only probe cannot observe sem_init() failing at runtime.
+  flags="$flags -DNGX_HAVE_POSIX_SEM=0"
+fi
 if [[ "${QFLI_NGINX_SANITIZE:-0}" == 1 ]]; then
   flags="$flags -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer"
 fi
 ./configure --prefix=. --with-cc="$compiler" --with-cc-opt="$flags" "${configure_options[@]}" \
   --without-http_gzip_module --without-http_rewrite_module \
   --without-http_auth_basic_module --without-http-cache \
-  --add-module="$root/native/nginx/embedded"
+  --add-module="$root/native/nginx/embedded" || {
+    status=$?
+    if [[ -f objs/autoconf.err ]]; then cat objs/autoconf.err >&2; fi
+    exit "$status"
+  }
 objects=()
 while IFS= read -r object; do objects+=("$object"); done < <(
   awk '
