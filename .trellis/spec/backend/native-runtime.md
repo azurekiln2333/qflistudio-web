@@ -129,19 +129,32 @@ the old signed artifact as evidence for the new release. Follow
 ### 1. Scope / Trigger
 
 Changes to native builders, retained sources or CI packaging use
-`.github/workflows/native-build.yml` and `native-ohos-build.yml`.
+`.github/workflows/native-build.yml`, `native-ohos-build.yml` and
+`native-apple-build.yml`. Deliver only Android, OHOS, iOS and macOS native artifacts.
+Linux is a host regression target with logs only. Compilers/SDKs are installed
+toolchains, not source-built deliverables.
 
 ### 2. Signatures
 
 ```text
-python3 scripts/package_native_artifacts.py --platform linux --input build/ci/linux
 python3 scripts/package_native_artifacts.py --platform android --abi ABI --input build/ci/android/ABI
 python3 scripts/package_native_artifacts.py --platform ohos --abi ABI --input build/ci/ohos/ABI
+python3 scripts/package_native_artifacts.py --platform ios --abi ARCH --apple-sdk SDK --input build/ci/ios/SDK/ARCH
+python3 scripts/package_native_artifacts.py --platform macos --abi ARCH --apple-sdk macosx --input build/ci/macos/ARCH
 ```
 
 ### 3. Contracts
 
 - Linux runs syntax, embedded lifecycle, access-log and portable CDP behavior tests.
+- iOS publishes device ARM64 and simulator ARM64/x86_64 separately. SDK names are
+  included in archive labels; never use a device ARM64 archive in a simulator.
+- macOS publishes ARM64 and x86_64 libraries from matching hosted architectures.
+  Native artifacts target macOS 11.0, consistent with the existing syntax builder.
+  This does not change the Flutter application's deployment target or prove it
+  works on an older OS. Set the syntax dylib ID to `@rpath/libqfli_web_syntax.dylib`.
+- Apple archives require Mach-O platform/architecture checks. macOS runs its own
+  syntax and Nginx HTTP smoke; Linux `/proc`-based lifecycle tests are not Apple
+  runtime evidence. iOS library compilation/linking is separate from device use.
 - Android uses NDK `27.0.12077973`. Invoke
   `$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager`; do not assume PATH contains it.
 - OHOS uses the public Linux native SDK `6.1.0.31` / API 23 with a pinned archive

@@ -43,7 +43,7 @@ env:
 
 jobs:
   linux:
-    name: Linux x86_64 native libraries and tests
+    name: Linux native regression tests
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -52,11 +52,6 @@ jobs:
 
       - name: Prepare build directories
         run: mkdir -p build/ci/linux/logs
-
-      - name: Build desktop Nginx
-        run: |
-          bash scripts/build_nginx_desktop.sh linux "$PWD/build/ci/linux/desktop/nginx" \
-            2>&1 | tee build/ci/linux/logs/nginx-desktop-build.log
 
       - name: Build embedded Nginx
         run: |
@@ -91,25 +86,11 @@ jobs:
           bash scripts/test_web_cdp_transport.sh "$PWD/build/ci/linux/cdp-test" \
             2>&1 | tee build/ci/linux/logs/web-cdp-transport-test.log
 
-      - name: Package native artifacts
-        run: |
-          python3 scripts/package_native_artifacts.py \
-            --platform linux --input build/ci/linux
-
-      - name: Upload native artifacts
-        uses: actions/upload-artifact@v7.0.2
-        with:
-          name: native-linux-x86_64
-          path: build/ci/artifacts/
-          if-no-files-found: error
-          retention-days: 14
-          compression-level: 0
-
       - name: Upload build and test logs
         if: always()
         uses: actions/upload-artifact@v7.0.2
         with:
-          name: native-linux-x86_64-logs
+          name: native-linux-test-logs
           path: build/ci/linux/logs/
           if-no-files-found: warn
           retention-days: 14

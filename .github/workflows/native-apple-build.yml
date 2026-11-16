@@ -1,0 +1,376 @@
+name: Native Apple build
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/native-apple-build.yml
+      - scripts/build_nginx_desktop.sh
+      - scripts/build_nginx_embedded.sh
+      - scripts/build_web_syntax.py
+      - scripts/bundle_nginx_ios.sh
+      - scripts/bundle_web_syntax_apple.sh
+      - scripts/package_native_artifacts.py
+      - native/**
+      - vendor/nginx/**
+      - vendor/quickjs/**
+  pull_request:
+    paths:
+      - .github/workflows/native-apple-build.yml
+      - scripts/build_nginx_desktop.sh
+      - scripts/build_nginx_embedded.sh
+      - scripts/build_web_syntax.py
+      - scripts/bundle_nginx_ios.sh
+      - scripts/bundle_web_syntax_apple.sh
+      - scripts/package_native_artifacts.py
+      - native/**
+      - vendor/nginx/**
+      - vendor/quickjs/**
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  NGINX_BUILD_JOBS: '2'
+  MACOSX_DEPLOYMENT_TARGET: '11.0'
+  IPHONEOS_DEPLOYMENT_TARGET: '13.0'
+
+jobs:
+  ios:
+    name: iOS ${{ matrix.sdk }} ${{ matrix.arch }} native libraries
+    runs-on: macos-15
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sdk: iphoneos
+            arch: arm64
+          - sdk: iphonesimulator
+            arch: arm64
+          - sdk: iphonesimulator
+            arch: x86_64
+    env:
+      APPLE_SDK: ${{ matrix.sdk }}
+      TARGET_ARCH: ${{ matrix.arch }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7.0.1
+
+      - name: Record Apple toolchain
+        run: |
+          output="$PWD/build/ci/ios/$APPLE_SDK/$TARGET_ARCH"
+          mkdir -p "$output/logs" "$output/nginx" "$output/web_syntax"
+          echo "QFLI_APPLE_OUTPUT=$output" >> "$GITHUB_ENV"
+          echo "XCODE_VERSION=$(xcodebuild -version | tr '\n' ' ')" >> "$GITHUB_ENV"
+          echo "APPLE_SDK_VERSION=$(xcrun --sdk "$APPLE_SDK" --show-sdk-version)" >> "$GITHUB_ENV"
+          {
+            uname -m
+            sw_vers
+            xcodebuild -version
+            xcrun --sdk "$APPLE_SDK" --show-sdk-version
+            xcrun --sdk "$APPLE_SDK" clang --version
+          } 2>&1 | tee "$output/logs/toolchain.log"
+
+      - name: Build and verify embedded Nginx archive
+        run: |
+          output="$QFLI_APPLE_OUTPUT"
+          PLATFORM_NAME="$APPLE_SDK" ARCHS="$TARGET_ARCH" \
+            BUILT_PRODUCTS_DIR="$output/products" TARGET_BUILD_DIR="$output/bundle" \
+            UNLOCALIZED_RESOURCES_FOLDER_PATH=Resources \
+            bash scripts/bundle_nginx_ios.sh \
+            2>&1 | tee "$output/logs/nginx-build.log"
+          source="$output/products/qfli-nginx/$TARGET_ARCH"
+          cp "$output/products/qfli-nginx/libqfli_nginx.a" "$output/nginx/"
+          cp "$source/platform.txt" "$source/undefined-symbols.txt" "$output/nginx/"
+          for object in "$source"/inspect.*/*.o; do
+            xcrun lipo -verify_arch "$TARGET_ARCH" "$object"
+          done
+          xcrun lipo -verify_arch "$TARGET_ARCH" "$output/nginx/libqfli_nginx.a"
+
+      - name: Build and verify QuickJS syntax archive
+        run: |
+          output="$QFLI_APPLE_OUTPUT"
+          PLATFORM_NAME="$APPLE_SDK" ARCHS="$TARGET_ARCH" \
+            BUILT_PRODUCTS_DIR="$output/products" \
+            bash scripts/bundle_web_syntax_apple.sh \
+            2>&1 | tee "$output/logs/web-syntax-build.log"
+          source="$output/products/qfli-web-syntax/$APPLE_SDK/$TARGET_ARCH"
+          cp "$output/products/qfli-web-syntax/libqfli_web_syntax.a" "$output/web_syntax/"
+          cp "$source/platform.txt" "$source/build.json" "$output/web_syntax/"
+          for object in "$source"/inspect.*/*.o; do
+            xcrun lipo -verify_arch "$TARGET_ARCH" "$object"
+          done
+          xcrun lipo -verify_arch "$TARGET_ARCH" "$output/web_syntax/libqfli_web_syntax.a"
+
+      - name: Record verified iOS platform and minimum version
+        run: |
+          python3 - <<'PY' 2>&1 | tee "$QFLI_APPLE_OUTPUT/logs/platform-verification.log"
+          import hashlib, json, os, re
+          from pathlib import Path
+          output = Path(os.environ['QFLI_APPLE_OUTPUT'])
+          sdk, arch = os.environ['APPLE_SDK'], os.environ['TARGET_ARCH']
+          expected_platform = 'IOS' if sdk == 'iphoneos' else 'IOSSIMULATOR'
+          allowed_versions = {'13.0'}
+          if sdk == 'iphonesimulator' and arch == 'arm64':
+              allowed_versions.add('14.0')
+          versions = []
+          for component in ['nginx', 'web_syntax']:
+              evidence = (output / component / 'platform.txt').read_text()
+              platforms = re.findall(r'^\s*platform\s+(\S+)', evidence, re.M)
+              minimums = re.findall(r'^\s*minos\s+(\S+)', evidence, re.M)
+              assert platforms and set(platforms) == {expected_platform}, platforms
+              assert len(minimums) == len(platforms), (component, platforms, minimums)
+              assert set(minimums) <= allowed_versions, (component, minimums)
+              versions.extend(minimums)
+              print(f'{component}: {len(platforms)} verified {expected_platform}/{arch} objects; minos={sorted(set(minimums))}')
+          minimum = max(versions, key=lambda value: tuple(map(int, value.split('.'))))
+          with open(os.environ['GITHUB_ENV'], 'a') as environment:
+              environment.write(f'APPLE_DEPLOYMENT_TARGET={minimum}\n')
+          metadata_path = output / 'web_syntax/build.json'
+          metadata = json.loads(metadata_path.read_text())
+          library = output / 'web_syntax/libqfli_web_syntax.a'
+          metadata.update(library=str(library), sha256=hashlib.sha256(library.read_bytes()).hexdigest())
+          metadata_path.write_text(json.dumps(metadata, indent=2) + '\n')
+          print(f'Published iOS archive minimum OS: {minimum}')
+          PY
+
+      - name: Link iOS C ABI probe against both archives
+        run: |
+          output="$QFLI_APPLE_OUTPUT"
+          cat > "$output/link-probe.c" <<'C'
+          #include "qfli_nginx.h"
+          #include "qfli_web_syntax.h"
+          int main(void) {
+            return qfli_nginx_version() == 0 || qfli_web_syntax_version() == 0;
+          }
+          C
+          target="$TARGET_ARCH-apple-ios$APPLE_DEPLOYMENT_TARGET"
+          if [[ "$APPLE_SDK" == iphonesimulator ]]; then target="$target-simulator"; fi
+          xcrun --sdk "$APPLE_SDK" clang -target "$target" \
+            -isysroot "$(xcrun --sdk "$APPLE_SDK" --show-sdk-path)" \
+            -Inative/nginx/embedded -Inative/web_syntax "$output/link-probe.c" \
+            "$output/nginx/libqfli_nginx.a" "$output/web_syntax/libqfli_web_syntax.a" \
+            -lm -lpthread -o "$output/link-probe" \
+            2>&1 | tee "$output/logs/archive-link-test.log"
+          xcrun vtool -show-build "$output/link-probe" \
+            2>&1 | tee -a "$output/logs/archive-link-test.log"
+
+      - name: Package native artifacts
+        run: |
+          python3 scripts/package_native_artifacts.py --platform ios --abi "$TARGET_ARCH" \
+            --apple-sdk "$APPLE_SDK" --input "$QFLI_APPLE_OUTPUT"
+          echo 'iOS artifacts are static libraries; device/simulator execution and application signing were not tested.' \
+            >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload native artifacts
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: native-ios-${{ matrix.sdk }}-${{ matrix.arch }}
+          path: build/ci/artifacts/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Upload build logs and platform evidence
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: native-ios-${{ matrix.sdk }}-${{ matrix.arch }}-logs
+          path: |
+            build/ci/ios/${{ matrix.sdk }}/${{ matrix.arch }}/logs/
+            build/ci/ios/${{ matrix.sdk }}/${{ matrix.arch }}/nginx/*.txt
+            build/ci/ios/${{ matrix.sdk }}/${{ matrix.arch }}/web_syntax/*.txt
+          if-no-files-found: warn
+          retention-days: 14
+
+  macos:
+    name: macOS ${{ matrix.arch }} native libraries and tests
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            runner: macos-15
+          - arch: x86_64
+            runner: macos-15-intel
+    env:
+      TARGET_ARCH: ${{ matrix.arch }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7.0.1
+
+      - name: Record native Apple toolchain
+        run: |
+          test "$(uname -m)" = "$TARGET_ARCH"
+          output="$PWD/build/ci/macos/$TARGET_ARCH"
+          mkdir -p "$output/logs"
+          echo "QFLI_APPLE_OUTPUT=$output" >> "$GITHUB_ENV"
+          echo "XCODE_VERSION=$(xcodebuild -version | tr '\n' ' ')" >> "$GITHUB_ENV"
+          echo "APPLE_SDK_VERSION=$(xcrun --sdk macosx --show-sdk-version)" >> "$GITHUB_ENV"
+          echo "APPLE_DEPLOYMENT_TARGET=$MACOSX_DEPLOYMENT_TARGET" >> "$GITHUB_ENV"
+          {
+            uname -m
+            sw_vers
+            xcodebuild -version
+            xcrun --sdk macosx --show-sdk-version
+            xcrun clang --version
+          } 2>&1 | tee "$output/logs/toolchain.log"
+
+      - name: Build desktop Nginx
+        run: |
+          ARCHS="$TARGET_ARCH" bash scripts/build_nginx_desktop.sh macos \
+            "$QFLI_APPLE_OUTPUT/desktop/nginx" \
+            2>&1 | tee "$QFLI_APPLE_OUTPUT/logs/nginx-build.log"
+
+      - name: Build QuickJS syntax bridge
+        run: |
+          python3 scripts/build_web_syntax.py --platform macos --arch "$TARGET_ARCH" \
+            --apple-sdk macosx --output "$QFLI_APPLE_OUTPUT/web_syntax" \
+            2>&1 | tee "$QFLI_APPLE_OUTPUT/logs/web-syntax-build.log"
+          library="$QFLI_APPLE_OUTPUT/web_syntax/libqfli_web_syntax.dylib"
+          install_name_tool -id '@rpath/libqfli_web_syntax.dylib' "$library"
+          codesign --force --sign - "$library"
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          output = Path(os.environ['QFLI_APPLE_OUTPUT']) / 'web_syntax'
+          metadata_path = output / 'build.json'
+          metadata = json.loads(metadata_path.read_text())
+          library = output / 'libqfli_web_syntax.dylib'
+          metadata.update(sha256=hashlib.sha256(library.read_bytes()).hexdigest(),
+                          installName='@rpath/libqfli_web_syntax.dylib', signing='adhoc')
+          metadata_path.write_text(json.dumps(metadata, indent=2) + '\n')
+          PY
+
+      - name: Verify Mach-O target architecture and platform
+        run: |
+          for binary in "$QFLI_APPLE_OUTPUT/desktop/nginx" \
+            "$QFLI_APPLE_OUTPUT/web_syntax/libqfli_web_syntax.dylib"; do
+            xcrun lipo -verify_arch "$TARGET_ARCH" "$binary"
+            evidence="$QFLI_APPLE_OUTPUT/logs/$(basename "$binary")-platform.log"
+            xcrun vtool -show-build "$binary" | tee "$evidence"
+            awk '$1 == "platform" {seen++; if ($2 != "MACOS") bad=1}
+                 $1 == "minos" {minimum++; if ($2 != "11.0") bad=1}
+                 END {exit (!seen || !minimum || bad)}' "$evidence"
+          done
+          library="$QFLI_APPLE_OUTPUT/web_syntax/libqfli_web_syntax.dylib"
+          xcrun otool -D "$library" | tee "$QFLI_APPLE_OUTPUT/logs/dylib-install-name.log"
+          xcrun otool -D "$library" | grep -Fx '@rpath/libqfli_web_syntax.dylib'
+          codesign --verify "$library"
+
+      - name: Test native syntax bridge
+        run: |
+          python3 native/web_syntax/test_native.py \
+            "$QFLI_APPLE_OUTPUT/web_syntax/libqfli_web_syntax.dylib" \
+            2>&1 | tee "$QFLI_APPLE_OUTPUT/logs/web-syntax-test.log"
+
+      - name: Test Nginx configuration and real HTTP lifecycle
+        run: |
+          python3 - <<'PY' 2>&1 | tee "$QFLI_APPLE_OUTPUT/logs/nginx-http-test.log"
+          import http.client, os, socket, subprocess, tempfile, time
+          from pathlib import Path
+          output = Path(os.environ['QFLI_APPLE_OUTPUT'])
+          binary = output / 'desktop/nginx'
+          version = subprocess.run([str(binary), '-v'], capture_output=True, text=True, check=True)
+          assert 'nginx/1.31.6' in version.stderr, version.stderr
+          print(version.stderr.strip())
+          with tempfile.TemporaryDirectory(prefix='qfli-nginx-smoke-') as temporary:
+              prefix = Path(temporary)
+              (prefix / 'index.html').write_text('QFLI native macOS smoke', encoding='utf8')
+              with socket.socket() as reservation:
+                  reservation.bind(('127.0.0.1', 0))
+                  port = reservation.getsockname()[1]
+              (prefix / 'nginx.conf').write_text(f'''
+          daemon off;
+          master_process off;
+          pid nginx.pid;
+          error_log stderr warn;
+          events {{ worker_connections 32; }}
+          http {{
+              access_log off;
+              client_body_temp_path client_temp;
+              proxy_temp_path proxy_temp;
+              server {{ listen 127.0.0.1:{port}; root "{prefix}"; }}
+          }}
+          ''', encoding='utf8')
+              command = [str(binary), '-p', str(prefix) + '/', '-c', 'nginx.conf']
+              subprocess.run([*command, '-t'], check=True, timeout=10)
+              with (output / 'logs/nginx-runtime.log').open('w') as log:
+                  process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT)
+                  try:
+                      deadline = time.monotonic() + 10
+                      while True:
+                          assert process.poll() is None, 'Nginx exited before HTTP readiness'
+                          connection = http.client.HTTPConnection('127.0.0.1', port, timeout=2)
+                          try:
+                              connection.request('GET', '/')
+                              response = connection.getresponse()
+                              assert response.status == 200, response.status
+                              assert response.getheader('Server') == 'nginx/1.31.6'
+                              assert response.read() == b'QFLI native macOS smoke'
+                              break
+                          except ConnectionRefusedError:
+                              if time.monotonic() >= deadline:
+                                  raise
+                              time.sleep(0.05)
+                          finally:
+                              connection.close()
+                      connection = http.client.HTTPConnection('127.0.0.1', port, timeout=2)
+                      try:
+                          connection.request('GET', '/missing.html')
+                          response = connection.getresponse()
+                          assert response.status == 404, response.status
+                          response.read()
+                      finally:
+                          connection.close()
+                  finally:
+                      if process.poll() is None:
+                          process.terminate()
+                      try:
+                          process.wait(timeout=5)
+                      except subprocess.TimeoutExpired:
+                          process.kill()
+                          process.wait(timeout=5)
+                          raise
+                  assert process.returncode == 0, process.returncode
+              try:
+                  connection = socket.create_connection(('127.0.0.1', port), timeout=1)
+              except ConnectionRefusedError:
+                  pass
+              else:
+                  connection.close()
+                  raise AssertionError('Nginx listener remained open after stop')
+          print('PASS: Nginx version, configuration, HTTP 200/body, HTTP 404 and listener shutdown')
+          PY
+
+      - name: Package native artifacts
+        run: |
+          python3 scripts/package_native_artifacts.py --platform macos --abi "$TARGET_ARCH" \
+            --apple-sdk macosx --input "$QFLI_APPLE_OUTPUT"
+          echo 'macOS native libraries require macOS 11 or later. Host native tests do not prove Flutter app or distribution signing.' \
+            >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload native artifacts
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: native-macos-${{ matrix.arch }}
+          path: build/ci/artifacts/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Upload build and test logs
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: native-macos-${{ matrix.arch }}-logs
+          path: build/ci/macos/${{ matrix.arch }}/logs/
+          if-no-files-found: warn
+          retention-days: 14

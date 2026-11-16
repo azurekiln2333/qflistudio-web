@@ -22,15 +22,6 @@ def sha256(path):
 
 def build_files(platform, source, abi):
     """Required source/destination pairs; a missing binary fails packaging."""
-    if platform == "linux":
-        return [
-            (source / "desktop/nginx", "bin/nginx"),
-            (source / "embedded/libqfli_nginx.a", "lib/libqfli_nginx.a"),
-            (source / "embedded/libqfli_nginx.so", "lib/libqfli_nginx.so"),
-            (source / "embedded/undefined-symbols.txt", "evidence/nginx-undefined-symbols.txt"),
-            (source / "web_syntax/libqfli_web_syntax.so", "lib/libqfli_web_syntax.so"),
-            (source / "web_syntax/build.json", "evidence/web-syntax-build.json"),
-        ]
     if platform == "android":
         return [
             (source / "nginx/libnginx_exec.so", f"jniLibs/{abi}/libnginx_exec.so"),
@@ -46,21 +37,58 @@ def build_files(platform, source, abi):
             (source / "cmake/web_syntax/libqfli_web_syntax.so", f"libs/{abi}/libqfli_web_syntax.so"),
             (ROOT / "ohos/entry/src/main/cpp/web_cdp_transport.h", "include/web_cdp_transport.h"),
         ]
+    if platform == "macos":
+        return [
+            (source / "desktop/nginx", "bin/nginx"),
+            (source / "web_syntax/libqfli_web_syntax.dylib", "lib/libqfli_web_syntax.dylib"),
+            (source / "web_syntax/build.json", "evidence/web-syntax-build.json"),
+        ]
+    if platform == "ios":
+        return [
+            (source / "nginx/libqfli_nginx.a", "lib/libqfli_nginx.a"),
+            (source / "nginx/platform.txt", "evidence/nginx-platform.txt"),
+            (source / "nginx/undefined-symbols.txt", "evidence/nginx-undefined-symbols.txt"),
+            (source / "web_syntax/libqfli_web_syntax.a", "lib/libqfli_web_syntax.a"),
+            (source / "web_syntax/platform.txt", "evidence/web-syntax-platform.txt"),
+            (source / "web_syntax/build.json", "evidence/web-syntax-build.json"),
+        ]
     raise ValueError(f"Unsupported platform: {platform}")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--platform", choices=["linux", "android", "ohos"], required=True)
-    parser.add_argument("--abi", default="x86_64", choices=["arm64-v8a", "armeabi-v7a", "x86_64"])
+    parser.add_argument("--platform", choices=["android", "ohos", "ios", "macos"], required=True)
+    parser.add_argument("--abi", required=True, choices=["arm64-v8a", "armeabi-v7a", "arm64", "x86_64"])
+    parser.add_argument("--apple-sdk", choices=["iphoneos", "iphonesimulator", "macosx"])
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output", type=Path, default=ROOT / "build/ci/artifacts")
     args = parser.parse_args()
+    allowed_abis = {
+        "android": {"arm64-v8a", "armeabi-v7a", "x86_64"},
+        "ohos": {"arm64-v8a", "x86_64"},
+        "ios": {"arm64", "x86_64"},
+        "macos": {"arm64", "x86_64"},
+    }
+    if args.abi not in allowed_abis[args.platform]:
+        parser.error(f"Unsupported ABI for {args.platform}: {args.abi}")
+    if args.platform == "ios":
+        if args.apple_sdk not in {"iphoneos", "iphonesimulator"}:
+            parser.error("iOS requires --apple-sdk iphoneos or iphonesimulator")
+        if args.apple_sdk == "iphoneos" and args.abi != "arm64":
+            parser.error("iPhone device builds require arm64")
+    elif args.platform == "macos":
+        if args.apple_sdk != "macosx":
+            parser.error("macOS requires --apple-sdk macosx")
+    elif args.apple_sdk:
+        parser.error("--apple-sdk applies only to iOS and macOS")
+    if args.apple_sdk and not os.environ.get("APPLE_DEPLOYMENT_TARGET"):
+        parser.error("Apple packaging requires APPLE_DEPLOYMENT_TARGET from Mach-O verification")
     source = args.input.resolve()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
-    name = f"qfli-native-{args.platform}-{args.abi}-{commit[:12]}"
+    sdk_label = f"-{args.apple_sdk}" if args.platform == "ios" else ""
+    name = f"qfli-native-{args.platform}{sdk_label}-{args.abi}-{commit[:12]}"
     required = build_files(args.platform, source, args.abi)
     required += [
         (ROOT / "native/nginx/embedded/qfli_nginx.h", "include/qfli_nginx.h"),
@@ -98,6 +126,10 @@ def main():
             "runnerOS": os.environ.get("RUNNER_OS"),
             "androidNdk": os.environ.get("ANDROID_NDK_VERSION") if args.platform == "android" else None,
             "ohosSdk": os.environ.get("OHOS_SDK_VERSION") if args.platform == "ohos" else None,
+            "appleSdk": args.apple_sdk,
+            "appleSdkVersion": os.environ.get("APPLE_SDK_VERSION") if args.apple_sdk else None,
+            "xcode": os.environ.get("XCODE_VERSION") if args.apple_sdk else None,
+            "minimumOS": os.environ.get("APPLE_DEPLOYMENT_TARGET") if args.apple_sdk else None,
             "nginx": "1.31.6",
             "quickjs": "2026-06-04",
             "files": [{"path": p.relative_to(package).as_posix(), "bytes": p.stat().st_size,
@@ -112,6 +144,9 @@ def main():
             "OHOS libs/ contains packaged NAPI/parser libraries.\n"
             "OHOS prebuilt/ is the archive consumed by the app CMake build.\n"
             "OHOS embedded/ is the standalone C ABI library, not the NAPI bridge.\n"
+            "iOS device and simulator archives are separate; select the matching SDK and architecture.\n"
+            "Apple minimum OS is recorded from Mach-O verification in build-manifest.json.\n"
+            "Apple native components still require the application's final linking/signing steps.\n"
             "Cross-compilation does not prove device execution or signing.\n"
             "Checksums: run sha256sum -c SHA256SUMS from this directory.\n"
             "See docs/native-builds.md in the source repository for download/use.\n",

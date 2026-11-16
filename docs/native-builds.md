@@ -4,6 +4,15 @@
 编译缓存留在托管机上。
 本地只需下载最终产物。
 
+发布目标是 Android、OHOS、iOS 和 macOS。
+工作流使用现成的 Clang、NDK 和 Xcode。
+工作流不编译这些工具链。
+它编译项目使用的 Nginx 和 QuickJS 桥接库。
+上游通用程序不包含这些定制接口。
+Windows 继续使用仓库中的 Nginx 预编译程序。
+Linux 只运行原生回归测试。
+Linux 不再发布库产物。
+
 2026-11-17 的首次试跑已通过。
 构建分支是 `ci/native-build-20261117`。
 
@@ -18,7 +27,7 @@ OHOS 对应提交 `2f98f43`。
 ## 下载
 
 1. 打开仓库的 [Actions 页面](https://github.com/azurekiln2333/qflistudio-web/actions)。
-2. 选择 `Native build` 或 `Native OHOS build`。
+2. 选择对应平台的工作流。
 3. 选择目标分支的成功记录。
 4. 核对提交编号。
 5. 在页面底部找到 `Artifacts`。
@@ -36,11 +45,15 @@ OHOS 对应提交 `2f98f43`。
 
 | 产物名 | 架构 | 内容 |
 | --- | --- | --- |
-| `native-linux-x86_64` | x86_64 | Nginx、嵌入库、语法库 |
 | `native-android-arm64-v8a` | ARM64 | Nginx、语法库 |
 | `native-android-armeabi-v7a` | ARMv7 | Nginx、语法库 |
 | `native-android-x86_64` | x86_64 | Nginx、语法库 |
 | `native-ohos` | ARM64、x86_64 | 嵌入库、NAPI 库、语法库、CDP 库 |
+| `native-ios-iphoneos-arm64` | iPhone ARM64 | Nginx 静态库、语法静态库 |
+| `native-ios-iphonesimulator-arm64` | 模拟器 ARM64 | Nginx 静态库、语法静态库 |
+| `native-ios-iphonesimulator-x86_64` | 模拟器 x86_64 | Nginx 静态库、语法静态库 |
+| `native-macos-arm64` | Apple Silicon | Nginx、语法动态库 |
+| `native-macos-x86_64` | Intel | Nginx、语法动态库 |
 
 每个压缩包附带头文件和许可证。
 `build-manifest.json` 记录提交与文件哈希。
@@ -48,14 +61,24 @@ OHOS 对应提交 `2f98f43`。
 外层 `.sha256` 记录压缩包哈希。
 压缩包不含编译源码树和对象缓存。
 
-Linux 包含这些文件：
+macOS 包含这些文件：
 
 ```text
 bin/nginx
-lib/libqfli_nginx.a
-lib/libqfli_nginx.so
-lib/libqfli_web_syntax.so
+lib/libqfli_web_syntax.dylib
 ```
+
+iOS 每个目标包含这些文件：
+
+```text
+lib/libqfli_nginx.a
+lib/libqfli_web_syntax.a
+```
+
+iOS 真机库与模拟器库分包。
+按 SDK 和架构选择压缩包。
+不要把真机 ARM64 库用于 ARM64 模拟器。
+Apple 库仍需应用完成链接和签名。
 
 Android 每个 ABI 包含这些文件：
 
@@ -85,10 +108,17 @@ libs/<ABI>/libqfli_web_syntax.so
 
 ## 构建范围
 
-`Native build` 构建 Linux 和 Android 原生层。
-Linux 还运行四组原生测试。
+`Native build` 发布 Android 原生层。
+它还在 Linux 上运行四组原生测试。
 测试覆盖语法、生命周期、访问日志和 CDP 传输。
 Android 使用 NDK `27.0.12077973`。
+`native-linux-test-logs` 只含测试日志。
+
+`Native Apple build` 构建 iOS 和 macOS 原生层。
+macOS 最低要求为 11.0。
+iOS 构建区分真机与模拟器。
+工作流核对 Mach-O 架构与平台。
+macOS 还运行语法库与 Nginx HTTP 冒烟测试。
 
 `Native OHOS build` 下载公开 OHOS SDK。
 SDK 版本为 `6.1.0.31`，对应 API 23。
@@ -101,7 +131,7 @@ SDK 下载和解压均发生在 GitHub 托管机上。
 OHOS 库仍需接入应用构建。
 完整应用依赖同级 `qfli_studio_core`。
 完整 HAP 还依赖 Flutter OHOS 和 Hvigor。
-本次工作流不构建 Windows 或 Apple 原生层。
+本次工作流不构建 Windows 原生层。
 
 源码或工作流变动会触发构建。
 工作流合入默认分支后可用 `Run workflow` 手动运行。
