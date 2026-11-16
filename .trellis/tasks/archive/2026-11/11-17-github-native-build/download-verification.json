@@ -1,0 +1,32 @@
+[
+  {
+    "artifact": "native-ohos",
+    "archive": "qfli-native-ohos-arm64-v8a-2f98f431308a.tar.gz",
+    "filesVerified": 19,
+    "platform": "ohos",
+    "abi": "arm64-v8a",
+    "commit": "2f98f431308a6bdc9d6968702e5ddce445285d4c",
+    "artifactDigest": "sha256:77bb0854965df1c4cb3597a6fed4dcb9f751dcbdbda16ca3e0ed1356a5a4f872",
+    "archiveSha256": "ede0d982bed2d51df3ba7b6f6bfdb95df7a296ebe6788a346502118b053f1101"
+  },
+  {
+    "artifact": "native-ohos",
+    "archive": "qfli-native-ohos-x86_64-2f98f431308a.tar.gz",
+    "filesVerified": 19,
+    "platform": "ohos",
+    "abi": "x86_64",
+    "commit": "2f98f431308a6bdc9d6968702e5ddce445285d4c",
+    "artifactDigest": "sha256:77bb0854965df1c4cb3597a6fed4dcb9f751dcbdbda16ca3e0ed1356a5a4f872",
+    "archiveSha256": "a6c0058b49f55b76bc23a9ab1538f11de01c3d03835626c5e5a34206d8088a18"
+  },
+  {
+    "artifact": "native-linux-x86_64",
+    "archive": "qfli-native-linux-x86_64-40440585f0c7.tar.gz",
+    "filesVerified": 21,
+    "platform": "linux",
+    "abi": "x86_64",
+    "commit": "40440585f0c728830e66f6539b41590ee7eeabfa",
+    "artifactDigest": "sha256:95f6ab7e65f060212592f7504e57abcc0b8f5a51ada02902567962555fa5b14d",
+    "archiveSha256": "c91b795950131cdc9ab9c13fd63e7cb31ecd2f6490de8d12d6b18737cc349862"
+  }
+]

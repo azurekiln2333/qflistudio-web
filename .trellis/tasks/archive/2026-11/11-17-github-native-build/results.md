@@ -40,6 +40,9 @@ expiry timestamps are recorded in `artifacts.json`. Retention is 14 days.
 The Android ARM64 artifact was downloaded from GitHub independently. The outer
 archive checksum and all 15 inner SHA256SUMS entries matched. Manifest commit,
 NDK and run URL matched the actual build. Source trees/object caches are absent.
+Linux and OHOS artifacts were also downloaded and verified against GitHub's ZIP
+digest, archive sidecar SHA-256 and every inner checksum. Linux verified 21 files;
+OHOS verified 19 files per ABI. `download-verification.json` records those checks.
 
 ## Storage
 
