@@ -72,7 +72,9 @@ Rules:
   library extraction; `nginxPath` returns `applicationInfo.nativeLibraryDir`.
 - **iOS** links a static archive (no `fork`); every object must match the
   device/simulator platform before linking. Apple build/sign/runtime gates stay
-  separate from Linux compilation.
+  separate from Linux compilation. Cross-target compile-only feature probes
+  cannot detect Darwin's unimplemented unnamed POSIX semaphores. The iOS builder
+  sets `NGX_HAVE_POSIX_SEM=0`; keep `-Werror` and all forbidden-symbol gates.
 - Keep engine evidence distinct per platform; a Linux embedded pass does not
   prove an Apple or Android pass.
 
@@ -155,6 +157,8 @@ python3 scripts/package_native_artifacts.py --platform macos --abi ARCH --apple-
 - Apple archives require Mach-O platform/architecture checks. macOS runs its own
   syntax and Nginx HTTP smoke; Linux `/proc`-based lifecycle tests are not Apple
   runtime evidence. iOS library compilation/linking is separate from device use.
+- Scope Apple deployment-target environment variables to their matching job.
+  Do not expose `IPHONEOS_DEPLOYMENT_TARGET` to macOS compiler feature probes.
 - Android uses NDK `27.0.12077973`. Invoke
   `$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager`; do not assume PATH contains it.
 - OHOS uses the public Linux native SDK `6.1.0.31` / API 23 with a pinned archive

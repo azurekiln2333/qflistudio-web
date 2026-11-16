@@ -13,15 +13,20 @@ Windows 继续使用仓库中的 Nginx 预编译程序。
 Linux 只运行原生回归测试。
 Linux 不再发布库产物。
 
-2026-11-17 的首次试跑已通过。
+2026-11-17 的 Android 和 OHOS 试跑已通过。
+Linux 原生回归测试也已通过。
 构建分支是 `ci/native-build-20261117`。
 
-- [Linux 与 Android 成功记录](https://github.com/azurekiln2333/qflistudio-web/actions/runs/43923902421)。
-- [OHOS 成功记录](https://github.com/azurekiln2333/qflistudio-web/actions/runs/43923264898)。
+- [Linux 与 Android 成功记录](https://github.com/azurekiln2333/qflistudio-web/actions/runs/43943840838)。
+- [OHOS 成功记录](https://github.com/azurekiln2333/qflistudio-web/actions/runs/43941454542)。
+- [Apple 重跑记录](https://github.com/azurekiln2333/qflistudio-web/actions/runs/43943840834)。
 
-Linux 与 Android 对应提交 `4044058`。
-OHOS 对应提交 `2f98f43`。
-后续提交只修正了 Android SDK 工具路径。
+Linux 与 Android 对应提交 `a7989dc`。
+OHOS 对应提交 `30927b6`。
+Apple 首轮遇到编译失败。
+修复提交为 `30927b6` 和 `a7989dc`。
+截至本次记录，Apple 重跑仍在等待托管机。
+Apple 尚无通过验证的下载产物。
 这些记录不证明后续源码版本通过。
 
 ## 下载
@@ -42,6 +47,9 @@ OHOS 对应提交 `2f98f43`。
 日志不包含可分发原生库。
 
 ## 产物
+
+下表列出工作流配置的产物。
+Apple 产物需等待对应构建成功。
 
 | 产物名 | 架构 | 内容 |
 | --- | --- | --- |

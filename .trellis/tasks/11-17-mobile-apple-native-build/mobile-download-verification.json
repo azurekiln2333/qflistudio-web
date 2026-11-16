@@ -1,0 +1,113 @@
+[
+  {
+    "artifact": "native-android-arm64-v8a",
+    "id": 14261533232,
+    "bytes": 3198062,
+    "zipDigest": "sha256:2a70b54391232c211401f1008edfeacf4a3f4654b38eafd0e6c4dc71aa2db445",
+    "archives": [
+      {
+        "name": "qfli-native-android-arm64-v8a-d8c9bc0592e5.tar.gz",
+        "sha256": "35e0f218048dbc18b33d4c1ce4aa1a85ce61270090060f6ce5b57d8d1e8142b8",
+        "platform": "android",
+        "abi": "arm64-v8a",
+        "commit": "d8c9bc0592e5076c12e1751e693a063d5326a4bb",
+        "verifiedFiles": 15,
+        "libraries": [
+          "jniLibs/arm64-v8a/libnginx_exec.so",
+          "jniLibs/arm64-v8a/libqfli_web_syntax.so"
+        ]
+      }
+    ]
+  },
+  {
+    "artifact": "native-android-armeabi-v7a",
+    "id": 14261248341,
+    "bytes": 3117267,
+    "zipDigest": "sha256:9c3c1477afdc7fb28da216e094ee181859e3948a100dd5c31137bb4f106ce12c",
+    "archives": [
+      {
+        "name": "qfli-native-android-armeabi-v7a-d8c9bc0592e5.tar.gz",
+        "sha256": "6447296db1bb168e4eb4653a2c59cedd2e15a02dd4ba26e941d3e63effbdc24c",
+        "platform": "android",
+        "abi": "armeabi-v7a",
+        "commit": "d8c9bc0592e5076c12e1751e693a063d5326a4bb",
+        "verifiedFiles": 15,
+        "libraries": [
+          "jniLibs/armeabi-v7a/libnginx_exec.so",
+          "jniLibs/armeabi-v7a/libqfli_web_syntax.so"
+        ]
+      }
+    ]
+  },
+  {
+    "artifact": "native-android-x86_64",
+    "id": 14262358487,
+    "bytes": 3350407,
+    "zipDigest": "sha256:f4931766cf2d5cc1d9b2f6469d771694bfa09a2b5a5f31f5cecab2c4ef259d2c",
+    "archives": [
+      {
+        "name": "qfli-native-android-x86_64-d8c9bc0592e5.tar.gz",
+        "sha256": "47a62d8dc2b40fae4b960c315f52eb469be4d523d69fadcee9fe2f4ae26466fd",
+        "platform": "android",
+        "abi": "x86_64",
+        "commit": "d8c9bc0592e5076c12e1751e693a063d5326a4bb",
+        "verifiedFiles": 15,
+        "libraries": [
+          "jniLibs/x86_64/libnginx_exec.so",
+          "jniLibs/x86_64/libqfli_web_syntax.so"
+        ]
+      }
+    ]
+  },
+  {
+    "artifact": "native-ohos",
+    "id": 14262268032,
+    "bytes": 13710136,
+    "zipDigest": "sha256:dd2bcf1bee8df1352807c91eedda8f65d1cf5b55ab4c84f3e12629924c62b254",
+    "archives": [
+      {
+        "name": "qfli-native-ohos-arm64-v8a-d8c9bc0592e5.tar.gz",
+        "sha256": "ef6e0144ed7664dcadd324c291b3ae5c096fb3483ae6751be194b4b9ef83862c",
+        "platform": "ohos",
+        "abi": "arm64-v8a",
+        "commit": "d8c9bc0592e5076c12e1751e693a063d5326a4bb",
+        "verifiedFiles": 19,
+        "libraries": [
+          "embedded/arm64-v8a/libqfli_nginx.so",
+          "libs/arm64-v8a/libqfli_nginx_napi.so",
+          "libs/arm64-v8a/libqfli_web_cdp_transport.so",
+          "libs/arm64-v8a/libqfli_web_syntax.so"
+        ]
+      },
+      {
+        "name": "qfli-native-ohos-x86_64-d8c9bc0592e5.tar.gz",
+        "sha256": "d71b2b8b2cbdde115ecc5c76087928b1aa48c3379b19d172d0fd8f02d833db4a",
+        "platform": "ohos",
+        "abi": "x86_64",
+        "commit": "d8c9bc0592e5076c12e1751e693a063d5326a4bb",
+        "verifiedFiles": 19,
+        "libraries": [
+          "embedded/x86_64/libqfli_nginx.so",
+          "libs/x86_64/libqfli_nginx_napi.so",
+          "libs/x86_64/libqfli_web_cdp_transport.so",
+          "libs/x86_64/libqfli_web_syntax.so"
+        ]
+      }
+    ]
+  },
+  {
+    "artifact": "native-linux-test-logs",
+    "id": 14262498357,
+    "bytes": 5245,
+    "zipDigest": "sha256:1c59a47f93f2fb12de13d317a94922e5e2200cbbb3d3b2924749e57f1afe36bf",
+    "archives": [],
+    "logs": [
+      "nginx-access-log-test.log",
+      "nginx-embedded-build.log",
+      "nginx-embedded-test.log",
+      "web-cdp-transport-test.log",
+      "web-syntax-build.log",
+      "web-syntax-test.log"
+    ]
+  }
+]

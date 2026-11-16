@@ -16,15 +16,15 @@ Focus native artifact delivery on Android, OHOS, iOS and macOS; keep Linux as re
 
 ## Acceptance Criteria
 
-- [ ] Android/OHOS publishing still passes.
+- [x] Android/OHOS publishing still passes.
 - [ ] iOS device ARM64 and simulator ARM64/x86_64 static libraries compile.
 - [ ] macOS ARM64/x86_64 Nginx and syntax libraries compile and pass host smoke.
 - [ ] Mach-O architectures/platforms and artifact checksums are verified.
-- [ ] Linux publishes logs only, with its native regression tests retained.
-- [ ] Documentation explains toolchain versus project library and download scope.
-- [ ] Three README license declarations match the main project's scope.
-- [ ] Root GPL v3 text remains byte-identical to the main project's LICENSE.
-- [ ] Requested changes are committed and pushed to GitHub.
+- [x] Linux publishes logs only, with its native regression tests retained.
+- [x] Documentation explains toolchain versus project library and download scope.
+- [x] Three README license declarations match the main project's scope.
+- [x] Root GPL v3 text remains byte-identical to the main project's LICENSE.
+- [x] Requested changes are committed and pushed to GitHub.
 
 ## Notes
 
