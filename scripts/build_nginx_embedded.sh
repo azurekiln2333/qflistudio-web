@@ -38,8 +38,8 @@ case "$platform:$(uname -s)" in
     compiler="bash $root/native/nginx/embedded/ohos_cc.sh"
     compiler_cmd=(bash "$root/native/nginx/embedded/ohos_cc.sh")
     export QFLI_NGINX_COMPAT_HEADER="$root/vendor/nginx/ohos_socket_compat.h"
-    archiver="ar"
-    symbol_tool="nm"
+    archiver="${AR:-ar}"
+    symbol_tool="${NM:-nm}"
     checksum=(sha256sum)
     configure_options+=("--crossbuild=Linux:5.10:${arch%%-*}")
     # The HarmonyOS native SDK ships Windows clang.exe. Under WSL that compiler

@@ -1,0 +1,173 @@
+name: Native OHOS build
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/native-ohos-build.yml
+      - scripts/build_nginx_embedded.sh
+      - scripts/package_native_artifacts.py
+      - native/**
+      - vendor/nginx/**
+      - vendor/quickjs/**
+      - ohos/entry/src/main/cpp/**
+  pull_request:
+    paths:
+      - .github/workflows/native-ohos-build.yml
+      - scripts/build_nginx_embedded.sh
+      - scripts/package_native_artifacts.py
+      - native/**
+      - vendor/nginx/**
+      - vendor/quickjs/**
+      - ohos/entry/src/main/cpp/**
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  OHOS_SDK_VERSION: 6.1.0.31
+  NGINX_BUILD_JOBS: '2'
+
+jobs:
+  ohos:
+    name: OHOS arm64 and x86_64 native libraries
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7.0.1
+
+      - name: Prepare build directories
+        run: mkdir -p build/ci/ohos/logs
+
+      - name: Install pinned public OpenHarmony native SDK
+        run: |
+          exec > >(tee build/ci/ohos/logs/sdk-install.log) 2>&1
+          sdk_root="$RUNNER_TEMP/openharmony-sdk"
+          mkdir -p "$sdk_root"
+          archive="$sdk_root/ohos-sdk-windows_linux-public.tar.gz"
+          curl --fail --location --retry 3 --connect-timeout 30 --max-time 1200 \
+            'https://repo.huaweicloud.com/openharmony/os/6.1-Release/ohos-sdk-windows_linux-public.tar.gz' \
+            --output "$archive"
+          printf '%s  %s\n' \
+            b833b75a64ee46bbd7880921abbb49b733ec5c8171b6684c9b524d57f624cee0 \
+            "$archive" | sha256sum --check
+          native_zip="linux/native-linux-x64-$OHOS_SDK_VERSION-Release.zip"
+          tar -xzf "$archive" -C "$sdk_root" "$native_zip"
+          unzip -q "$sdk_root/$native_zip" -d "$sdk_root"
+          native="$sdk_root/native"
+          test -x "$native/llvm/bin/clang"
+          test -f "$native/sysroot/usr/include/napi/native_api.h"
+          test -f "$native/build/cmake/ohos.toolchain.cmake"
+          python3 - "$native/oh-uni-package.json" <<'PY'
+          import json, os, sys
+          from pathlib import Path
+          metadata = json.loads(Path(sys.argv[1]).read_text())
+          assert metadata['version'] == os.environ['OHOS_SDK_VERSION'], metadata
+          assert str(metadata['apiVersion']) == '23', metadata
+          print(json.dumps(metadata, indent=2))
+          PY
+          echo "QFLI_OHOS_NATIVE=$native" >> "$GITHUB_ENV"
+          echo "$native/build-tools/cmake/bin" >> "$GITHUB_PATH"
+          rm "$archive" "$sdk_root/$native_zip"
+
+      - name: Build embedded Nginx and NAPI libraries
+        run: |
+          export AR="$QFLI_OHOS_NATIVE/llvm/bin/llvm-ar"
+          export NM="$QFLI_OHOS_NATIVE/llvm/bin/llvm-nm"
+          for abi in arm64-v8a x86_64; do
+            output="$PWD/build/ci/ohos/$abi"
+            mkdir -p "$output/logs"
+            bash scripts/build_nginx_embedded.sh ohos "$output/nginx" \
+              "$QFLI_OHOS_NATIVE" "$abi" \
+              2>&1 | tee "$output/logs/nginx-build.log"
+            # Replace the checkout's prebuilt input with this run's fresh archive.
+            cp "$output/nginx/libqfli_nginx.a" \
+              "ohos/entry/src/main/cpp/prebuilt/$abi/libqfli_nginx.a"
+            cmake -S ohos/entry/src/main/cpp -B "$output/cmake" -G Ninja \
+              -DCMAKE_TOOLCHAIN_FILE="$QFLI_OHOS_NATIVE/build/cmake/ohos.toolchain.cmake" \
+              -DOHOS_ARCH="$abi" -DOHOS_PLATFORM=OHOS -DOHOS_STL=c++_static \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=16384 \
+              2>&1 | tee "$output/logs/cmake-configure.log"
+            cmake --build "$output/cmake" --parallel 2 \
+              2>&1 | tee "$output/logs/cmake-build.log"
+          done
+
+      - name: Verify target ELF files and NAPI symbols
+        run: |
+          python3 - <<'PY' 2>&1 | tee build/ci/ohos/logs/elf-verification.log
+          import os, re, subprocess
+          from pathlib import Path
+          tools = Path(os.environ['QFLI_OHOS_NATIVE']) / 'llvm/bin'
+          targets = {
+              'nginx/libqfli_nginx.so': ['qfli_nginx_version', 'qfli_nginx_start',
+                  'qfli_nginx_poll', 'qfli_nginx_stop', 'qfli_nginx_release'],
+              'cmake/libqfli_nginx_napi.so': [],
+              'cmake/libqfli_web_cdp_transport.so': ['qfli_web_cdp_open_self',
+                  'qfli_web_cdp_read', 'qfli_web_cdp_write', 'qfli_web_cdp_close'],
+              'cmake/web_syntax/libqfli_web_syntax.so': [
+                  'qfli_web_syntax_version', 'qfli_web_syntax_check'],
+          }
+          registrations = {
+              'cmake/libqfli_nginx_napi.so': 'RegisterQfliNginxModule',
+              'cmake/libqfli_web_cdp_transport.so': 'RegisterQfliWebCdpTransportModule',
+          }
+          def run(tool, *args):
+              return subprocess.check_output([str(tools / tool), *map(str, args)], text=True)
+          for abi, machine in [('arm64-v8a', 'AArch64'), ('x86_64', 'X86-64')]:
+              output = Path('build/ci/ohos') / abi
+              evidence = []
+              for relative, exports in targets.items():
+                  binary = output / relative
+                  header = run('llvm-readelf', '--file-header', binary)
+                  assert machine in header and 'ELF64' in header, header
+                  segments = run('llvm-readelf', '--program-headers', '--wide', binary)
+                  loads = [line.split() for line in segments.splitlines()
+                           if line.strip().startswith('LOAD ')]
+                  assert loads and all(int(row[-1], 16) >= 16384 for row in loads), segments
+                  symbols = run('llvm-nm', '--dynamic', '--defined-only', binary)
+                  names = {line.split()[-1] for line in symbols.splitlines() if line.split()}
+                  assert set(exports) <= names, (binary, set(exports) - names)
+                  dynamic = run('llvm-readelf', '--dynamic', binary)
+                  assert 'libc.so.6' not in dynamic and 'ld-linux' not in dynamic, dynamic
+                  if relative in registrations:
+                      undefined = run('llvm-nm', '--dynamic', '--undefined-only', binary)
+                      assert re.search(r'\bnapi_module_register\b', undefined), undefined
+                      assert 'libace_napi.z.so' in dynamic, dynamic
+                      full_symbols = run('llvm-nm', '--defined-only', binary)
+                      assert registrations[relative] in full_symbols, full_symbols
+                  evidence.extend([str(binary), header, segments, symbols, dynamic])
+                  print(f'PASS {abi}: {relative}; ELF64, correct machine, 16 KiB LOAD alignment')
+              (output / 'logs/elf-verification.log').write_text('\n'.join(evidence))
+          print('Cross-compilation and ELF checks only; no HAP or device execution claim.')
+          PY
+
+      - name: Package native artifacts
+        run: |
+          for abi in arm64-v8a x86_64; do
+            python3 scripts/package_native_artifacts.py --platform ohos --abi "$abi" \
+              --input "build/ci/ohos/$abi"
+          done
+
+      - name: Upload native artifacts
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: native-ohos
+          path: build/ci/artifacts/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Upload SDK and build logs
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: native-ohos-logs
+          path: build/ci/ohos/**/logs/
+          if-no-files-found: warn
+          retention-days: 14

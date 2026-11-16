@@ -139,6 +139,9 @@ flutter build hap --release
 切换到发布构建时保留 pub 步骤。
 `--no-pub` 可能保留旧插件注册表。
 
+原生云构建见 [GitHub 原生构建](docs/native-builds.md)。
+文档列出产物、下载步骤和本地缓存用途。
+
 ## 目录
 
 ```text

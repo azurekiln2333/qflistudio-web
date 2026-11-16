@@ -1,0 +1,218 @@
+name: Native build
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/native-build.yml
+      - scripts/build_nginx_*.sh
+      - scripts/nginx_cc.sh
+      - scripts/build_web_syntax.py
+      - scripts/package_native_artifacts.py
+      - scripts/test_nginx_embedded.sh
+      - scripts/test_web_cdp_transport.sh
+      - native/**
+      - vendor/nginx/**
+      - vendor/quickjs/**
+      - ohos/entry/src/main/cpp/**
+      - test/native/**
+  pull_request:
+    paths:
+      - .github/workflows/native-build.yml
+      - scripts/build_nginx_*.sh
+      - scripts/nginx_cc.sh
+      - scripts/build_web_syntax.py
+      - scripts/package_native_artifacts.py
+      - scripts/test_nginx_embedded.sh
+      - scripts/test_web_cdp_transport.sh
+      - native/**
+      - vendor/nginx/**
+      - vendor/quickjs/**
+      - ohos/entry/src/main/cpp/**
+      - test/native/**
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  NGINX_BUILD_JOBS: '2'
+
+jobs:
+  linux:
+    name: Linux x86_64 native libraries and tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7.0.1
+
+      - name: Prepare build directories
+        run: mkdir -p build/ci/linux/logs
+
+      - name: Build desktop Nginx
+        run: |
+          bash scripts/build_nginx_desktop.sh linux "$PWD/build/ci/linux/desktop/nginx" \
+            2>&1 | tee build/ci/linux/logs/nginx-desktop-build.log
+
+      - name: Build embedded Nginx
+        run: |
+          bash scripts/build_nginx_embedded.sh linux "$PWD/build/ci/linux/embedded" \
+            2>&1 | tee build/ci/linux/logs/nginx-embedded-build.log
+
+      - name: Build QuickJS syntax bridge
+        run: |
+          python3 scripts/build_web_syntax.py --platform linux \
+            --output build/ci/linux/web_syntax \
+            2>&1 | tee build/ci/linux/logs/web-syntax-build.log
+
+      - name: Test syntax bridge
+        run: |
+          python3 native/web_syntax/test_native.py \
+            build/ci/linux/web_syntax/libqfli_web_syntax.so \
+            2>&1 | tee build/ci/linux/logs/web-syntax-test.log
+
+      - name: Test embedded Nginx lifecycle
+        run: |
+          bash scripts/test_nginx_embedded.sh "$PWD/build/ci/linux/embedded" \
+            2>&1 | tee build/ci/linux/logs/nginx-embedded-test.log
+
+      - name: Test embedded Nginx access log
+        run: |
+          bash native/nginx/embedded/run_access_log_regression.sh \
+            "$PWD/build/ci/linux/embedded/libqfli_nginx.so" \
+            2>&1 | tee build/ci/linux/logs/nginx-access-log-test.log
+
+      - name: Test portable CDP transport
+        run: |
+          bash scripts/test_web_cdp_transport.sh "$PWD/build/ci/linux/cdp-test" \
+            2>&1 | tee build/ci/linux/logs/web-cdp-transport-test.log
+
+      - name: Package native artifacts
+        run: |
+          python3 scripts/package_native_artifacts.py \
+            --platform linux --input build/ci/linux
+
+      - name: Upload native artifacts
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: native-linux-x86_64
+          path: build/ci/artifacts/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Upload build and test logs
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: native-linux-x86_64-logs
+          path: build/ci/linux/logs/
+          if-no-files-found: warn
+          retention-days: 14
+
+  android:
+    name: Android ${{ matrix.abi }} native libraries
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        abi: [arm64-v8a, armeabi-v7a, x86_64]
+    env:
+      ANDROID_NDK_VERSION: 27.0.12077973
+      TARGET_ABI: ${{ matrix.abi }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7.0.1
+
+      - name: Prepare build directories
+        run: mkdir -p "build/ci/android/$TARGET_ABI/logs"
+
+      - name: Install pinned Android NDK
+        run: |
+          sdkmanager --install "ndk;$ANDROID_NDK_VERSION" \
+            2>&1 | tee "build/ci/android/$TARGET_ABI/logs/ndk-install.log"
+          echo "QFLI_ANDROID_NDK=$ANDROID_HOME/ndk/$ANDROID_NDK_VERSION" >> "$GITHUB_ENV"
+
+      - name: Build Android Nginx
+        run: |
+          bash scripts/build_nginx_android.sh "$TARGET_ABI" "$QFLI_ANDROID_NDK" \
+            2>&1 | tee "build/ci/android/$TARGET_ABI/logs/nginx-build.log"
+          mkdir -p "build/ci/android/$TARGET_ABI/nginx"
+          cp "android/app/src/main/jniLibs/$TARGET_ABI/libnginx_exec.so" \
+            "build/ci/android/$TARGET_ABI/nginx/libnginx_exec.so"
+
+      - name: Build Android QuickJS syntax bridge
+        run: |
+          cmake -S native/web_syntax -B "build/ci/android/$TARGET_ABI/web_syntax" \
+            -DCMAKE_TOOLCHAIN_FILE="$QFLI_ANDROID_NDK/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI="$TARGET_ABI" \
+            -DANDROID_PLATFORM=android-24 \
+            -DCMAKE_BUILD_TYPE=Release \
+            2>&1 | tee "build/ci/android/$TARGET_ABI/logs/web-syntax-configure.log"
+          cmake --build "build/ci/android/$TARGET_ABI/web_syntax" --parallel 2 \
+            2>&1 | tee "build/ci/android/$TARGET_ABI/logs/web-syntax-build.log"
+
+      - name: Verify Android ELF outputs
+        run: |
+          python3 - <<'PY' 2>&1 | tee "build/ci/android/$TARGET_ABI/logs/elf-validation.log"
+          import os
+          from pathlib import Path
+          import re
+          import subprocess
+
+          abi = os.environ["TARGET_ABI"]
+          readelf = Path(os.environ["QFLI_ANDROID_NDK"]) / "toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf"
+          source = Path("build/ci/android") / abi
+          expected_machine = {
+              "arm64-v8a": "AArch64",
+              "armeabi-v7a": "ARM",
+              "x86_64": "Advanced Micro Devices X86-64",
+          }[abi]
+          for relative, executable in [("nginx/libnginx_exec.so", True), ("web_syntax/libqfli_web_syntax.so", False)]:
+              binary = source / relative
+              header = subprocess.check_output([str(readelf), "-hW", str(binary)], text=True)
+              segments = subprocess.check_output([str(readelf), "-lW", str(binary)], text=True)
+              print(f"=== {binary} ===\n{header}{segments}", flush=True)
+              machine = re.search(r"^\s*Machine:\s*(.+)$", header, re.MULTILINE)
+              elf_type = re.search(r"^\s*Type:\s*(\S+)", header, re.MULTILINE)
+              entry = re.search(r"Entry point address:\s*(0x[0-9a-fA-F]+)", header)
+              if not machine or machine.group(1).strip() != expected_machine:
+                  raise RuntimeError(f"Wrong ELF architecture: {binary}")
+              if not elf_type or elf_type.group(1) != "DYN":
+                  raise RuntimeError(f"Expected a PIE/shared ELF file: {binary}")
+              if not entry or (int(entry.group(1), 16) != 0) != executable:
+                  raise RuntimeError(f"Wrong executable/library entry point: {binary}")
+              alignments = [int(line.split()[-1], 0) for line in segments.splitlines() if line.lstrip().startswith("LOAD ")]
+              if not alignments or any(alignment < 16384 for alignment in alignments):
+                  raise RuntimeError(f"Missing 16 KiB LOAD alignment: {binary}")
+              print(f"PASS: {abi}, DYN, expected entry point, 16 KiB LOAD alignment", flush=True)
+          PY
+
+      - name: Package native artifacts
+        run: |
+          python3 scripts/package_native_artifacts.py \
+            --platform android --abi "$TARGET_ABI" \
+            --input "build/ci/android/$TARGET_ABI"
+
+      - name: Upload native artifacts
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: native-android-${{ matrix.abi }}
+          path: build/ci/artifacts/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: native-android-${{ matrix.abi }}-logs
+          path: build/ci/android/${{ matrix.abi }}/logs/
+          if-no-files-found: warn
+          retention-days: 14

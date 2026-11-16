@@ -3,8 +3,7 @@ set -euo pipefail
 
 # OpenHarmony embedded-engine compiler entry point.
 #
-# The installed HarmonyOS native SDK ships Windows clang.exe. Two constraints
-# follow:
+# Linux SDK paths stay in their native form. When WSL invokes Windows clang.exe:
 #   1. Under WSL the executable-interpreter form must supply argv[0] explicitly.
 #   2. clang.exe resolves paths on the Windows side, so every path-shaped
 #      argument and the sysroot must be translated with wslpath -m.
@@ -13,25 +12,31 @@ set -euo pipefail
 # the standalone PIE flag from scripts/nginx_cc.sh.
 
 clang="${QFLI_NGINX_CLANG:?}"
-sysroot_raw="${QFLI_NGINX_SYSROOT:?}"
-case "$sysroot_raw" in
-  /*) sysroot="$(wslpath -m "$sysroot_raw")" ;;
-  *)  sysroot="$sysroot_raw" ;;
-esac
+windows_compiler=0
+if [[ "$clang" == *.exe && -n "${WSL_INTEROP:-}" ]]; then
+  windows_compiler=1
+fi
+
+compiler_path() {
+  if [[ "$windows_compiler" == 1 && "$1" == /* ]]; then
+    wslpath -m "$1"
+  else
+    printf '%s\n' "$1"
+  fi
+}
+
+sysroot="$(compiler_path "${QFLI_NGINX_SYSROOT:?}")"
 
 # Translate WSL paths to Windows form, but leave flags and bare names alone.
 args=()
 if [[ -n "${QFLI_NGINX_COMPAT_HEADER:-}" ]]; then
-  args+=("-include" "$(wslpath -m "$QFLI_NGINX_COMPAT_HEADER")")
+  args+=("-include" "$(compiler_path "$QFLI_NGINX_COMPAT_HEADER")")
 fi
 for arg in "$@"; do
-  case "$arg" in
-    /*) args+=("$(wslpath -m "$arg")") ;;
-    *)  args+=("$arg") ;;
-  esac
+  args+=("$(compiler_path "$arg")")
 done
 
-if [[ "$clang" == *.exe && -n "${WSL_INTEROP:-}" ]]; then
+if [[ "$windows_compiler" == 1 ]]; then
   /init "$clang" clang.exe \
     --target="${QFLI_NGINX_TARGET:?}" --sysroot="$sysroot" \
     -DIOV_MAX=1024 -D__USE_GNU=1 -fPIC "${args[@]}" 2>&1 | tr -d '\r'
