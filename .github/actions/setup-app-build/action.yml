@@ -15,7 +15,7 @@ inputs:
   flutter-revision:
     description: Required immutable revision of the Flutter fork tag
     required: false
-    default: 0337f5378a33614354edde7d8ae8473be5994572
+    default: 244a0e8abb3085e8675589b13e219af8c41cb7aa
   core-ref:
     description: Full immutable commit of azurekiln2333/qflistudio-core
     required: false
