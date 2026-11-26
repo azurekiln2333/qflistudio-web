@@ -5,7 +5,7 @@ Audits the HTML/CSS/JavaScript tutorial and example content that WebForge
 actually reads. Two modes:
 
   --shared   audit the shared core aggregate assets (default when run with no
-             --product flag), i.e. qfli_studio_core/assets/content/*.json.
+             --product flag), i.e. qflistudio-core/assets/content/*.json.
   --product  audit WebForge's own assets/content/*.json.
 
 Checks: schema shape, required fields, scope-unique ids, cross-reference
@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any
 
 REPO = Path(__file__).resolve().parent.parent
-SHARED = REPO.parent / "qfli_studio_core" / "assets" / "content"
+SHARED = REPO.parent / "qflistudio-core" / "assets" / "content"
 PRODUCT = REPO / "assets" / "content"
 WEB_TYPES = ("html", "css", "javascript")
 

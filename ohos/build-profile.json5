@@ -1,39 +1,10 @@
 {
   "app": {
-    // Keep checkout portable. Configure a local WebForge-specific signing
-    // profile for com.azurekiln.qfli.webforge before installing on a device.
-    "signingConfigs": [
-      {
-        "name": "default",
-        "type": "HarmonyOS",
-        "material": {
-          "certpath": "C:\\Users\\lichengyu\\.ohos\\config\\default_ohos_b3jX5cCDMWEkzTROEfPFp-hmwLSqVil8p6t63tCjlAw=.cer",
-          "keyAlias": "debugKey",
-          "keyPassword": "0000001B78A4377AB0A1B3232AA6E601FC84948B7B706AD6525BB7A797D1CA454D9FAA7EA43BF4A2B5329C",
-          "profile": "C:\\Users\\lichengyu\\.ohos\\config\\default_ohos_b3jX5cCDMWEkzTROEfPFp-hmwLSqVil8p6t63tCjlAw=.p7b",
-          "signAlg": "SHA256withECDSA",
-          "storeFile": "C:\\Users\\lichengyu\\.ohos\\config\\default_ohos_b3jX5cCDMWEkzTROEfPFp-hmwLSqVil8p6t63tCjlAw=.p12",
-          "storePassword": "0000001BE25D51704C9C0B476CB01AF1687D3711865DBB6B3E1E84C8FDA70536931C97BA09AD3406D004C5"
-        }
-      },
-      {
-        "name": "releaseKey",
-        "type": "HarmonyOS",
-        "material": {
-          "certpath": "D:/Keystore/suanxiwanjie_release.cer",
-          "keyAlias": "suanxiwanjie",
-          "keyPassword": "00000020F55A9BB8C99ABF3AA14DBF7533C576ADB86DA94990350D8192A09D68141B4B10DBDBDDE430B00E170708AB11",
-          "profile": "D:/Keystore/Profile/webforgeRelease.p7b",
-          "signAlg": "SHA256withECDSA",
-          "storeFile": "D:/Keystore/suanxiwanjie.p12",
-          "storePassword": "0000002048F170263A6DA4538F912AA6989B44DEB03BF93DEDBB87D6D8C257745237F83FCE1F5DD8A4EEB735C44A28E3"
-        }
-      }
-    ],
+    // Unsigned by default. CI signing material must come from Actions secrets.
+    "signingConfigs": [],
     "products": [
       {
         "name": "default",
-        "signingConfig": "default",
         "compatibleSdkVersion": "5.1.0(18)",
         "runtimeOS": "HarmonyOS",
         "targetSdkVersion": "6.1.1(24)"

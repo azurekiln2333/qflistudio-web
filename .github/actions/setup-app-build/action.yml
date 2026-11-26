@@ -1,0 +1,213 @@
+name: Set up application build
+description: >-
+  Check out the canonical qflistudio-core sibling at an immutable commit,
+  install the verified OHOS Flutter fork and resolve Dart packages. No native
+  compilation occurs in this action.
+
+inputs:
+  platform:
+    description: Target platform (android, ios, linux, windows, macos or ohos)
+    required: true
+  flutter-ref:
+    description: Tag of openharmony-tpc/flutter_flutter to install
+    required: false
+    default: 3.41.10-ohos-1.0.0
+  flutter-revision:
+    description: Required immutable revision of the Flutter fork tag
+    required: false
+    default: 0337f5378a33614354edde7d8ae8473be5994572
+  core-ref:
+    description: Full immutable commit of azurekiln2333/qflistudio-core
+    required: false
+    default: 476a30acee21dc486ee2849dd8064a7be665e4d5
+  build-native:
+    description: Must be false; native builds belong to the calling workflow
+    required: false
+    default: 'false'
+  precache:
+    description: Flags for `flutter precache`; empty skips the precache step
+    required: false
+    default: ''
+
+outputs:
+  core-commit:
+    description: Commit of qfli_studio_core used by this build
+    value: ${{ steps.core.outputs.commit }}
+  flutter-commit:
+    description: Verified immutable revision of the Flutter fork
+    value: ${{ steps.flutter.outputs.commit }}
+  package-version:
+    description: Version label used in package file names
+    value: ${{ steps.version.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check out immutable qflistudio-core beside the workspace
+      id: core
+      shell: bash
+      env:
+        CORE_REF: ${{ inputs.core-ref }}
+        BUILD_NATIVE: ${{ inputs.build-native }}
+      run: |
+        [[ "$CORE_REF" =~ ^[0-9a-f]{40}$ ]] || {
+          echo 'core-ref must be a full immutable commit SHA' >&2; exit 1;
+        }
+        [[ "$BUILD_NATIVE" == false ]] || {
+          echo 'setup-app-build only supports build-native=false' >&2; exit 1;
+        }
+        # Anonymous public checkout works for fork pull requests without secrets.
+        # Keep the repository folder distinct from the Dart package name.
+        core="$GITHUB_WORKSPACE/../qflistudio-core"
+        if [[ -e "$core" ]]; then
+          echo "Refusing to replace an existing sibling: $core" >&2
+          exit 1
+        fi
+        git init --quiet "$core"
+        git -C "$core" remote add origin https://github.com/azurekiln2333/qflistudio-core.git
+        git -C "$core" -c protocol.version=2 fetch --quiet --depth 1 origin "$CORE_REF"
+        git -C "$core" -c advice.detachedHead=false checkout --quiet FETCH_HEAD
+        commit="$(git -C "$core" rev-parse HEAD)"
+        test "$commit" = "$CORE_REF"
+        test -f "$core/pubspec.yaml"
+        test -f "$core/vendor/re_editor/pubspec.yaml"
+        test -f "$core/vendor/xterm/pubspec.yaml"
+        echo "commit=$commit" >> "$GITHUB_OUTPUT"
+        echo "QFLI_CORE_COMMIT=$commit" >> "$GITHUB_ENV"
+        echo "qfli_studio_core $CORE_REF -> $commit"
+
+    - name: Restore Flutter and Pub caches
+      uses: actions/cache@v6.1.0
+      with:
+        path: |
+          ${{ runner.temp }}/flutter
+          ${{ runner.temp }}/pub-cache
+        key: app-flutter-v2-${{ runner.os }}-${{ runner.arch }}-${{ inputs.platform }}-${{ inputs.flutter-revision }}-${{ inputs.core-ref }}-${{ hashFiles('pubspec.lock') }}
+
+    - name: Install the pinned OHOS Flutter fork
+      id: flutter
+      shell: bash
+      env:
+        FLUTTER_REF: ${{ inputs.flutter-ref }}
+        FLUTTER_REVISION: ${{ inputs.flutter-revision }}
+        TARGET_PLATFORM: ${{ inputs.platform }}
+      run: |
+        case "$TARGET_PLATFORM" in
+          android|ios|linux|windows|macos|ohos) ;;
+          *) echo "Unsupported platform: $TARGET_PLATFORM" >&2; exit 1 ;;
+        esac
+        # On Windows RUNNER_TEMP is "D:\a\_temp". Bash needs a POSIX form for
+        # PATH (a drive colon would split the entry); GITHUB_PATH, GITHUB_ENV
+        # and the Dart tools need the native form.
+        if command -v cygpath > /dev/null 2>&1; then
+          temp_posix="$(cygpath -u "$RUNNER_TEMP")"
+          temp_native="$(cygpath -w "$RUNNER_TEMP")"
+          separator='\'
+        else
+          temp_posix="$RUNNER_TEMP"
+          temp_native="$RUNNER_TEMP"
+          separator='/'
+        fi
+        flutter_root="$temp_posix/flutter"
+        if [[ ! -f "$flutter_root/bin/flutter" ]]; then
+          rm -rf "$flutter_root"
+          # The tool derives its version from the git tag, so clone the tag
+          # itself. Keep LF line endings so the Bash entry points run on Windows.
+          git -c core.autocrlf=false -c advice.detachedHead=false clone --quiet --depth 1 \
+            --branch "$FLUTTER_REF" \
+            https://gitcode.com/openharmony-tpc/flutter_flutter.git "$flutter_root"
+        fi
+        [[ "$FLUTTER_REVISION" =~ ^[0-9a-f]{40}$ ]] || {
+          echo 'flutter-revision must be a full immutable commit SHA' >&2; exit 1;
+        }
+        revision="$(git -C "$flutter_root" rev-parse HEAD)"
+        echo "Flutter fork $FLUTTER_REF -> $revision"
+        if [[ "$revision" != "$FLUTTER_REVISION" ]]; then
+          echo "Flutter tag/cache revision mismatch: expected $FLUTTER_REVISION" >&2
+          exit 1
+        fi
+        # A restored cache must not conceal movement of the public tag.
+        remote_revision="$(git -C "$flutter_root" ls-remote origin "refs/tags/$FLUTTER_REF^{}" | cut -f 1)"
+        if [[ -z "$remote_revision" ]]; then
+          remote_revision="$(git -C "$flutter_root" ls-remote origin "refs/tags/$FLUTTER_REF" | cut -f 1)"
+        fi
+        test "$remote_revision" = "$FLUTTER_REVISION"
+        git -C "$flutter_root" describe --tags --exact-match HEAD
+        echo "commit=$revision" >> "$GITHUB_OUTPUT"
+        echo "${temp_native}${separator}flutter${separator}bin" >> "$GITHUB_PATH"
+        echo "PUB_CACHE=${temp_native}${separator}pub-cache" >> "$GITHUB_ENV"
+        echo "QFLI_FLUTTER_REVISION=$revision" >> "$GITHUB_ENV"
+        export PUB_CACHE="${temp_native}${separator}pub-cache"
+        export PATH="$flutter_root/bin:$PATH"
+
+        # Storage and Pub mirrors stay unset: the defaults serve every target.
+        # Desktop targets are enabled by default in this fork.
+        flutter config --no-analytics
+        # The fork also enables OHOS by default. With ohos/ present, `flutter
+        # pub get` and every `flutter build` then require a HarmonyOS SDK and
+        # exit with "No Hmos SDK found". Only the OHOS job has that SDK.
+        if [[ "$TARGET_PLATFORM" == ohos ]]; then
+          flutter config --enable-ohos
+        else
+          flutter config --no-enable-ohos
+        fi
+        flutter --version
+
+        # pubspec.yaml requires sdk ^3.11.5. Do not compare the Flutter version
+        # string; only the Dart SDK version decides whether pub get can resolve.
+        dart_version="$(dart --version 2>&1 | sed -nE 's/.*version: ([0-9]+)\.([0-9]+)\.([0-9]+).*/\1 \2 \3/p' | head -n 1)"
+        read -r dart_major dart_minor dart_patch <<< "$dart_version"
+        echo "Dart SDK: ${dart_major:-?}.${dart_minor:-?}.${dart_patch:-?}"
+        if [[ -z "${dart_patch:-}" || "$dart_major" != 3 ]] \
+          || (( dart_minor < 11 || (dart_minor == 11 && dart_patch < 5) )); then
+          echo "This Dart SDK does not satisfy ^3.11.5" >&2
+          exit 1
+        fi
+        echo "QFLI_DART_VERSION=$dart_major.$dart_minor.$dart_patch" >> "$GITHUB_ENV"
+
+    - name: Download Flutter engine artifacts
+      if: inputs.precache != ''
+      shell: bash
+      env:
+        PRECACHE_FLAGS: ${{ inputs.precache }}
+      run: |
+        # shellcheck disable=SC2086
+        flutter precache $PRECACHE_FLAGS
+
+    - name: Resolve Dart packages
+      shell: bash
+      run: |
+        flutter pub get
+        git diff -- pubspec.lock
+
+    - name: Record build inputs
+      id: version
+      shell: bash
+      env:
+        FLUTTER_REF: ${{ inputs.flutter-ref }}
+        CORE_REF: ${{ inputs.core-ref }}
+        TARGET_PLATFORM: ${{ inputs.platform }}
+      run: |
+        if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+          version="${GITHUB_REF_NAME#v}"
+        else
+          base="$(sed -nE 's/^version:[[:space:]]*([^+[:space:]]+).*/\1/p' pubspec.yaml | head -n 1)"
+          test -n "$base"
+          version="$base-${GITHUB_SHA::7}"
+        fi
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+        echo "QFLI_PACKAGE_VERSION=$version" >> "$GITHUB_ENV"
+        mkdir -p build/ci/packages build/ci/logs
+        {
+          echo "### Build inputs ($TARGET_PLATFORM)"
+          echo
+          echo "| Input | Value |"
+          echo "| --- | --- |"
+          echo "| qflistudio-web commit | \`$GITHUB_SHA\` |"
+          echo "| qfli_studio_core ref | \`$CORE_REF\` |"
+          echo "| qfli_studio_core commit | \`$QFLI_CORE_COMMIT\` |"
+          echo "| Flutter fork tag | \`$FLUTTER_REF\` |"
+          echo "| Flutter fork revision | \`$QFLI_FLUTTER_REVISION\` |"
+          echo "| Dart SDK | \`$QFLI_DART_VERSION\` |"
+          echo "| Package version label | \`$version\` |"
+        } >> "$GITHUB_STEP_SUMMARY"
