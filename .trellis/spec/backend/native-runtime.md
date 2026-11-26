@@ -73,8 +73,10 @@ Rules:
 - **iOS** links a static archive (no `fork`); every object must match the
   device/simulator platform before linking. Apple build/sign/runtime gates stay
   separate from Linux compilation. Cross-target compile-only feature probes
-  cannot detect Darwin's unimplemented unnamed POSIX semaphores. The iOS builder
-  sets `NGX_HAVE_POSIX_SEM=0`; keep `-Werror` and all forbidden-symbol gates.
+  cannot detect Darwin's unimplemented unnamed POSIX semaphores. The iOS
+  builder sets `NGX_HAVE_POSIX_SEM=0` and `NGX_HAVE_PWRITEV=0`; the latter keeps
+  the upstream `writev()`/`lseek()` fallback because the iOS 13 SDK declares
+  `pwritev()` as iOS 14-only. Keep `-Werror` and all forbidden-symbol gates.
 - Keep engine evidence distinct per platform; a Linux embedded pass does not
   prove an Apple or Android pass.
 

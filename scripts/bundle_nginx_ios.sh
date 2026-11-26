@@ -13,7 +13,7 @@ for arch in ${ARCHS:?}; do
   arch_output="$output/$arch"
   bash "$root/scripts/build_nginx_embedded.sh" ios "$arch_output" "$arch" "$sdk"
   # Both architecture and platform must match before linking into the app.
-  xcrun lipo -verify_arch "$arch" "$arch_output/libqfli_nginx.a"
+  xcrun lipo "$arch_output/libqfli_nginx.a" -verify_arch "$arch"
   inspect="$(mktemp -d "$arch_output/inspect.XXXXXX")"
   (cd "$inspect" && xcrun ar -x "$arch_output/libqfli_nginx.a")
   : > "$arch_output/platform.txt"

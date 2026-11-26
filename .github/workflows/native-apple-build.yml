@@ -9,6 +9,7 @@ on:
       - scripts/build_nginx_embedded.sh
       - scripts/build_web_syntax.py
       - scripts/bundle_nginx_ios.sh
+      - scripts/bundle_nginx_macos.sh
       - scripts/bundle_web_syntax_apple.sh
       - scripts/package_native_artifacts.py
       - native/**
@@ -21,6 +22,7 @@ on:
       - scripts/build_nginx_embedded.sh
       - scripts/build_web_syntax.py
       - scripts/bundle_nginx_ios.sh
+      - scripts/bundle_nginx_macos.sh
       - scripts/bundle_web_syntax_apple.sh
       - scripts/package_native_artifacts.py
       - native/**
@@ -87,9 +89,9 @@ jobs:
           cp "$output/products/qfli-nginx/libqfli_nginx.a" "$output/nginx/"
           cp "$source/platform.txt" "$source/undefined-symbols.txt" "$output/nginx/"
           for object in "$source"/inspect.*/*.o; do
-            xcrun lipo -verify_arch "$TARGET_ARCH" "$object"
+            xcrun lipo "$object" -verify_arch "$TARGET_ARCH"
           done
-          xcrun lipo -verify_arch "$TARGET_ARCH" "$output/nginx/libqfli_nginx.a"
+          xcrun lipo "$output/nginx/libqfli_nginx.a" -verify_arch "$TARGET_ARCH"
 
       - name: Build and verify QuickJS syntax archive
         run: |
@@ -102,9 +104,9 @@ jobs:
           cp "$output/products/qfli-web-syntax/libqfli_web_syntax.a" "$output/web_syntax/"
           cp "$source/platform.txt" "$source/build.json" "$output/web_syntax/"
           for object in "$source"/inspect.*/*.o; do
-            xcrun lipo -verify_arch "$TARGET_ARCH" "$object"
+            xcrun lipo "$object" -verify_arch "$TARGET_ARCH"
           done
-          xcrun lipo -verify_arch "$TARGET_ARCH" "$output/web_syntax/libqfli_web_syntax.a"
+          xcrun lipo "$output/web_syntax/libqfli_web_syntax.a" -verify_arch "$TARGET_ARCH"
 
       - name: Record verified iOS platform and minimum version
         run: |
@@ -253,7 +255,7 @@ jobs:
         run: |
           for binary in "$QFLI_APPLE_OUTPUT/desktop/nginx" \
             "$QFLI_APPLE_OUTPUT/web_syntax/libqfli_web_syntax.dylib"; do
-            xcrun lipo -verify_arch "$TARGET_ARCH" "$binary"
+            xcrun lipo "$binary" -verify_arch "$TARGET_ARCH"
             evidence="$QFLI_APPLE_OUTPUT/logs/$(basename "$binary")-platform.log"
             xcrun vtool -show-build "$binary" | tee "$evidence"
             awk '$1 == "platform" {seen++; if ($2 != "MACOS") bad=1}

@@ -16,7 +16,7 @@ for arch in ${ARCHS:?}; do
   arch_output="$output/$PLATFORM_NAME/$arch"
   python3 "$root/scripts/build_web_syntax.py" --platform "$platform" \
     --apple-sdk "$PLATFORM_NAME" --arch "$arch" --output "$arch_output"
-  xcrun lipo -verify_arch "$arch" "$arch_output/$library"
+  xcrun lipo "$arch_output/$library" -verify_arch "$arch"
   # Inspect each object so an arm64 device archive cannot masquerade as an
   # arm64 simulator archive (architecture alone cannot distinguish the two).
   inspect="$arch_output"

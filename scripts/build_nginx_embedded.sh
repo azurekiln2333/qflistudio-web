@@ -94,7 +94,9 @@ flags="-O2 -fPIC -fvisibility=hidden -std=gnu11 -DQFLI_NGINX_EMBEDDED=1"
 if [[ "$platform" == ios ]]; then
   # Darwin's unnamed POSIX semaphores are unavailable. The cross-target
   # compile-only probe cannot observe sem_init() failing at runtime.
-  flags="$flags -DNGX_HAVE_POSIX_SEM=0"
+  # The SDK also exposes pwritev() even when targeting iOS 13; it requires
+  # iOS 14. Keep the upstream writev()/lseek() fallback for iOS 13.
+  flags="$flags -DNGX_HAVE_POSIX_SEM=0 -DNGX_HAVE_PWRITEV=0"
 fi
 if [[ "${QFLI_NGINX_SANITIZE:-0}" == 1 ]]; then
   flags="$flags -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer"

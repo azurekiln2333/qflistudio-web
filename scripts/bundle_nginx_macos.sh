@@ -15,4 +15,4 @@ sign_options=()
 if [[ "$identity" != - ]]; then sign_options+=(--timestamp --options runtime); fi
 codesign --force --sign "$identity" "${sign_options[@]}" \
   --entitlements "$root/macos/Runner/Nginx.entitlements" "$executable"
-lipo -verify_arch ${ARCHS:-$(uname -m)} "$executable"
+lipo "$executable" -verify_arch ${ARCHS:-$(uname -m)}
