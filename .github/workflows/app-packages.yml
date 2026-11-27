@@ -908,6 +908,38 @@ jobs:
           # Rewrites the runner's copy only. The repository file stays unchanged.
           python3 scripts/prepare_ohos_ci_profile.py ohos/build-profile.json5 --in-place
 
+      - name: Restrict the entry module to the single ABI the HAP targets
+        run: |
+          # ohos/entry/build-profile.json5 lists arm64-v8a and x86_64, because
+          # the module is also used for local dual-ABI native builds. This job
+          # runs `flutter build hap --target-platform ohos-arm64`, which builds
+          # one Flutter engine ABI, so leaving x86_64 in the module would add a
+          # native-only x86_64 payload with no engine behind it. Rewrite the
+          # runner's copy to arm64-v8a only. Only the entry module's native
+          # abiFilters change; the repository file stays as reviewed, and the
+          # dual-ABI Nginx archives built above stay as native evidence.
+          python3 - <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          sys.path.insert(0, "scripts")
+          # Reuse the project's JSON5 reader: the checked-in build profiles use
+          # comments, single-quoted strings and trailing commas.
+          from prepare_ohos_ci_profile import json5_to_json
+
+          profile = Path("ohos/entry/build-profile.json5")
+          data = json.loads(json5_to_json(profile.read_text(encoding="utf8")))
+          options = data["buildOption"]["externalNativeOptions"]
+          before = options.get("abiFilters")
+          options["abiFilters"] = ["arm64-v8a"]
+          if options["abiFilters"] != ["arm64-v8a"]:
+              raise SystemExit("abiFilters rewrite did not take effect")
+          profile.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+                             encoding="utf8", newline="\n")
+          print(f"Entry module abiFilters: {before} -> {options['abiFilters']}")
+          PY
+
       - name: Build unsigned release HAP
         run: |
           set -o pipefail
