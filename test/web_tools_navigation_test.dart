@@ -396,12 +396,44 @@ void main() {
     expect(find.text('服务器'), findsNothing);
     expect(tester.takeException(), isNull);
 
-    await tester.tap(
-      find.byKey(WorkbenchActivityRail.activityKey(WorkbenchActivity.tutorial)),
+    final flutterErrors = <FlutterErrorDetails>[];
+    var omittedFlutterErrors = 0;
+    final previousFlutterErrorHandler = FlutterError.onError;
+    FlutterError.onError = (details) {
+      if (flutterErrors.length == 4) {
+        flutterErrors.removeAt(0);
+        omittedFlutterErrors++;
+      }
+      flutterErrors.add(details);
+      if (previousFlutterErrorHandler != null) {
+        previousFlutterErrorHandler(details);
+      } else {
+        FlutterError.presentError(details);
+      }
+    };
+    try {
+      await tester.tap(
+        find.byKey(
+          WorkbenchActivityRail.activityKey(WorkbenchActivity.tutorial),
+        ),
+      );
+      await tester.pump();
+      await _expectContentSections(tester, assetRequests);
+    } finally {
+      FlutterError.onError = previousFlutterErrorHandler;
+    }
+    final exception = tester.takeException();
+    expect(
+      exception,
+      isNull,
+      reason: exception == null
+          ? null
+          : _capturedFlutterErrorDiagnostics(
+              exception,
+              flutterErrors,
+              omittedFlutterErrors,
+            ),
     );
-    await tester.pump();
-    await _expectContentSections(tester, assetRequests);
-    expect(tester.takeException(), isNull);
     await tester.tap(find.byKey(WorkbenchActivityRail.avatarKey));
     await tester.pump();
     await _expectOfflineSettings(tester);
@@ -584,6 +616,22 @@ String _contentLoadDiagnostics(
       'assetRequests=[$requests$omittedRequests], '
       'scrollables=[${scrollMetrics.join('; ')}], '
       'widgets=[$widgetSummary$omittedWidgets]';
+}
+
+String _capturedFlutterErrorDiagnostics(
+  Object exception,
+  List<FlutterErrorDetails> details,
+  int omittedCount,
+) {
+  final summaries = details
+      .map((detail) => _truncateDiagnostic(detail.toString(), 6000))
+      .join('\n--- FlutterErrorDetails ---\n');
+  final omitted = omittedCount == 0
+      ? ''
+      : '\nOmitted earlier FlutterErrorDetails: $omittedCount';
+  return 'Captured exception: ${_truncateDiagnostic(exception.toString(), 2000)}'
+      '\nCaptured FlutterErrorDetails (library, context and diagnostics):\n'
+      '$summaries$omitted';
 }
 
 String _truncateDiagnostic(String value, int limit) =>
