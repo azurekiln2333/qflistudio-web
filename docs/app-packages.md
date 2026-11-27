@@ -13,7 +13,7 @@ Codex 决定版本固定值与交付范围。
 Codex 的评审结论是本文件的依据。
 根协调者暂存、提交、拉取并触发工作流。
 实现者不暂存、不提交、不推送。
-代理从不执行 `git push`。
+代理从不运行 `git push`。
 交付只走门禁请求文件：
 `D:/MyNewProjects/_orchestra/push/qflistudio-web.json`。
 请求内容包含仓库名、完整提交 SHA 和 `allow` 条目。
@@ -21,7 +21,7 @@ Codex 的评审结论是本文件的依据。
 `push/qflistudio-web.result.json`，并经 Herdr 报告结果。
 origin 只把 push URL 收窄到 GitHub。
 源工作区保留镜像远端，镜像引用留在源 `.git` 内。
-外部备份只保存原 Git 配置。
+外部备份只保存原 Git 设置。
 
 ## 不可变输入
 
