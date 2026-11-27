@@ -135,9 +135,11 @@ SDK 下载和解压均发生在 GitHub 托管机上。
 本地 SDK `6.1.0.32` 与此版本不同。
 
 这些产物不是 APK、HAP 或 IPA。
+应用安装包的构建见 [GitHub 应用安装包构建](app-packages.md)。
 原生编译成功不代表设备运行通过。
 OHOS 库仍需接入应用构建。
-完整应用依赖同级 `qfli_studio_core`。
+完整应用依赖同级 `../qflistudio-core`。
+Dart 包名与导入名保持 `qfli_studio_core`。
 完整 HAP 还依赖 Flutter OHOS 和 Hvigor。
 本次工作流不构建 Windows 原生层。
 
