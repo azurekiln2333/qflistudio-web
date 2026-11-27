@@ -19,7 +19,7 @@ inputs:
   core-ref:
     description: Full immutable commit of azurekiln2333/qflistudio-core
     required: false
-    default: 8e031313ffc8d531c5a6b4d131f721f35da04c86
+    default: b756b2eaf9fb941d6bdad30a7ba4262d7341e2ce
   build-native:
     description: Must be false; native builds belong to the calling workflow
     required: false

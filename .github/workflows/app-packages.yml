@@ -41,7 +41,7 @@ defaults:
 
 env:
   NGINX_BUILD_JOBS: '2'
-  QFLI_CORE_REF: 8e031313ffc8d531c5a6b4d131f721f35da04c86
+  QFLI_CORE_REF: b756b2eaf9fb941d6bdad30a7ba4262d7341e2ce
   QFLI_FLUTTER_REF: 3.41.10-ohos-1.0.0
   # Peeled commit of the annotated tag above. Runners compare checkout HEAD
   # with this value, so the tag object SHA is wrong here.
@@ -74,7 +74,7 @@ jobs:
     # This workflow defines no workflow_dispatch inputs, so the `inputs` context
     # is empty here. Pass the reviewed qflistudio-core commit literally.
     with:
-      core_ref: 8e031313ffc8d531c5a6b4d131f721f35da04c86
+      core_ref: b756b2eaf9fb941d6bdad30a7ba4262d7341e2ce
 
   android:
     name: Android APK

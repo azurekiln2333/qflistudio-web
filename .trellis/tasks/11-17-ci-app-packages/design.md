@@ -50,7 +50,7 @@ Jobs use separate jobs, not a matrix: each platform's steps differ too much.
 
 Inputs: `flutter-ref` (tag `3.41.10-ohos-1.0.0`), `flutter-revision`
 (peeled commit `244a0e8abb3085e8675589b13e219af8c41cb7aa`), `core-ref`
-(commit `8e031313ffc8d531c5a6b4d131f721f35da04c86`) and `precache`
+(commit `b756b2eaf9fb941d6bdad30a7ba4262d7341e2ce`) and `precache`
 (platform flags). These match the migration plan. Each cloud check and package
 job verifies and records the same dependency commits before building. A moving
 branch, an annotated tag-object SHA or per-job ref lookup is not reproducible.
