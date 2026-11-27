@@ -23,18 +23,29 @@ GENERATED_PARTS = {
     ".cache", "cache", ".npm", ".venv", "venv", "target", "dist", "out",
 }
 RUNTIME_ROOTS = (
-    ".trellis/.runtime/", ".dsh/", ".pi/agent/sessions/", ".pi/agent/logs/",
+    ".trellis/.runtime/", ".pi/agent/sessions/", ".pi/agent/logs/",
     ".claude/sessions/", ".claude/cache/",
 )
-INTEGRATION_ROOTS = (".agents/", ".pi/", ".claude/", ".codex/", ".gemini/", ".opencode/")
+INTEGRATION_ROOTS = (
+    ".agents/", ".pi/", ".dsh/", ".claude/", ".codebuddy/", ".cursor/",
+    ".zcode/", ".opencode/",
+)
 PORTABLE_INTEGRATION_ROOTS = (
     ".agents/agents/", ".agents/skills/",
-    ".pi/extensions/", ".pi/prompts/", ".pi/skills/", ".pi/themes/",
+    ".pi/agents/", ".pi/extensions/", ".pi/prompts/",
+    ".dsh/skills/",
     ".claude/agents/", ".claude/commands/", ".claude/hooks/", ".claude/skills/",
-    ".codex/agents/", ".codex/skills/",
-    ".gemini/agents/", ".gemini/commands/", ".gemini/skills/",
+    ".codebuddy/agents/", ".codebuddy/commands/", ".codebuddy/hooks/", ".codebuddy/skills/",
+    ".cursor/agents/", ".cursor/commands/", ".cursor/hooks/", ".cursor/skills/",
+    ".zcode/agents/", ".zcode/commands/", ".zcode/hooks/", ".zcode/skills/",
     ".opencode/agents/", ".opencode/commands/", ".opencode/skills/",
+    ".opencode/lib/", ".opencode/plugins/",
 )
+PORTABLE_INTEGRATION_FILES = {
+    ".pi/settings.json", ".dsh/DSH.md", ".claude/settings.json",
+    ".codebuddy/settings.json", ".cursor/hooks.json", ".zcode/config.json",
+    ".opencode/package.json",
+}
 ARTIFACT_SUFFIXES = (
     ".log", ".pyc", ".pyo", ".class", ".o", ".obj", ".a", ".so", ".dll",
     ".dylib", ".exe", ".apk", ".aab", ".hap", ".ipa", ".msi", ".msix",
@@ -131,14 +142,18 @@ def is_hashed_product_input(path: str, tracked: set[str]) -> bool:
             if repo_path != path or repo_path not in tracked:
                 continue
             if candidate_digest == expected_digest:
-                continue
-            if candidate_digest == expected_digest:
                 return True
     return False
 
 
 def is_portable_integration_source(path: str) -> bool:
-    return path.startswith(PORTABLE_INTEGRATION_ROOTS)
+    return path in PORTABLE_INTEGRATION_FILES or path.startswith(PORTABLE_INTEGRATION_ROOTS)
+
+
+def is_private_runtime_path(path: str) -> bool:
+    return path.startswith(RUNTIME_ROOTS) or (
+        path.startswith(".dsh/") and not is_portable_integration_source(path)
+    )
 
 
 def check_artifacts(tracked: set[str], changed: set[str], added: set[str], errors: list[str]) -> None:
@@ -149,7 +164,7 @@ def check_artifacts(tracked: set[str], changed: set[str], added: set[str], error
             is_portable_integration_source(path) or path.startswith(RUNTIME_ROOTS)
         ):
             errors.append(f"{path}: agent integration files must use an approved portable source directory")
-        if path.startswith(RUNTIME_ROOTS):
+        if is_private_runtime_path(path):
             errors.append(f"{path}: private agent runtime/session data")
         if path.endswith((".local.json", ".local.yaml", ".local.yml")) or name in PRIVATE_NAMES or name.endswith(PRIVATE_SUFFIXES) or name in {".env", "settings.local.json", "settings.local.yaml"} or (name.startswith(".env.") and name not in {".env.example", ".env.sample"}):
             errors.append(f"{path}: private signing, credentials or machine-local file")
@@ -159,7 +174,7 @@ def check_artifacts(tracked: set[str], changed: set[str], added: set[str], error
             continue  # Existing research logs and retained native inputs remain legal.
         if any(part != part.strip() for part in parts) or any(ord(char) < 32 for char in path):
             errors.append(f"{path!r}: malformed or control-character path")
-        if GENERATED_PARTS.intersection(parts) or path.startswith(RUNTIME_ROOTS):
+        if GENERATED_PARTS.intersection(parts) or is_private_runtime_path(path):
             errors.append(f"{path}: newly tracked generated/cache/private runtime output")
         elif name.endswith(ARTIFACT_SUFFIXES) and not is_hashed_product_input(path, tracked):
             errors.append(f"{path}: newly tracked build/archive/log output without a retained-input checksum")

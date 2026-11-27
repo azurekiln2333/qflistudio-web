@@ -79,8 +79,11 @@ Future<void> _reveal(WidgetTester tester, Finder target) async {
 Future<void> _expectRefused(WidgetTester tester, String url) async {
   final uri = Uri.parse(url);
   // Darwin/POSIX ECONNREFUSED and Windows ERROR_CONNECTION_REFUSED /
-  // WSAECONNREFUSED. A timeout or any other socket error is not refusal.
+  // WSAECONNREFUSED are the only successful closure observations.
   const connectionRefusedCodes = <int>{61, 111, 1225, 10061};
+  // An accept racing with disposal can reset a connection. Retry only these
+  // ECONNRESET / WSAECONNRESET codes; resets never establish listener closure.
+  const connectionResetCodes = <int>{54, 104, 10054};
   var refused = false;
   for (var attempt = 0; attempt < 100 && !refused; attempt++) {
     final observation = await tester.runAsync(() async {
@@ -95,13 +98,19 @@ Future<void> _expectRefused(WidgetTester tester, String url) async {
         );
         return (refused: false, error: null, trace: null);
       } on Object catch (error, trace) {
-        final connectionRefused =
-            error is SocketException &&
-            connectionRefusedCodes.contains(error.osError?.errorCode);
+        // Socket.connect can surface the native OSError directly, as in the
+        // hosted Linux reset, or wrap it in a SocketException.
+        final errorCode = error is SocketException
+            ? error.osError?.errorCode
+            : error is OSError
+            ? error.errorCode
+            : null;
+        final connectionRefused = connectionRefusedCodes.contains(errorCode);
+        final connectionReset = connectionResetCodes.contains(errorCode);
         return (
           refused: connectionRefused,
-          error: connectionRefused ? null : error,
-          trace: connectionRefused ? null : trace,
+          error: connectionRefused || connectionReset ? null : error,
+          trace: connectionRefused || connectionReset ? null : trace,
         );
       } finally {
         socket?.destroy();
@@ -124,7 +133,12 @@ Future<void> _expectRefused(WidgetTester tester, String url) async {
       );
     }
   }
-  expect(refused, isTrue, reason: 'Owned preview endpoint still accepts TCP');
+  expect(
+    refused,
+    isTrue,
+    reason: 'Owned preview endpoint never reached ECONNREFUSED; '
+        'accepted or reset connections do not prove closure',
+  );
 }
 
 void main() {
