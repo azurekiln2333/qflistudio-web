@@ -38,7 +38,7 @@ This package plan shares the migration plan's exact dependency pins:
 | --- | --- |
 | Flutter tag | `3.41.10-ohos-1.0.0` |
 | Flutter peeled commit | `244a0e8abb3085e8675589b13e219af8c41cb7aa` |
-| Core commit | `476a30acee21dc486ee2849dd8064a7be665e4d5` |
+| Core commit | `1ae4674a4b153701b0c3b3ff04b1a1b77a318611` |
 
 Every cloud check and package job records these resolved commits and its Web
 source SHA. A later dependency change requires coordinator review.

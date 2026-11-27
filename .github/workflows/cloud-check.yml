@@ -11,14 +11,14 @@ on:
         description: Full immutable qflistudio-core commit SHA
         required: false
         type: string
-        default: 476a30acee21dc486ee2849dd8064a7be665e4d5
+        default: 1ae4674a4b153701b0c3b3ff04b1a1b77a318611
   workflow_call:
     inputs:
       core_ref:
         description: Full immutable qflistudio-core commit SHA
         required: false
         type: string
-        default: 476a30acee21dc486ee2849dd8064a7be665e4d5
+        default: 1ae4674a4b153701b0c3b3ff04b1a1b77a318611
 
 permissions:
   contents: read
@@ -101,9 +101,9 @@ jobs:
 
       - name: Require the reviewed Core revision
         env:
-          CORE_REF: ${{ inputs.core_ref || '476a30acee21dc486ee2849dd8064a7be665e4d5' }}
+          CORE_REF: ${{ inputs.core_ref || '1ae4674a4b153701b0c3b3ff04b1a1b77a318611' }}
         run: |
-          if [[ "$CORE_REF" != 476a30acee21dc486ee2849dd8064a7be665e4d5 ]]; then
+          if [[ "$CORE_REF" != 1ae4674a4b153701b0c3b3ff04b1a1b77a318611 ]]; then
             echo 'Cloud checks require the reviewed immutable Core revision.' >&2
             exit 1
           fi
@@ -131,7 +131,7 @@ jobs:
         uses: ./.github/actions/setup-app-build
         with:
           platform: linux
-          core-ref: ${{ inputs.core_ref || '476a30acee21dc486ee2849dd8064a7be665e4d5' }}
+          core-ref: ${{ inputs.core_ref || '1ae4674a4b153701b0c3b3ff04b1a1b77a318611' }}
           flutter-ref: 3.41.10-ohos-1.0.0
           flutter-revision: 244a0e8abb3085e8675589b13e219af8c41cb7aa
           build-native: 'false'

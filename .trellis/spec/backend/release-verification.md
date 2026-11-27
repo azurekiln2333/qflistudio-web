@@ -19,9 +19,8 @@ checks or package success. Cloud-check run `45969407193` and app-packages run
 `runner.temp` reference in job-level `env` at cloud-check line 87 is assigned
 to Pi p2. No test or app package has passed yet.
 
-Keep Core at `476a30acee21dc486ee2849dd8064a7be665e4d5` under the
-2026-11-27 `core-last.md` decision. A later `CORE_REF` bump is pending, not a
-blocker. Do not change the pin independently.
+Keep Core at `1ae4674a4b153701b0c3b3ff04b1a1b77a318611` under the
+2026-11-28 `core-ref-wave.md` decision. Do not change the pin independently.
 
 ## 2. Commands and interfaces
 
