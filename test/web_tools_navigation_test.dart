@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:qfli_studio_core/app.dart';
 import 'package:qfli_studio_core/layout/app_form_factor.dart';
@@ -16,10 +17,55 @@ import 'package:qfli_studio_core/shell/workbench_chrome.dart';
 import 'package:qfli_studio_core/store/auth_store.dart';
 import 'package:qfli_studio_core/store/project_store.dart';
 import 'package:qfli_studio_core/store/settings_store.dart';
+import 'package:qfli_web/content/webforge_content_repository.dart';
 import 'package:qfli_web/main.dart' show webProfile;
 import 'package:qfli_web/pages/web_tools_overview.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  late Map<String, ByteData> assetBytes;
+  final assetRequests = <String>[];
+
+  setUpAll(() {
+    final tutorials = File(
+      WebForgeContentRepository.tutorialAsset,
+    ).readAsBytesSync();
+    final examples = File(
+      WebForgeContentRepository.exampleAsset,
+    ).readAsBytesSync();
+    assetBytes = {
+      WebForgeContentRepository.tutorialAsset: ByteData.sublistView(tutorials),
+      WebForgeContentRepository.exampleAsset: ByteData.sublistView(examples),
+    };
+  });
+
+  setUp(() {
+    assetRequests.clear();
+    rootBundle.clear();
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMessageHandler('flutter/assets', (message) async {
+          if (message == null) return null;
+          final key = utf8.decode(
+            message.buffer.asUint8List(
+              message.offsetInBytes,
+              message.lengthInBytes,
+            ),
+          );
+          assetRequests.add(key);
+          const productPrefix = 'packages/qfli_web/';
+          final asset = key.startsWith(productPrefix)
+              ? key.substring(productPrefix.length)
+              : key;
+          return assetBytes[asset];
+        });
+  });
+
+  tearDown(() {
+    rootBundle.clear();
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMessageHandler('flutter/assets', null);
+  });
+
   /// 用真实 stores 起一台 QfliApp，并注册完整的 teardown 清理。
   Future<
     ({
@@ -240,7 +286,7 @@ void main() {
     );
 
     await selectPage(tester, Icons.menu_book_outlined);
-    await _expectContentSections(tester);
+    await _expectContentSections(tester, assetRequests);
     expect(
       tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
       2,
@@ -301,7 +347,7 @@ void main() {
     expect(tester.takeException(), isNull);
 
     await selectPage(tester, Icons.menu_book_outlined);
-    await _expectContentSections(tester);
+    await _expectContentSections(tester, assetRequests);
     expect(tester.takeException(), isNull);
     await selectPage(tester, Icons.person_outline);
     await _expectOfflineSettings(tester);
@@ -339,7 +385,7 @@ void main() {
       find.byKey(WorkbenchActivityRail.activityKey(WorkbenchActivity.tutorial)),
     );
     await tester.pump();
-    await _expectContentSections(tester);
+    await _expectContentSections(tester, assetRequests);
     expect(tester.takeException(), isNull);
     await tester.tap(find.byKey(WorkbenchActivityRail.avatarKey));
     await tester.pump();
@@ -359,7 +405,10 @@ void main() {
   });
 }
 
-Future<void> _expectContentSections(WidgetTester tester) async {
+Future<void> _expectContentSections(
+  WidgetTester tester,
+  List<String> assetRequests,
+) async {
   final center = find.byType(TutorialCenterPage);
   expect(center, findsOneWidget);
   for (final section in TutorialCenterSection.values) {
@@ -402,6 +451,20 @@ Future<void> _expectContentSections(WidgetTester tester) async {
       findsNothing,
     );
   }
+  _expectWebForgeAssetRequests(assetRequests);
+}
+
+void _expectWebForgeAssetRequests(List<String> requests) {
+  for (final asset in [
+    WebForgeContentRepository.tutorialAsset,
+    WebForgeContentRepository.exampleAsset,
+  ]) {
+    expect(requests, contains('packages/qfli_web/$asset'));
+  }
+  expect(
+    requests.where((key) => key.contains('packages/qfli_studio_core/assets/')),
+    isEmpty,
+  );
 }
 
 Future<void> _expectOfflineSettings(WidgetTester tester) async {
