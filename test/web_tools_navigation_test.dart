@@ -431,16 +431,26 @@ Future<void> _expectContentSections(
       );
       await tester.pump(const Duration(milliseconds: 20));
     }
-    expect(
-      find.descendant(
-        of: center,
-        matching: find.byKey(const ValueKey('content-language-all')),
-      ),
-      findsOneWidget,
-      reason: 'The real ${section.name} catalog must load.',
+    final loaded = find.descendant(
+      of: center,
+      matching: find.byKey(const ValueKey('content-language-all')),
     );
     final tabs = tester.widget<TabBar>(
       find.byKey(const ValueKey('tutorial-center-sections')),
+    );
+    final diagnostics = loaded.evaluate().isEmpty
+        ? _contentLoadDiagnostics(
+            tester,
+            center: center,
+            section: section,
+            controllerIndex: tabs.controller?.index,
+            assetRequests: assetRequests,
+          )
+        : '';
+    expect(
+      loaded,
+      findsOneWidget,
+      reason: 'The real ${section.name} catalog must load.$diagnostics',
     );
     expect(tabs.controller!.index, section.index);
     expect(
@@ -453,6 +463,116 @@ Future<void> _expectContentSections(
   }
   _expectWebForgeAssetRequests(assetRequests);
 }
+
+String _contentLoadDiagnostics(
+  WidgetTester tester, {
+  required Finder center,
+  required TutorialCenterSection section,
+  required int? controllerIndex,
+  required List<String> assetRequests,
+}) {
+  final textLabels = <String>[];
+  final visibleTexts = find
+      .descendant(of: center, matching: find.byType(Text))
+      .hitTestable();
+  for (final element in visibleTexts.evaluate()) {
+    final text = element.widget as Text;
+    final label = text.data ?? text.textSpan?.toPlainText() ?? '';
+    if (label.trim().isEmpty) continue;
+    textLabels.add(_truncateDiagnostic(label.replaceAll('\n', ' '), 120));
+    if (textLabels.length == 24) break;
+  }
+
+  final circularProgress = find
+      .descendant(
+        of: center,
+        matching: find.byType(CircularProgressIndicator),
+      )
+      .evaluate()
+      .length;
+  final linearProgress = find
+      .descendant(
+        of: center,
+        matching: find.byType(LinearProgressIndicator),
+      )
+      .evaluate()
+      .length;
+  final requests = assetRequests
+      .take(12)
+      .map((request) => _truncateDiagnostic(request, 140))
+      .join(', ');
+  final omittedRequests = assetRequests.length > 12
+      ? ', ... ${assetRequests.length - 12} more'
+      : '';
+
+  String centerSize;
+  try {
+    final size = tester.getSize(center);
+    centerSize = '${size.width}x${size.height}';
+  } catch (error) {
+    centerSize = '<unavailable: ${error.runtimeType}>';
+  }
+
+  final scrollables = find.descendant(
+    of: center,
+    matching: find.byType(Scrollable),
+  );
+  final scrollMetrics = <String>[];
+  final scrollableCount = scrollables.evaluate().length;
+  for (var index = 0; index < scrollableCount && index < 8; index++) {
+    try {
+      final position = tester
+          .state<ScrollableState>(scrollables.at(index))
+          .position;
+      scrollMetrics.add(
+        '#$index pixels=${position.pixels} min=${position.minScrollExtent} '
+        'max=${position.maxScrollExtent} '
+        'viewport=${position.viewportDimension} '
+        'hasDimensions=${position.hasContentDimensions && position.hasViewportDimension}',
+      );
+    } catch (error) {
+      scrollMetrics.add('#$index <unavailable: ${error.runtimeType}>');
+    }
+  }
+  if (scrollableCount > 8) {
+    scrollMetrics.add('... ${scrollableCount - 8} more scrollables');
+  }
+
+  final diagnosticWidgets = find
+      .descendant(
+        of: center,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget.key != null ||
+              widget is ListView ||
+              widget is CustomScrollView ||
+              widget is Scrollable,
+        ),
+      )
+      .evaluate()
+      .take(61)
+      .toList();
+  final widgetSummary = diagnosticWidgets
+      .take(60)
+      .map((element) {
+        final widget = element.widget;
+        return '${widget.runtimeType}${widget.key == null ? '' : ' key=${widget.key}'}';
+      })
+      .join(' > ');
+  final omittedWidgets = diagnosticWidgets.length > 60
+      ? ' > ... additional matching widgets omitted'
+      : '';
+  return '\nFailure diagnostics: section=${section.name}, '
+      'controllerIndex=$controllerIndex, centerSize=$centerSize, '
+      'progress=circular:$circularProgress/linear:$linearProgress, '
+      'texts=${textLabels.join(' | ')}, '
+      'assetRequests=[$requests$omittedRequests], '
+      'scrollables=[${scrollMetrics.join('; ')}], '
+      'widgets=[$widgetSummary$omittedWidgets]';
+}
+
+String _truncateDiagnostic(String value, int limit) =>
+    value.length <= limit ? value : '${value.substring(0, limit)}…';
 
 void _expectWebForgeAssetRequests(List<String> requests) {
   for (final asset in [
