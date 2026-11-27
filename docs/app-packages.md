@@ -33,7 +33,7 @@ origin 只把 push URL 收窄到 GitHub。
 | --- | --- |
 | Flutter 标签 | `3.41.10-ohos-1.0.0` |
 | Flutter 剥离提交 | `244a0e8abb3085e8675589b13e219af8c41cb7aa` |
-| Core 提交 | `1ae4674a4b153701b0c3b3ff04b1a1b77a318611` |
+| Core 提交 | `8e031313ffc8d531c5a6b4d131f721f35da04c86` |
 
 Flutter 输入用剥离提交。
 带注释标签的对象 SHA 不是这个值。
