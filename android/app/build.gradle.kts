@@ -1,8 +1,18 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+val releaseKeyPropertiesFile = rootProject.file("key.properties")
+val releaseKeyProperties = Properties().apply {
+    if (releaseKeyPropertiesFile.exists()) {
+        FileInputStream(releaseKeyPropertiesFile).use { load(it) }
+    }
 }
 
 android {
@@ -36,11 +46,28 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        // Optional release keystore. android/key.properties is git-ignored and
+        // may be provided on a GitHub-hosted runner from Actions secrets.
+        if (releaseKeyPropertiesFile.exists()) {
+            create("release") {
+                storeFile = rootProject.file(releaseKeyProperties.getProperty("storeFile"))
+                storePassword = releaseKeyProperties.getProperty("storePassword")
+                keyAlias = releaseKeyProperties.getProperty("keyAlias")
+                keyPassword = releaseKeyProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Without android/key.properties the release build uses the debug key.
+            // Such an APK is a migration artifact, not a store-ready release.
+            signingConfig = if (releaseKeyPropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 

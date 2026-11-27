@@ -20,7 +20,6 @@ import 'package:qfli_studio_core/services/app_paths.dart';
 import 'package:qfli_studio_core/services/studio_profile.dart';
 import 'package:qfli_studio_core/services/task_activity_service.dart';
 import 'package:qfli_studio_core/shell/large_screen_workbench.dart';
-import 'package:qfli_studio_core/shell/workbench_chrome.dart';
 import 'package:qfli_studio_core/shell/workbench_explorer.dart';
 import 'package:qfli_studio_core/store/auth_store.dart';
 import 'package:qfli_studio_core/store/project_store.dart';
