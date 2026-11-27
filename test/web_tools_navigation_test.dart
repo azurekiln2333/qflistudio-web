@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:qfli_studio_core/app.dart';
 import 'package:qfli_studio_core/layout/app_form_factor.dart';
 import 'package:qfli_studio_core/models/project.dart';
@@ -11,6 +12,7 @@ import 'package:qfli_studio_core/pages/home_page.dart';
 import 'package:qfli_studio_core/pages/local_content_pages.dart';
 import 'package:qfli_studio_core/pages/profile_page.dart';
 import 'package:qfli_studio_core/pages/settings_page.dart';
+import 'package:qfli_studio_core/services/app_paths.dart';
 import 'package:qfli_studio_core/services/studio_profile.dart';
 import 'package:qfli_studio_core/shell/large_screen_workbench.dart';
 import 'package:qfli_studio_core/shell/workbench_chrome.dart';
@@ -23,10 +25,12 @@ import 'package:qfli_web/pages/web_tools_overview.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  late Directory suiteStorage;
+  late PathProviderPlatform previousPaths;
   late Map<String, ByteData> assetBytes;
   final assetRequests = <String>[];
 
-  setUpAll(() {
+  setUpAll(() async {
     final tutorials = File(
       WebForgeContentRepository.tutorialAsset,
     ).readAsBytesSync();
@@ -37,6 +41,12 @@ void main() {
       WebForgeContentRepository.tutorialAsset: ByteData.sublistView(tutorials),
       WebForgeContentRepository.exampleAsset: ByteData.sublistView(examples),
     };
+    suiteStorage = await Directory.systemTemp.createTemp(
+      'webforge-navigation-storage-',
+    );
+    previousPaths = PathProviderPlatform.instance;
+    PathProviderPlatform.instance = _TemporaryPaths(suiteStorage.path);
+    expect(await AppPaths.storageDirectory(), suiteStorage.path);
   });
 
   setUp(() {
@@ -64,6 +74,11 @@ void main() {
     rootBundle.clear();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMessageHandler('flutter/assets', null);
+  });
+
+  tearDownAll(() async {
+    PathProviderPlatform.instance = previousPaths;
+    await suiteStorage.delete(recursive: true);
   });
 
   /// 用真实 stores 起一台 QfliApp，并注册完整的 teardown 清理。
@@ -573,6 +588,21 @@ String _contentLoadDiagnostics(
 
 String _truncateDiagnostic(String value, int limit) =>
     value.length <= limit ? value : '${value.substring(0, limit)}…';
+
+class _TemporaryPaths extends PathProviderPlatform {
+  _TemporaryPaths(this.path);
+
+  final String path;
+
+  @override
+  Future<String?> getApplicationSupportPath() async => path;
+
+  @override
+  Future<String?> getApplicationDocumentsPath() async => path;
+
+  @override
+  Future<String?> getExternalStoragePath() async => path;
+}
 
 void _expectWebForgeAssetRequests(List<String> requests) {
   for (final asset in [
