@@ -6,6 +6,23 @@ Apply to Android/OHOS release builds, native integration tests and offline
 store-readiness work. Product source stays in `qfli_web`; generic core defects
 require a declared shared owner and a separate core commit.
 
+## Cloud-only precedence — 2026-11-27
+
+Run builds, tests, lint, package verification and installation only in GitHub
+Actions. The historical local commands and cleanup guidance below do not
+authorize local execution. Record actual run outcomes in the migration task.
+
+Runs `45969409234`, `45969409276` and `45969409494` passed their native jobs
+at Web SHA `ab12fa6313acee4cd2709796ee333561f8d0f8dd`. They do not prove app
+checks or package success. Cloud-check run `45969407193` and app-packages run
+`45969409158` failed workflow validation before jobs ran. The invalid
+`runner.temp` reference in job-level `env` at cloud-check line 87 is assigned
+to Pi p2. No test or app package has passed yet.
+
+Keep Core at `476a30acee21dc486ee2849dd8064a7be665e4d5` under the
+2026-11-27 `core-last.md` decision. A later `CORE_REF` bump is pending, not a
+blocker. Do not change the pin independently.
+
 ## 2. Commands and interfaces
 
 ```text
