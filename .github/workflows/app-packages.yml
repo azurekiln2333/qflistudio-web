@@ -1,0 +1,1019 @@
+name: App packages
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - '**'
+    tags:
+      - v*
+    paths:
+      - .github/workflows/app-packages.yml
+      - .github/workflows/cloud-check.yml
+      - .github/actions/setup-app-build/action.yml
+      - pubspec.yaml
+      - pubspec.lock
+      - scripts/**
+      - native/**
+      - vendor/**
+      - assets/**
+      - installer/**
+      - android/**
+      - ios/**
+      - linux/**
+      - macos/**
+      - ohos/**
+      - windows/**
+      - lib/**
+      - test/**
+      - integration_test/**
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-packages-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  NGINX_BUILD_JOBS: '2'
+  QFLI_CORE_REF: 476a30acee21dc486ee2849dd8064a7be665e4d5
+  QFLI_FLUTTER_REF: 3.41.10-ohos-1.0.0
+  # Peeled commit of the annotated tag above. Runners compare checkout HEAD
+  # with this value, so the tag object SHA is wrong here.
+  QFLI_FLUTTER_REVISION: 244a0e8abb3085e8675589b13e219af8c41cb7aa
+  # Public command-line tools for OHOS. ErBWs/ohos-sdk republishes the Huawei
+  # Linux archive as two release parts, and the SHA-256 covers the joined file.
+  OHOS_TOOLS_BASE: https://github.com/ErBWs/ohos-sdk/releases/download/6.1.1.280
+  OHOS_TOOLS_ARCHIVE: ohos-sdk-linux-amd64.tar.gz
+  OHOS_TOOLS_SHA256: 3d37eb5a3a81358a9731c35265f4f29d8ecf1028b0bbbb777f2928cd6990aa83
+  # The project targets 6.1.1(24). The command-line tools archive must match,
+  # because the HAP records the API of the SDK that built it.
+  OHOS_TARGET_API: '24'
+  # Public OpenHarmony native SDK that cross-compiles the embedded Nginx
+  # archive. Same pin as .github/workflows/native-ohos-build.yml.
+  OHOS_NATIVE_SDK_VERSION: 6.1.0.31
+  OHOS_NATIVE_SDK_URL: https://repo.huaweicloud.com/openharmony/os/6.1-Release/ohos-sdk-windows_linux-public.tar.gz
+  OHOS_NATIVE_SDK_SHA256: b833b75a64ee46bbd7880921abbb49b733ec5c8171b6684c9b524d57f624cee0
+  # Official Inno Setup release asset. The .issig next to it pins this size and
+  # this SHA-256, and the file carries a valid Authenticode signature.
+  INNOSETUP_VERSION: '6.7.4'
+  INNOSETUP_URL: https://github.com/jrsoftware/issrc/releases/download/is-6_7_4/innosetup-6.7.4.exe
+  INNOSETUP_SHA256: a549929319f9120716677c685535ca4671e4b937b5fdc87e2585f32d8eb30e8c
+  # The publisher of record for the signed Inno Setup release.
+  INNOSETUP_SIGNER: Pyrsys B.V.
+
+jobs:
+  cloud-check:
+    name: Source and Flutter checks
+    uses: ./.github/workflows/cloud-check.yml
+    # This workflow defines no workflow_dispatch inputs, so the `inputs` context
+    # is empty here. Pass the reviewed qflistudio-core commit literally.
+    with:
+      core_ref: 476a30acee21dc486ee2849dd8064a7be665e4d5
+
+  android:
+    name: Android APK
+    needs: cloud-check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      ANDROID_NDK_VERSION: 27.0.12077973
+      ANDROID_ABIS: arm64-v8a armeabi-v7a x86_64
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7.0.1
+
+      - name: Select Java 17 and install pinned Android NDK
+        run: |
+          set -o pipefail
+          test -d "$JAVA_HOME_17_X64"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+          mkdir -p build/ci/logs build/ci/packages
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ANDROID_NDK_VERSION" \
+            2>&1 | tee build/ci/logs/android-ndk-install.log
+          echo "QFLI_ANDROID_NDK=$ANDROID_HOME/ndk/$ANDROID_NDK_VERSION" >> "$GITHUB_ENV"
+          test -d "$ANDROID_HOME/ndk/$ANDROID_NDK_VERSION"
+
+      - name: Build fresh Nginx for every shipped ABI
+        run: |
+          set -o pipefail
+          # Gradle packages android/app/src/main/jniLibs/<abi>, and no Gradle
+          # task compiles Nginx. Build the executable library here so the APK
+          # cannot carry the tracked binary. Contract of
+          # .github/workflows/native-build.yml.
+          for abi in $ANDROID_ABIS; do
+            bash scripts/build_nginx_android.sh "$abi" "$QFLI_ANDROID_NDK" \
+              2>&1 | tee "build/ci/logs/android-nginx-$abi.log"
+            test -s "android/app/src/main/jniLibs/$abi/libnginx_exec.so"
+          done
+
+      - name: Verify the fresh Android Nginx libraries
+        run: |
+          set -o pipefail
+          python3 - <<'PY' 2>&1 | tee build/ci/logs/android-elf-validation.log
+          import os
+          from pathlib import Path
+          import re
+          import subprocess
+
+          abis = os.environ["ANDROID_ABIS"].split()
+          readelf = Path(os.environ["QFLI_ANDROID_NDK"]) / "toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf"
+          expected_machine = {
+              "arm64-v8a": "AArch64",
+              "armeabi-v7a": "ARM",
+              "x86_64": "Advanced Micro Devices X86-64",
+          }
+          for abi in abis:
+              binary = Path("android/app/src/main/jniLibs") / abi / "libnginx_exec.so"
+              header = subprocess.check_output([str(readelf), "-hW", str(binary)], text=True)
+              segments = subprocess.check_output([str(readelf), "-lW", str(binary)], text=True)
+              print(f"=== {binary} ===\n{header}{segments}", flush=True)
+              machine = re.search(r"^\s*Machine:\s*(.+)$", header, re.MULTILINE)
+              elf_type = re.search(r"^\s*Type:\s*(\S+)", header, re.MULTILINE)
+              if not machine or machine.group(1).strip() != expected_machine[abi]:
+                  raise RuntimeError(f"Wrong ELF architecture: {binary}")
+              if not elf_type or elf_type.group(1) != "DYN":
+                  raise RuntimeError(f"Expected a PIE/shared ELF file: {binary}")
+              alignments = [int(line.split()[-1], 0) for line in segments.splitlines()
+                            if line.lstrip().startswith("LOAD ")]
+              if not alignments or any(alignment < 16384 for alignment in alignments):
+                  raise RuntimeError(f"Missing 16 KiB LOAD alignment: {binary}")
+              print(f"PASS: {abi}, DYN, 16 KiB LOAD alignment", flush=True)
+          PY
+
+      - name: Set up application build
+        uses: ./.github/actions/setup-app-build
+        with:
+          platform: android
+          flutter-ref: ${{ env.QFLI_FLUTTER_REF }}
+          flutter-revision: ${{ env.QFLI_FLUTTER_REVISION }}
+          core-ref: ${{ env.QFLI_CORE_REF }}
+          build-native: 'false'
+          precache: --android
+
+      - name: Configure optional release keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          present=0
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [[ -n "${!name}" ]]; then present=$((present + 1)); fi
+          done
+          if [[ "$present" == 0 ]]; then
+            echo "::notice title=Android signing::No release keystore secrets. The APK keeps the debug key."
+            exit 0
+          fi
+          if [[ "$present" != 4 ]]; then
+            echo "::error title=Android signing::Set all four ANDROID_* keystore secrets, or none."
+            exit 1
+          fi
+          # The keystore and key.properties exist on this runner only.
+          keystore="$RUNNER_TEMP/qfli-release.jks"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore"
+          test -s "$keystore"
+          python3 - "$keystore" <<'PY'
+          import os, sys
+          from pathlib import Path
+
+          def escape(value):
+              return value.replace('\\', '\\\\').replace('\n', '\\n')
+
+          lines = [
+              f"storeFile={escape(sys.argv[1])}",
+              f"storePassword={escape(os.environ['ANDROID_KEYSTORE_PASSWORD'])}",
+              f"keyAlias={escape(os.environ['ANDROID_KEY_ALIAS'])}",
+              f"keyPassword={escape(os.environ['ANDROID_KEY_PASSWORD'])}",
+          ]
+          Path('android/key.properties').write_text('\n'.join(lines) + '\n', encoding='utf8')
+          PY
+
+      - name: Build release APK
+        run: |
+          set -o pipefail
+          # Gradle compiles the QuickJS syntax bridge through
+          # android/app/build.gradle.kts externalNativeBuild, so the APK gets a
+          # fresh libqfli_web_syntax.so for every ABI listed here.
+          flutter build apk --release \
+            --target-platform android-arm,android-arm64,android-x64 \
+            2>&1 | tee build/ci/logs/android-build.log
+
+      - name: Verify and stage APK
+        run: |
+          set -o pipefail
+          package="build/ci/packages/qfli-webforge-$QFLI_PACKAGE_VERSION-android.apk"
+          cp build/app/outputs/flutter-apk/app-release.apk "$package"
+          # Report the certificate that really signed the APK.
+          apksigner="$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -n 1)"
+          "$apksigner" verify --print-certs "$package" | tee build/ci/logs/android-signature.log
+          if grep -q 'CN=Android Debug' build/ci/logs/android-signature.log; then
+            signing='debug key (validation build, not store-ready)'
+          else
+            signing='release keystore from repository secrets'
+          fi
+          python3 scripts/verify_app_package.py --platform android --package "$package" \
+            --abi arm64-v8a --abi armeabi-v7a --abi x86_64 \
+            --signing "$signing" \
+            --native-provenance 'source-built in this run: scripts/build_nginx_android.sh for all three ABIs, Gradle externalNativeBuild for QuickJS'
+
+      - name: Remove signing files from the runner
+        if: always()
+        run: rm -f android/key.properties "$RUNNER_TEMP/qfli-release.jks"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: app-package-android
+          path: build/ci/packages/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: app-build-logs-android
+          path: build/ci/logs/
+          if-no-files-found: warn
+          retention-days: 14
+
+  linux:
+    name: Linux x86_64 bundle and deb
+    needs: cloud-check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7.0.1
+
+      - name: Install Linux desktop build dependencies
+        run: |
+          mkdir -p build/ci/logs build/ci/packages
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+
+      - name: Set up application build
+        uses: ./.github/actions/setup-app-build
+        with:
+          platform: linux
+          flutter-ref: ${{ env.QFLI_FLUTTER_REF }}
+          flutter-revision: ${{ env.QFLI_FLUTTER_REVISION }}
+          core-ref: ${{ env.QFLI_CORE_REF }}
+          build-native: 'false'
+          precache: --linux
+
+      - name: Build release bundle
+        run: |
+          set -o pipefail
+          # linux/CMakeLists.txt builds the QuickJS bridge in-tree and runs
+          # scripts/build_nginx_desktop.sh for the bundled Nginx.
+          flutter build linux --release 2>&1 | tee build/ci/logs/linux-build.log
+
+      - name: Package, verify and stage bundle and deb
+        run: |
+          set -o pipefail
+          name="qfli-webforge-$QFLI_PACKAGE_VERSION-linux-x86_64"
+          bundle="build/linux/x64/release/bundle"
+          package="build/ci/packages/$name.tar.gz"
+          deb="build/ci/packages/$name.deb"
+          test -x "$bundle/qfli_web"
+          test -x "$bundle/data/nginx/nginx"
+          test -f "$bundle/data/flutter_assets/assets/app_icon.png"
+          # tar keeps the executable bits of qfli_web and data/nginx/nginx.
+          tar -czf "$package" -C "$(dirname "$bundle")" \
+            --transform "s,^bundle,$name," bundle
+
+          # The Deb carries the same verified bundle under /opt, plus the entry
+          # points a desktop session needs: a launcher and a desktop file.
+          stage="$RUNNER_TEMP/linux-deb"
+          rm -rf "$stage"
+          mkdir -p "$stage/DEBIAN" "$stage/opt/qfli-webforge" \
+            "$stage/usr/bin" "$stage/usr/share/applications"
+          cp -a "$bundle/." "$stage/opt/qfli-webforge/"
+          chmod 0755 "$stage/opt/qfli-webforge/qfli_web" \
+            "$stage/opt/qfli-webforge/data/nginx/nginx"
+          {
+            echo '#!/bin/sh'
+            echo '# Launcher installed by the qfli-webforge Debian package.'
+            echo 'exec /opt/qfli-webforge/qfli_web "$@"'
+          } > "$stage/usr/bin/qfli-webforge"
+          chmod 0755 "$stage/usr/bin/qfli-webforge"
+          {
+            echo '[Desktop Entry]'
+            echo 'Type=Application'
+            echo 'Version=1.0'
+            echo 'Name=QFLIWebForge'
+            echo 'Comment=Offline web IDE with a bundled preview server'
+            echo 'Exec=/opt/qfli-webforge/qfli_web'
+            echo 'Icon=/opt/qfli-webforge/data/flutter_assets/assets/app_icon.png'
+            echo 'Terminal=false'
+            echo 'Categories=Development;WebDevelopment;'
+            echo 'StartupWMClass=com.azurekiln.qfli.webforge'
+          } > "$stage/usr/share/applications/qfli-webforge.desktop"
+          chmod 0644 "$stage/usr/share/applications/qfli-webforge.desktop"
+          installed_kb="$(du -sk --exclude=DEBIAN "$stage" | cut -f 1)"
+          {
+            echo 'Package: qfli-webforge'
+            echo "Version: $QFLI_PACKAGE_VERSION"
+            echo 'Architecture: amd64'
+            # Repository metadata only; no personal address is invented here.
+            echo 'Maintainer: AzureKiln <azurekiln2333@users.noreply.github.com>'
+            echo 'Homepage: https://github.com/azurekiln2333/qflistudio-web'
+            echo 'Section: devel'
+            echo 'Priority: optional'
+            echo 'Depends: libgtk-3-0t64 | libgtk-3-0, liblzma5'
+            echo "Installed-Size: $installed_kb"
+            echo 'Description: QFLIWebForge offline web IDE'
+            echo ' QFLIWebForge edits and previews web projects offline.'
+            echo ' The package ships a bundled Nginx preview server.'
+          } > "$stage/DEBIAN/control"
+          /usr/bin/dpkg-deb --root-owner-group --build "$stage" "$deb"
+          dpkg-deb --info "$deb" | tee build/ci/logs/linux-deb-control.log
+          dpkg-deb --contents "$deb" | tee build/ci/logs/linux-deb-contents.log
+          python3 scripts/verify_app_package.py --platform linux \
+            --package "$package" --installer "$deb" \
+            --signing 'not signed (Linux tar.gz bundle and deb)' \
+            --native-provenance 'source-built in this run: flutter build linux compiles QuickJS and scripts/build_nginx_desktop.sh compiles Nginx'
+
+      - name: Upload bundle and deb
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: app-package-linux
+          path: build/ci/packages/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: app-build-logs-linux
+          path: build/ci/logs/
+          if-no-files-found: warn
+          retention-days: 14
+
+  windows:
+    name: Windows x86_64 exe and zip
+    needs: cloud-check
+    runs-on: windows-2022
+    timeout-minutes: 75
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7.0.1
+
+      - name: Provision the pinned Inno Setup compiler
+        shell: bash
+        run: |
+          set -o pipefail
+          # The runner image preinstalls an unknown Inno Setup version, so the
+          # release EXE must be built by the pinned compiler below. Fetch the
+          # official release asset, check the SHA-256 published beside it in the
+          # .issig file, verify its Authenticode signature, then install it.
+          mkdir -p build/ci/logs build/ci/packages
+          installer="$RUNNER_TEMP/innosetup-$INNOSETUP_VERSION.exe"
+          curl --fail --silent --show-error --location --retry 3 \
+            --connect-timeout 30 --max-time 900 \
+            "$INNOSETUP_URL" --output "$installer"
+          printf '%s  %s\n' "$INNOSETUP_SHA256" "$installer" | sha256sum --check \
+            2>&1 | tee build/ci/logs/windows-innosetup-hash.log
+          INNOSETUP_INSTALLER="$installer" INNOSETUP_EXPECTED_SIGNER="$INNOSETUP_SIGNER" \
+            INNOSETUP_VERSION="$INNOSETUP_VERSION" \
+            powershell -NoProfile -NonInteractive -Command - <<'POWERSHELL' \
+            2>&1 | tee build/ci/logs/windows-innosetup-signature.log
+          $ErrorActionPreference = 'Stop'
+          $path = $env:INNOSETUP_INSTALLER
+          $expected = $env:INNOSETUP_EXPECTED_SIGNER
+          $signature = Get-AuthenticodeSignature -FilePath $path
+          if ($signature.Status -ne 'Valid') {
+            throw "Inno Setup signature status is $($signature.Status): $($signature.StatusMessage)"
+          }
+          $subject = $signature.SignerCertificate.Subject
+          if ($subject -notlike "*O=$expected*") {
+            throw "Inno Setup is signed by $subject, not by $expected"
+          }
+          $file = Get-Item $path
+          # The pin comes from official release metadata: the tag is-6_7_4, the
+          # asset name innosetup-6.7.4.exe and the size and SHA-256 in the
+          # .issig file published beside it. Compare the numeric version
+          # components instead of the raw string, because the version resource
+          # may carry a fourth revision field.
+          $expectedParts = $env:INNOSETUP_VERSION.Split('.')
+          $observed = $file.VersionInfo.ProductVersion
+          if ([string]::IsNullOrWhiteSpace($observed)) {
+            throw 'The Inno Setup installer carries no product version resource'
+          }
+          $observedParts = $observed.Trim().Split('.')
+          if ($observedParts.Length -lt $expectedParts.Length) {
+            throw "Inno Setup product version $observed has fewer components than $($env:INNOSETUP_VERSION)"
+          }
+          for ($index = 0; $index -lt $expectedParts.Length; $index++) {
+            if ([int]$observedParts[$index] -ne [int]$expectedParts[$index]) {
+              throw "Inno Setup product version $observed does not match the pinned $($env:INNOSETUP_VERSION)"
+            }
+          }
+          "PASS signature: $subject"
+          "PASS product version: $observed (pinned $($env:INNOSETUP_VERSION))"
+          "PASS SHA-256: $((Get-FileHash -Algorithm SHA256 -Path $path).Hash.ToLowerInvariant())"
+          POWERSHELL
+          # Install into a runner-local directory so the compiler path is fixed.
+          target="$RUNNER_TEMP/innosetup-$INNOSETUP_VERSION"
+          rm -rf "$target"
+          "$(cygpath -w "$installer")" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP- \
+            /NOICONS "/DIR=$(cygpath -w "$target")" \
+            2>&1 | tee build/ci/logs/windows-innosetup-install.log
+          test -f "$target/ISCC.exe"
+          printf 'QFLI_ISCC=%s\n' "$(cygpath -w "$target/ISCC.exe")" >> "$GITHUB_ENV"
+          rm -f "$installer"
+
+      - name: Set up application build
+        uses: ./.github/actions/setup-app-build
+        with:
+          platform: windows
+          flutter-ref: ${{ env.QFLI_FLUTTER_REF }}
+          flutter-revision: ${{ env.QFLI_FLUTTER_REVISION }}
+          core-ref: ${{ env.QFLI_CORE_REF }}
+          build-native: 'false'
+          precache: --windows
+
+      - name: Build release directory with a GNU-target QuickJS compiler
+        run: |
+          set -o pipefail
+          # windows/CMakeLists.txt runs find_program(QFLI_SYNTAX_CC NAMES clang gcc)
+          # and QuickJS needs a GNU/MinGW target. `flutter build windows` passes no
+          # custom CMake arguments, so select the compiler through PATH: hide every
+          # MSVC-target clang and put the runner's MinGW GCC first.
+          filtered=
+          IFS=':' read -ra entries <<< "$PATH"
+          for entry in "${entries[@]}"; do
+            if [[ -n "$entry" && -f "$entry/clang.exe" ]]; then
+              target="$("$entry/clang.exe" -dumpmachine 2>/dev/null || true)"
+              if [[ "$target" != *mingw* && "$target" != *gnu* ]]; then
+                echo "Hiding non-GNU clang ($target): $entry"
+                continue
+              fi
+            fi
+            filtered="${filtered:+$filtered:}$entry"
+          done
+          PATH="$filtered"
+          if [[ -x /c/mingw64/bin/gcc.exe ]]; then PATH="/c/mingw64/bin:$PATH"; fi
+          export PATH
+
+          # Probe with the same lookup before the long build starts.
+          printf '%s\n' \
+            'find_program(QFLI_SYNTAX_PYTHON NAMES python3 python)' \
+            'find_program(QFLI_SYNTAX_CC NAMES clang gcc)' \
+            'file(WRITE "${OUT}" "${QFLI_SYNTAX_CC}\n${QFLI_SYNTAX_PYTHON}\n")' \
+            > "$RUNNER_TEMP/find_syntax_cc.cmake"
+          cmake -DOUT="$(cygpath -m "$RUNNER_TEMP/syntax_cc.txt")" -P "$RUNNER_TEMP/find_syntax_cc.cmake"
+          syntax_cc="$(sed -n 1p "$RUNNER_TEMP/syntax_cc.txt" | tr -d '\r')"
+          syntax_python="$(sed -n 2p "$RUNNER_TEMP/syntax_cc.txt" | tr -d '\r')"
+          echo "QuickJS compiler: $syntax_cc"
+          echo "QuickJS build Python: $syntax_python"
+          test -n "$syntax_cc" && test "$syntax_cc" != QFLI_SYNTAX_CC-NOTFOUND
+          test -n "$syntax_python" && test "$syntax_python" != QFLI_SYNTAX_PYTHON-NOTFOUND
+          syntax_target="$("$syntax_cc" -dumpmachine)"
+          "$syntax_cc" --version | head -n 1
+          echo "QuickJS compiler target: $syntax_target"
+          if [[ "$syntax_target" != *mingw* && "$syntax_target" != *gnu* ]]; then
+            echo "::error title=Windows compiler::$syntax_cc targets $syntax_target; QuickJS needs a GNU/MinGW target."
+            exit 1
+          fi
+
+          # The Windows package ships assets/runtime/nginx/windows/nginx.exe as a
+          # tracked input, not a rebuild, so this job must prove the binary it
+          # packages is the reviewed one. scripts/check_source_policy.py checks
+          # that newly added vendor archives match their manifest entry; it does
+          # not re-verify a tracked baseline binary such as this one. Compare the
+          # single pinned line instead of feeding the whole manifest to
+          # sha256sum, because a Windows checkout may rewrite line endings in
+          # vendor/nginx/HASHES.sha256.
+          nginx_exe=assets/runtime/nginx/windows/nginx.exe
+          test -s "$nginx_exe"
+          printf '%s  %s\n' \
+            2429269c8ea20ce6c5040bb4eb5fd78a28003dfa272f66d146338320353c5f62 \
+            "$nginx_exe" \
+            | sha256sum --check \
+            | tee build/ci/logs/windows-nginx-hash.log
+
+          flutter build windows --release 2>&1 | tee build/ci/logs/windows-build.log
+
+      - name: Package, verify and stage exe and zip
+        shell: bash
+        run: |
+          set -o pipefail
+          name="qfli-webforge-$QFLI_PACKAGE_VERSION-windows-x86_64"
+          release=build/windows/x64/runner/Release
+          test -f "$release/qfli_web.exe"
+          test -f "$release/qfli_web_syntax.dll"
+          test -f "$release/data/nginx/nginx.exe"
+          # Inno writes its own log and uninstaller; keep them out of the zip,
+          # which is the byte-for-byte reference for the installed payload.
+          stage="$RUNNER_TEMP/windows-package"
+          rm -rf "$stage"
+          mkdir -p "$stage"
+          cp -R "$release" "$stage/$name"
+          python - "$stage" "$name" build/ci/packages <<'PY'
+          import shutil, sys
+          from pathlib import Path
+          stage, name, output = sys.argv[1:]
+          archive = shutil.make_archive(str(Path(output) / name), 'zip', root_dir=stage, base_dir=name)
+          print(archive)
+          PY
+          # Inno Setup writes qfli-webforge-<version>-windows-x86_64-setup.exe.
+          "$QFLI_ISCC" /Qp \
+            /DSourceDir="$(cygpath -w "$stage/$name")" \
+            /DOutputDir="$(cygpath -w "$PWD/build/ci/packages")" \
+            /DAppVersion="$QFLI_PACKAGE_VERSION" \
+            /DOutputBaseFilename="$name-setup" \
+            installer/windows/qfli-webforge.iss 2>&1 | tee build/ci/logs/windows-installer.log
+          installer_exe="build/ci/packages/$name-setup.exe"
+          test -s "$installer_exe"
+          # Record whether the produced installer carries a signature. An
+          # unsigned EXE is published with that fact in the release notes.
+          cat > "$RUNNER_TEMP/inspect_setup.ps1" <<'POWERSHELL'
+          $ErrorActionPreference = 'Stop'
+          $setup = Get-ChildItem -Path 'build/ci/packages' -Filter '*-setup.exe' | Select-Object -First 1
+          if (-not $setup) { throw 'The Inno Setup compiler produced no installer' }
+          $signature = Get-AuthenticodeSignature -FilePath $setup.FullName
+          Write-Output "Installer: $($setup.Name)"
+          Write-Output "Signature status: $($signature.Status)"
+          if ($signature.SignerCertificate) {
+            Write-Output "Signer: $($signature.SignerCertificate.Subject)"
+          } else {
+            Write-Output 'Signer: none (unsigned build)'
+          }
+          POWERSHELL
+          powershell -NoProfile -NonInteractive \
+            -File "$(cygpath -w "$RUNNER_TEMP/inspect_setup.ps1")" \
+            2>&1 | tee build/ci/logs/windows-installer-signature.log
+          # Provenance is mixed on purpose: QuickJS is compiled from source in
+          # this run by windows/CMakeLists.txt, while Nginx is the tracked
+          # assets/runtime/nginx/windows/nginx.exe, whose SHA-256 is pinned in
+          # vendor/nginx/HASHES.sha256 and re-checked by this job before the
+          # build. It is not rebuilt here, and the release notes must not claim
+          # that it is.
+          python scripts/verify_app_package.py --platform windows \
+            --package "build/ci/packages/$name.zip" --installer "$installer_exe" \
+            --signing 'not signed (no Authenticode signature)' \
+            --native-provenance 'mixed: QuickJS syntax bridge source-built in this run by flutter build windows; Nginx is the checksum-pinned tracked input assets/runtime/nginx/windows/nginx.exe, not source-built' \
+            2>&1 | tee build/ci/logs/windows-verify.log
+
+      - name: Upload exe and zip
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: app-package-windows
+          path: build/ci/packages/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: app-build-logs-windows
+          path: build/ci/logs/
+          if-no-files-found: warn
+          retention-days: 14
+
+  macos:
+    name: macOS arm64 dmg
+    needs: cloud-check
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      # FLUTTER_XCODE_<SETTING> becomes an xcodebuild build setting. Build the
+      # runner's architecture only: scripts/bundle_nginx_macos.sh compiles Nginx
+      # for $ARCHS, and only single-architecture Nginx builds are exercised.
+      FLUTTER_XCODE_ARCHS: arm64
+      FLUTTER_XCODE_ONLY_ACTIVE_ARCH: 'NO'
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7.0.1
+
+      - name: Record Apple toolchain
+        run: |
+          mkdir -p build/ci/logs build/ci/packages
+          test "$(uname -m)" = arm64
+          sw_vers
+          xcodebuild -version
+
+      - name: Set up application build
+        uses: ./.github/actions/setup-app-build
+        with:
+          platform: macos
+          flutter-ref: ${{ env.QFLI_FLUTTER_REF }}
+          flutter-revision: ${{ env.QFLI_FLUTTER_REVISION }}
+          core-ref: ${{ env.QFLI_CORE_REF }}
+          build-native: 'false'
+          precache: --macos
+
+      - name: Build release application
+        run: |
+          set -o pipefail
+          flutter build macos --release 2>&1 | tee build/ci/logs/macos-build.log
+
+      - name: Verify application bundle
+        run: |
+          set -o pipefail
+          products=build/macos/Build/Products/Release
+          app="$(find "$products" -maxdepth 1 -name '*.app' -type d | head -n 1)"
+          test -n "$app"
+          echo "QFLI_MACOS_APP=$app" >> "$GITHUB_ENV"
+          xcrun lipo "$app/Contents/Helpers/nginx" -verify_arch arm64
+          xcrun lipo "$app/Contents/Frameworks/libqfli_web_syntax.dylib" -verify_arch arm64
+          xcrun lipo "$app/Contents/Frameworks/App.framework/App" -verify_arch arm64
+          # The project signs with identity "-" (ad-hoc). Not notarized.
+          codesign --verify --deep --strict --verbose=2 "$app"
+          codesign --display --verbose=2 "$app" 2>&1 | tee build/ci/logs/macos-signature.log
+          grep -q 'Signature=adhoc' build/ci/logs/macos-signature.log
+
+      - name: Create, verify and stage dmg
+        run: |
+          package="build/ci/packages/qfli-webforge-$QFLI_PACKAGE_VERSION-macos-arm64.dmg"
+          stage="$RUNNER_TEMP/macos-dmg"
+          rm -rf "$stage"
+          mkdir -p "$stage"
+          # ditto keeps symlinks, modes and the ad-hoc signature.
+          ditto "$QFLI_MACOS_APP" "$stage/$(basename "$QFLI_MACOS_APP")"
+          ln -s /Applications "$stage/Applications"
+          created=0
+          for attempt in 1 2 3; do
+            if hdiutil create -volname QFLIWebForge -srcfolder "$stage" -ov -format UDZO "$package"; then
+              created=1
+              break
+            fi
+            echo "hdiutil attempt $attempt failed; retrying"
+            sleep 5
+          done
+          test "$created" = 1
+          hdiutil verify "$package"
+          python3 scripts/verify_app_package.py --platform macos \
+            --package "$QFLI_MACOS_APP" --image "$package" \
+            --signing 'ad-hoc signature, not notarized (arm64 only)' \
+            --native-provenance 'source-built in this run: Xcode build phases run scripts/bundle_nginx_macos.sh and scripts/bundle_web_syntax_apple.sh'
+
+      - name: Upload dmg
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: app-package-macos
+          path: build/ci/packages/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: app-build-logs-macos
+          path: build/ci/logs/
+          if-no-files-found: warn
+          retention-days: 14
+
+  ios:
+    name: iOS unsigned IPA
+    needs: cloud-check
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7.0.1
+
+      - name: Record Apple toolchain
+        run: |
+          mkdir -p build/ci/logs build/ci/packages
+          sw_vers
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+
+      - name: Set up application build
+        uses: ./.github/actions/setup-app-build
+        with:
+          platform: ios
+          flutter-ref: ${{ env.QFLI_FLUTTER_REF }}
+          flutter-revision: ${{ env.QFLI_FLUTTER_REVISION }}
+          core-ref: ${{ env.QFLI_CORE_REF }}
+          build-native: 'false'
+          precache: --ios
+
+      - name: Build release application without code signing
+        run: |
+          set -o pipefail
+          flutter build ios --release --no-codesign 2>&1 | tee build/ci/logs/ios-build.log
+
+      - name: Package, verify and stage unsigned IPA
+        run: |
+          app=build/ios/iphoneos/Runner.app
+          test -d "$app"
+          xcrun lipo "$app/Runner" -verify_arch arm64
+          package="$PWD/build/ci/packages/qfli-webforge-$QFLI_PACKAGE_VERSION-ios.ipa"
+          stage="$RUNNER_TEMP/ios-ipa"
+          rm -rf "$stage"
+          mkdir -p "$stage/Payload"
+          ditto "$app" "$stage/Payload/Runner.app"
+          (cd "$stage" && zip --quiet --recurse-paths --symlinks "$package" Payload)
+          python3 scripts/verify_app_package.py --platform ios --package "$package" \
+            --signing 'unsigned (cannot be installed until re-signed)' \
+            --native-provenance 'source-built in this run: Xcode build phases run scripts/bundle_nginx_ios.sh and scripts/bundle_web_syntax_apple.sh'
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: app-package-ios
+          path: build/ci/packages/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: app-build-logs-ios
+          path: build/ci/logs/
+          if-no-files-found: warn
+          retention-days: 14
+
+  ohos:
+    name: OHOS arm64 unsigned HAP
+    needs: cloud-check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7.0.1
+
+      - name: Download the public HarmonyOS command-line tools and record the archive hash
+        run: |
+          # This is the only step that needs the republishing project. When it is
+          # unreachable the job reports a toolchain blocker instead of skipping:
+          # a skipped OHOS job is not six-platform delivery.
+          # ErBWs/ohos-sdk republishes the Huawei Linux command-line tools as two
+          # public GitHub release parts of one 2 GiB archive.
+          mkdir -p build/ci/logs build/ci/packages
+          tools="$RUNNER_TEMP/ohos-tools"
+          rm -rf "$tools"
+          mkdir -p "$tools/unpacked"
+          archive="$tools/$OHOS_TOOLS_ARCHIVE"
+          for part in aa ab; do
+            if ! curl --fail --silent --show-error --location --retry 3 \
+              --connect-timeout 30 --max-time 3600 \
+              "$OHOS_TOOLS_BASE/$OHOS_TOOLS_ARCHIVE.$part" --output "$archive.$part"; then
+              echo "::error title=OHOS toolchain blocker::$OHOS_TOOLS_BASE/$OHOS_TOOLS_ARCHIVE.$part is unreachable. No HAP was built."
+              {
+                echo "### OHOS toolchain blocker"
+                echo
+                echo "The command-line tools archive part \`$OHOS_TOOLS_ARCHIVE.$part\` could not be downloaded."
+                echo "No HAP was built and no OHOS result is claimed."
+                echo "A skipped job is not six-platform delivery."
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 1
+            fi
+          done
+          cat "$archive.aa" "$archive.ab" > "$archive"
+          rm -f "$archive.aa" "$archive.ab"
+          archive_sha="$(sha256sum "$archive" | awk '{print $1}')"
+          echo "Archive SHA-256: $archive_sha"
+          if [[ "$archive_sha" != "$OHOS_TOOLS_SHA256" ]]; then
+            echo "::error title=OHOS tools::Archive SHA-256 $archive_sha is not the pinned $OHOS_TOOLS_SHA256. A republished archive needs review before it builds a release HAP."
+            exit 1
+          fi
+          # The archive has one top-level directory. Unpack inside it so the
+          # absolute tool paths are stable for the rest of the job.
+          tar -xzf "$archive" -C "$tools/unpacked"
+          rm "$archive"
+          inner="$(find "$tools/unpacked" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+          test -n "$inner"
+          root="$(cd "$inner" && pwd)"
+          sdk="$root/sdk"
+          test -f "$root/bin/ohpm"
+          test -x "$root/tool/node/bin/node"
+          test -d "$sdk/default/openharmony/toolchains"
+          cat "$sdk/default/sdk-pkg.json"
+          api="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['data']['apiVersion'])" "$sdk/default/sdk-pkg.json")"
+          echo "HarmonyOS SDK API version: $api"
+          # The project targets 6.1.1(24). The HAP records the API of the SDK
+          # that built it, so a different SDK is a hard failure, not a warning.
+          if [[ "$api" != "$OHOS_TARGET_API" ]]; then
+            echo "::error title=OHOS tools::SDK API $api is not the project target $OHOS_TARGET_API (6.1.1(24)). The HAP would record the wrong API."
+            exit 1
+          fi
+          {
+            echo "### OHOS toolchain"
+            echo
+            echo "| Input | Value |"
+            echo "| --- | --- |"
+            echo "| Command-line tools archive | \`$OHOS_TOOLS_BASE/$OHOS_TOOLS_ARCHIVE\` |"
+            echo "| Archive SHA-256 (checked) | \`$archive_sha\` |"
+            echo "| SDK API version (required) | \`$api\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          chmod +x "$root"/bin/* "$root/tool/node/bin"/* || true
+          # The Flutter OHOS tool locates the HarmonyOS SDK through DEVECO_SDK_HOME
+          # (or HOS_SDK_HOME), reads NODE_HOME, and runs hvigorw, ohpm and npm from PATH.
+          {
+            echo "DEVECO_SDK_HOME=$sdk"
+            echo "HOS_SDK_HOME=$sdk"
+            echo "NODE_HOME=$root/tool/node"
+            echo "QFLI_OHOS_SDK_API=$api"
+          } >> "$GITHUB_ENV"
+          {
+            echo "$root/bin"
+            echo "$root/tool/node/bin"
+            echo "$sdk/default/openharmony/toolchains"
+          } >> "$GITHUB_PATH"
+          # Hvigor and the Flutter Hvigor plugin resolve @ohos packages from
+          # the HarmonyOS registries, not from the default npm registry.
+          {
+            echo "registry=https://repo.huaweicloud.com/repository/npm/"
+            echo "@ohos:registry=https://repo.harmonyos.com/npm/"
+          } > "$HOME/.npmrc"
+          "$root/bin/ohpm" config set registry https://ohpm.openharmony.cn/ohpm/
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends libgl1-mesa-dev
+
+      - name: Install the pinned public OpenHarmony native SDK
+        run: |
+          # Cross-compiles the embedded Nginx archive with the same toolchain and
+          # the same pin as .github/workflows/native-ohos-build.yml.
+          exec > >(tee build/ci/logs/ohos-native-sdk-install.log) 2>&1
+          sdk_root="$RUNNER_TEMP/openharmony-native-sdk"
+          rm -rf "$sdk_root"
+          mkdir -p "$sdk_root"
+          archive="$sdk_root/ohos-sdk-windows_linux-public.tar.gz"
+          curl --fail --silent --show-error --location --retry 3 \
+            --connect-timeout 30 --max-time 1800 \
+            "$OHOS_NATIVE_SDK_URL" --output "$archive"
+          printf '%s  %s\n' "$OHOS_NATIVE_SDK_SHA256" "$archive" | sha256sum --check
+          native_zip="linux/native-linux-x64-$OHOS_NATIVE_SDK_VERSION-Release.zip"
+          tar -xzf "$archive" -C "$sdk_root" "$native_zip"
+          unzip -q "$sdk_root/$native_zip" -d "$sdk_root"
+          native="$sdk_root/native"
+          test -x "$native/llvm/bin/clang"
+          test -f "$native/build/cmake/ohos.toolchain.cmake"
+          python3 - "$native/oh-uni-package.json" <<'PY'
+          import json, os, sys
+          from pathlib import Path
+          metadata = json.loads(Path(sys.argv[1]).read_text())
+          assert metadata['version'] == os.environ['OHOS_NATIVE_SDK_VERSION'], metadata
+          print(json.dumps(metadata, indent=2))
+          PY
+          echo "QFLI_OHOS_NATIVE=$native" >> "$GITHUB_ENV"
+          echo "$native/build-tools/cmake/bin" >> "$GITHUB_PATH"
+          rm "$archive" "$sdk_root/$native_zip"
+
+      - name: Build fresh embedded Nginx archives and replace the tracked prebuilt inputs
+        run: |
+          set -o pipefail
+          # ohos/entry/src/main/cpp/CMakeLists.txt imports
+          # prebuilt/<abi>/libqfli_nginx.a. Build the archive here so the HAP
+          # cannot carry the tracked file, then let the Hvigor CMake build
+          # produce libqfli_nginx_napi.so, libqfli_web_cdp_transport.so and
+          # libqfli_web_syntax.so from source.
+          export AR="$QFLI_OHOS_NATIVE/llvm/bin/llvm-ar"
+          export NM="$QFLI_OHOS_NATIVE/llvm/bin/llvm-nm"
+          for abi in arm64-v8a x86_64; do
+            bash scripts/build_nginx_embedded.sh ohos \
+              "$PWD/build/ci/ohos/nginx/$abi" "$QFLI_OHOS_NATIVE" "$abi" \
+              2>&1 | tee "build/ci/logs/ohos-nginx-$abi.log"
+            test -s "build/ci/ohos/nginx/$abi/libqfli_nginx.a"
+            mkdir -p "ohos/entry/src/main/cpp/prebuilt/$abi"
+            cp "build/ci/ohos/nginx/$abi/libqfli_nginx.a" \
+              "ohos/entry/src/main/cpp/prebuilt/$abi/libqfli_nginx.a"
+          done
+
+      - name: Set up application build
+        uses: ./.github/actions/setup-app-build
+        with:
+          platform: ohos
+          flutter-ref: ${{ env.QFLI_FLUTTER_REF }}
+          flutter-revision: ${{ env.QFLI_FLUTTER_REVISION }}
+          core-ref: ${{ env.QFLI_CORE_REF }}
+          build-native: 'false'
+          precache: --ohos
+
+      - name: Remove signing from the working-copy build profile
+        run: |
+          # Rewrites the runner's copy only. The repository file stays unchanged.
+          python3 scripts/prepare_ohos_ci_profile.py ohos/build-profile.json5 --in-place
+
+      - name: Build unsigned release HAP
+        run: |
+          set -o pipefail
+          output=ohos/entry/build/default/outputs/default
+          rm -rf "$output"
+          # --no-codesign makes the tool skip its signing-config check and look
+          # for entry-default-unsigned.hap. A non-zero exit is a failure: a
+          # leftover HAP from an earlier run cannot stand in for this build.
+          flutter build hap --release --no-codesign --target-platform ohos-arm64 \
+            2>&1 | tee build/ci/logs/ohos-build.log
+          hap="$(find "$output" -maxdepth 1 -type f -name '*-unsigned.hap' | head -n 1)"
+          test -n "$hap"
+          echo "QFLI_OHOS_HAP=$hap" >> "$GITHUB_ENV"
+          ls -l "$output"
+
+      - name: Verify and stage unsigned HAP
+        run: |
+          package="build/ci/packages/qfli-webforge-$QFLI_PACKAGE_VERSION-ohos-arm64.hap"
+          cp "$QFLI_OHOS_HAP" "$package"
+          python3 scripts/verify_app_package.py --platform ohos --abi arm64-v8a \
+            --package "$package" \
+            --signing "unsigned (installation fails until signed; SDK API $QFLI_OHOS_SDK_API)" \
+            --native-provenance 'source-built in this run: scripts/build_nginx_embedded.sh replaces the tracked archive, Hvigor CMake builds NAPI, CDP and QuickJS'
+
+      - name: Upload HAP
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: app-package-ohos
+          path: build/ci/packages/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: app-build-logs-ohos
+          path: build/ci/logs/
+          if-no-files-found: warn
+          retention-days: 14
+
+  release:
+    name: Publish GitHub Release
+    needs: [cloud-check, android, linux, windows, macos, ios, ohos]
+    # Tag runs only. All six package jobs are required, so a missing HAP stops
+    # the release instead of publishing a partial one.
+    if: >-
+      ${{ !cancelled() && startsWith(github.ref, 'refs/tags/v')
+      && !contains(needs.*.result, 'failure')
+      && !contains(needs.*.result, 'cancelled')
+      && !contains(needs.*.result, 'skipped') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - name: Download package artifacts of this run
+        run: |
+          gh run download "$GITHUB_RUN_ID" --pattern 'app-package-*' --dir "$RUNNER_TEMP/artifacts"
+          find "$RUNNER_TEMP/artifacts" -type f | sort
+
+      - name: Collect packages and write SHA256SUMS
+        run: |
+          release="$RUNNER_TEMP/release"
+          mkdir -p "$release"
+          for platform in android linux windows macos ios ohos; do
+            test -d "$RUNNER_TEMP/artifacts/app-package-$platform"
+            test -f "$RUNNER_TEMP/artifacts/app-package-$platform/$platform.summary.md"
+          done
+          # Each job recorded a hash for every file it uploaded; a mismatch
+          # means a damaged transfer.
+          for directory in "$RUNNER_TEMP"/artifacts/app-package-*/; do
+            (cd "$directory" && for sum in *.sha256; do sha256sum --check "$sum"; done)
+            find "$directory" -maxdepth 1 -type f \
+              ! -name '*.sha256' ! -name '*.summary.md' -exec cp {} "$release/" \;
+          done
+          (cd "$release" && sha256sum -- * > "$RUNNER_TEMP/SHA256SUMS")
+          mv "$RUNNER_TEMP/SHA256SUMS" "$release/SHA256SUMS"
+          cat "$release/SHA256SUMS"
+          {
+            echo "## Packages"
+            echo
+            echo "| Platform | Package | Signing | qflistudio-core | Flutter fork | Native provenance | SHA-256 |"
+            echo "| --- | --- | --- | --- | --- | --- | --- |"
+            cat "$RUNNER_TEMP"/artifacts/app-package-*/*.summary.md
+            echo
+            echo "Packages passed an archive content check only. No device, store or signing acceptance ran."
+            echo "Source commit: \`$GITHUB_SHA\`."
+            echo
+          } > "$RUNNER_TEMP/release-notes.md"
+          cat "$RUNNER_TEMP/release-notes.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish release
+        run: |
+          release="$RUNNER_TEMP/release"
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            # A rerun for the same tag replaces the files of the existing release.
+            gh release upload "$TAG" "$release"/* --clobber
+          else
+            gh release create "$TAG" --verify-tag --title "$TAG" \
+              --notes-file "$RUNNER_TEMP/release-notes.md" --generate-notes \
+              "$release"/*
+          fi
