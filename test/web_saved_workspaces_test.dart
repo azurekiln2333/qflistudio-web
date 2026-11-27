@@ -13,11 +13,15 @@ import 'package:qfli_studio_core/editor/editor_problems_bar.dart';
 import 'package:qfli_studio_core/editor/file_explorer.dart';
 import 'package:qfli_studio_core/editor/project_history.dart';
 import 'package:qfli_studio_core/i18n/studio_localizations.dart';
+import 'package:qfli_studio_core/layout/app_form_factor.dart';
 import 'package:qfli_studio_core/models/project.dart';
 import 'package:qfli_studio_core/pages/home_page.dart';
 import 'package:qfli_studio_core/services/app_paths.dart';
 import 'package:qfli_studio_core/services/studio_profile.dart';
 import 'package:qfli_studio_core/services/task_activity_service.dart';
+import 'package:qfli_studio_core/shell/large_screen_workbench.dart';
+import 'package:qfli_studio_core/shell/workbench_chrome.dart';
+import 'package:qfli_studio_core/shell/workbench_explorer.dart';
 import 'package:qfli_studio_core/store/auth_store.dart';
 import 'package:qfli_studio_core/store/project_store.dart';
 import 'package:qfli_studio_core/store/settings_store.dart';
@@ -82,7 +86,20 @@ void main() {
       final home = find.byType(HomeTab);
       final homeTabs = find.descendant(of: home, matching: find.byType(Tab));
       final labels = StudioLocalizations.of(tester.element(home));
-      expect(homeTabs, findsNWidgets(4));
+      // Phone Home includes the local Agents scope in addition to the four
+      // project/workspace scopes. Desktop uses an Explorer filter, not Tabs.
+      expect(homeTabs, findsNWidgets(5));
+      for (final scope in ['history', 'workspace', 'all', 'favorite', 'agents']) {
+        expect(
+          find.descendant(
+            of: home,
+            matching: find.byKey(ValueKey('home-scope-tab-$scope')),
+          ),
+          findsOneWidget,
+        );
+      }
+      expect(find.byType(HomePage), findsOneWidget);
+      expect(find.byType(LargeScreenWorkbench), findsNothing);
       expect(
         find.descendant(of: home, matching: find.text(labels.cloudProjects)),
         findsNothing,
@@ -196,71 +213,68 @@ void main() {
       expect(fixture.history.readAsBytesSync(), orderedEquals(projectHistory));
       fixture.expectSourceBytes();
 
-      await tester.runAsync(() async {
-        await WorkspaceStore.instance.load(force: true);
-        await fixture.recreateStores();
-      });
-      await fixture.mountHome(tester);
-      final workspaceTab = find.widgetWithText(Tab, '工作区');
-      expect(workspaceTab, findsOneWidget);
-      await tester.tap(workspaceTab);
-      await _until(
-        tester,
-        () => find.text(_name).hitTestable().evaluate().isNotEmpty,
-        'The actual Web Home workspace scope did not list the saved document.',
-      );
-      await tester.tap(find.text(_name).hitTestable());
-      await _until(
-        tester,
-        () =>
-            fixture.editor(tester)?.files.length == 2 &&
-            fixture.editor(tester)?.current?.projectRootPath ==
-                fixture.secondary.path,
-        'The actual Home card did not reconstruct the named Web session.',
-      );
-      final restored = fixture.editor(tester)!;
-      expect(restored, isNot(same(editor)));
-      expect(
-        tester.widget<EditorPage>(find.byType(EditorPage)).workspace?.id,
-        saved.id,
-      );
-      expect(restored.files.map((file) => file.path), [
-        fixture.source(fixture.primary).path,
-        fixture.source(fixture.secondary).path,
-      ]);
-      expect(restored.files.map((file) => file.ownerProjectName), [
-        fixture.primary.name,
-        fixture.secondary.name,
-      ]);
-      expect(
-        restored.files.every((file) => file.projectType == 'html'),
-        isTrue,
-      );
-      expect(restored.files.every((file) => !file.dirty), isTrue);
-      expect(restored.files.first.controller.text, _primarySource);
-      expect(restored.files.last.controller.text, _secondarySource);
-      expect(restored.files.first.controller.selection.baseIndex, 1);
-      expect(restored.files.first.controller.selection.baseOffset, 3);
-      expect(restored.current!.controller.selection.baseIndex, 2);
-      expect(restored.current!.controller.selection.baseOffset, 4);
-      await fixture.showTree(tester);
-      await _until(
-        tester,
-        () =>
-            fixture
-                .entry(fixture.primary, 'detail.html')
-                .evaluate()
-                .isNotEmpty &&
-            fixture
-                .entry(fixture.secondary, 'detail.html')
-                .evaluate()
-                .isNotEmpty,
-        'The named workspace did not restore both roots\' expanded directories.',
-      );
-      fixture.expectSourceBytes();
-      expect(fixture.history.readAsBytesSync(), orderedEquals(projectHistory));
-      expect(StudioProfile.current, same(webProfile));
-      expect(tester.takeException(), isNull);
+      var previousEditor = editor;
+      for (final formFactor in [AppFormFactor.phone, AppFormFactor.desktop]) {
+        await tester.runAsync(() async {
+          await WorkspaceStore.instance.load(force: true);
+          await fixture.recreateStores();
+        });
+        await fixture.mountHome(tester, formFactor: formFactor);
+        await fixture.openWorkspaceScope(tester, formFactor: formFactor);
+        await _until(
+          tester,
+          () => find.text(_name).hitTestable().evaluate().isNotEmpty,
+          'The ${formFactor.name} workspace entry did not list the saved document.',
+        );
+        await tester.tap(find.text(_name).hitTestable());
+        await fixture.showTree(tester);
+        await _until(
+          tester,
+          () =>
+              fixture.editor(tester)?.files.length == 2 &&
+              fixture.editor(tester)?.current?.projectRootPath ==
+                  fixture.secondary.path,
+          'The ${formFactor.name} card did not reconstruct the named Web session.',
+        );
+        final restored = fixture.editor(tester)!;
+        expect(restored, isNot(same(previousEditor)));
+        expect(
+          tester.widget<EditorPage>(find.byType(EditorPage)).workspace?.id,
+          saved.id,
+        );
+        expect(restored.files.map((file) => file.path), [
+          fixture.source(fixture.primary).path,
+          fixture.source(fixture.secondary).path,
+        ]);
+        expect(restored.files.map((file) => file.ownerProjectName), [
+          fixture.primary.name,
+          fixture.secondary.name,
+        ]);
+        expect(
+          restored.files.every((file) => file.projectType == 'html'),
+          isTrue,
+        );
+        expect(restored.files.every((file) => !file.dirty), isTrue);
+        expect(restored.files.first.controller.text, _primarySource);
+        expect(restored.files.last.controller.text, _secondarySource);
+        expect(restored.files.first.controller.selection.baseIndex, 1);
+        expect(restored.files.first.controller.selection.baseOffset, 3);
+        expect(restored.current!.controller.selection.baseIndex, 2);
+        expect(restored.current!.controller.selection.baseOffset, 4);
+        await _until(
+          tester,
+          () =>
+              fixture.entry(fixture.primary, 'detail.html').evaluate().isNotEmpty &&
+              fixture.entry(fixture.secondary, 'detail.html').evaluate().isNotEmpty,
+          'The named workspace did not restore both roots\' expanded directories.',
+        );
+        fixture.expectSourceBytes();
+        expect(fixture.history.readAsBytesSync(), orderedEquals(projectHistory));
+        expect(StudioProfile.current, same(webProfile));
+        expect(tester.takeException(), isNull);
+        previousEditor = restored;
+        await fixture.unmountAndDrain(tester);
+      }
     },
   );
 }
@@ -339,24 +353,87 @@ class _Fixture {
     settings.dispose();
   }
 
-  Future<void> mountHome(WidgetTester tester) async {
+  Future<void> mountHome(
+    WidgetTester tester, {
+    AppFormFactor formFactor = AppFormFactor.phone,
+  }) async {
     await tester.pumpWidget(
-      QfliApp(store: store, auth: auth, settings: settings),
+      QfliApp(
+        store: store,
+        auth: auth,
+        settings: settings,
+        formFactor: formFactor,
+      ),
     );
+    final project = formFactor == AppFormFactor.phone
+        ? find.text(primary.name)
+        : find.byKey(ValueKey('workbench-project-${primary.id}'));
     await _until(
       tester,
-      () => find.text(primary.name).hitTestable().evaluate().isNotEmpty,
-      'The actual Web Home did not show its registered project.',
+      () => project.hitTestable().evaluate().isNotEmpty,
+      'The actual ${formFactor.name} Home did not show its registered project.',
     );
+    if (formFactor == AppFormFactor.desktop) {
+      expect(find.byType(LargeScreenWorkbench), findsOneWidget);
+      expect(find.byType(HomePage), findsNothing);
+      expect(find.byType(WorkbenchProjectsPanel), findsOneWidget);
+      expect(find.byKey(const ValueKey('workbench-project-search')), findsOneWidget);
+      expect(
+        find.descendant(of: find.byType(HomeTab), matching: find.byType(Tab)),
+        findsNothing,
+      );
+    }
+  }
+
+  Future<void> openWorkspaceScope(
+    WidgetTester tester, {
+    required AppFormFactor formFactor,
+  }) async {
+    if (formFactor == AppFormFactor.phone) {
+      final tab = find.byKey(const ValueKey('home-scope-tab-workspace'));
+      expect(tab, findsOneWidget);
+      await tester.ensureVisible(tab);
+      await tester.tap(tab);
+    } else {
+      final filter = find.descendant(
+        of: find.byType(WorkbenchProjectsPanel),
+        matching: find.widgetWithIcon(IconButton, Icons.filter_list),
+      );
+      expect(filter.hitTestable(), findsOneWidget);
+      await tester.tap(filter);
+      await tester.pump();
+      final labels = StudioLocalizations.of(tester.element(find.byType(HomeTab)));
+      final workspace = find.widgetWithText(
+        MenuItemButton,
+        labels.isEnglish ? 'Workspaces' : '工作区',
+      );
+      expect(workspace.hitTestable(), findsOneWidget);
+      await tester.tap(workspace);
+    }
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
   }
 
   EditorController? editor(WidgetTester tester) {
+    final tree = find.byType(FileExplorer).hitTestable();
+    if (tree.evaluate().isNotEmpty) {
+      return tester.widget<FileExplorer>(tree).editor;
+    }
     final bar = find.byType(EditorProblemsBar).hitTestable();
     if (bar.evaluate().isEmpty) return null;
     return tester.widget<EditorProblemsBar>(bar).analysis.editor;
   }
 
   Future<void> showTree(WidgetTester tester) async {
+    if (find.byType(LargeScreenWorkbench).evaluate().isNotEmpty) {
+      await _until(
+        tester,
+        () => root(primary).hitTestable().evaluate().isNotEmpty,
+        'The actual workbench did not reveal the restored project tree.',
+      );
+      expect(find.byType(WorkbenchExplorer), findsOneWidget);
+      return;
+    }
     await _until(
       tester,
       () =>

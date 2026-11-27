@@ -152,25 +152,54 @@ void main() {
           await tester.pumpWidget(_app(stores, scale: narrow ? 2 : 1));
           await tester.pumpAndSettle();
 
-          // HomePage must obtain its repository from the real Web profile.
-          // Both retained tabs use the same factory-produced product source.
+          // Exercise HomePage's responsive rail/bar, not OS form-factor
+          // detection. The merged page must use the real Web profile factory.
           final navigation = narrow
               ? find.byType(NavigationBar)
               : find.byType(NavigationRail);
           await tester.tap(
             find.descendant(
               of: navigation,
-              matching: find.byIcon(
-                tutorials ? Icons.menu_book_outlined : Icons.code_outlined,
-              ),
+              matching: find.byIcon(Icons.menu_book_outlined),
             ),
           );
           await tester.pump();
           await tester.pump(const Duration(milliseconds: 350));
-          final tab = tutorials
-              ? find.byType(LocalTutorialsTab)
-              : find.byType(ExampleCodeTab);
-          await _waitForCatalog(tester, tab);
+          final tab = find.byType(TutorialCenterPage);
+          expect(tab, findsOneWidget);
+          expect(
+            find.descendant(
+              of: tab,
+              matching: find.byKey(TutorialCenterPage.tutorialSectionKey),
+            ),
+            findsOneWidget,
+          );
+          expect(
+            find.descendant(
+              of: tab,
+              matching: find.byKey(TutorialCenterPage.examplesSectionKey),
+            ),
+            findsOneWidget,
+          );
+          final section = find.byKey(
+            tutorials
+                ? TutorialCenterPage.tutorialSectionKey
+                : TutorialCenterPage.examplesSectionKey,
+          );
+          await tester.ensureVisible(section);
+          await tester.pump();
+          expect(section.hitTestable(), findsOneWidget);
+          await tester.tap(section);
+          await tester.pump();
+          await _waitForCatalog(tester, tab, tutorials: tutorials);
+          expect(
+            find.descendant(
+              of: tab,
+              matching: find.byKey(const ValueKey('content-query')),
+            ),
+            findsNothing,
+            reason: 'Search starts collapsed, independently of catalog loading.',
+          );
           expect(
             MediaQuery.textScalerOf(tester.element(tab)).scale(10),
             narrow ? 20 : 10,
@@ -230,7 +259,17 @@ void main() {
               of: tab,
               matching: find.byKey(const ValueKey('content-query')),
             );
-            await _showControl(tester, tab, query);
+            if (query.evaluate().isEmpty) {
+              final labels = StudioLocalizations.of(tester.element(tab));
+              final search = find.descendant(
+                of: tab,
+                matching: find.byTooltip(labels.searchContent),
+              );
+              expect(search.hitTestable(), findsOneWidget);
+              await tester.tap(search);
+              await tester.pumpAndSettle();
+            }
+            expect(query.hitTestable(), findsOneWidget);
             await tester.enterText(query, title);
             await tester.pumpAndSettle();
             await _expectCount(tester, tab, tutorials: tutorials, count: 1);
@@ -319,11 +358,16 @@ MaterialApp _app(_Stores stores, {required double scale}) => MaterialApp(
   ),
 );
 
-Future<void> _waitForCatalog(WidgetTester tester, Finder tab) async {
-  final query = find.descendant(
+Future<void> _waitForCatalog(
+  WidgetTester tester,
+  Finder tab, {
+  required bool tutorials,
+}) async {
+  final count = find.descendant(
     of: tab,
-    matching: find.byKey(const ValueKey('content-query')),
+    matching: find.text('481 ${tutorials ? 'lessons' : 'examples'}'),
   );
+  final rows = find.descendant(of: tab, matching: find.byType(ListTile));
   for (var attempt = 0; attempt < 500; attempt++) {
     // Repository parsing runs in a real isolate and examples load real local
     // storage; fake clock advancement alone cannot complete either operation.
@@ -331,7 +375,7 @@ Future<void> _waitForCatalog(WidgetTester tester, Finder tab) async {
       () => Future<void>.delayed(const Duration(milliseconds: 10)),
     );
     await tester.pump(const Duration(milliseconds: 30));
-    if (query.evaluate().isNotEmpty) return;
+    if (count.evaluate().isNotEmpty && rows.evaluate().isNotEmpty) return;
   }
   fail('The real WebForge catalog did not appear');
 }
