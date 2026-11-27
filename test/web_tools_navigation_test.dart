@@ -100,6 +100,20 @@ void main() {
     return (store: store, auth: auth, settings: settings, temp: temp);
   }
 
+  /// 切到目标页后推进几帧。教程/示例页含（或等待）内容加载，
+  /// `pumpAndSettle` 可能一直不 settle，因此用有界的 pump 序列。
+  Future<void> selectPage(WidgetTester tester, IconData icon) async {
+    final destination = find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.byIcon(icon),
+    );
+    expect(destination.hitTestable(), findsOneWidget);
+    await tester.tap(destination);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+  }
+
   /// Use each shell's real navigation entry, even in a narrow desktop window.
   Future<void> openTools(WidgetTester tester) async {
     if (find.byType(LargeScreenWorkbench).evaluate().isNotEmpty) {
@@ -123,20 +137,6 @@ void main() {
     }
     expect(find.byType(LinearProgressIndicator), findsNothing);
     await tester.pumpAndSettle();
-  }
-
-  /// 切到目标页后推进几帧。教程/示例页含（或等待）内容加载，
-  /// `pumpAndSettle` 可能一直不 settle，因此用有界的 pump 序列。
-  Future<void> selectPage(WidgetTester tester, IconData icon) async {
-    final destination = find.descendant(
-      of: find.byType(NavigationBar),
-      matching: find.byIcon(icon),
-    );
-    expect(destination.hitTestable(), findsOneWidget);
-    await tester.tap(destination);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-    await tester.pump(const Duration(milliseconds: 300));
   }
 
   testWidgets('tools tab is one integrated offline surface', (tester) async {
